@@ -19,7 +19,7 @@ const createProject = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Project name is required");
     }
 
-    const Project = await createProjectService(workspaceId, "6a7724654b6d32df48ceb3a5", { name, description })
+    const Project = await createProjectService(workspaceId,"6a7725074b6d32df48ceb3a6", { name, description })
 
     return res
         .status(201)
@@ -90,7 +90,7 @@ const updateProjectMembers = asyncHandler(async (req, res) => {
 
   const updatedMembers = await updateProjectMembersService(
     projectId,
-    req.user._id,
+    "6a7725074b6d32df48ceb3a6",
     members
   );
 

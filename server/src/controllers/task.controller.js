@@ -25,7 +25,7 @@ const createTask = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Task title is required");
     }
 
-    const task = await createTaskService(projectId, "6a7724654b6d32df48ceb3a5", { title, description, priority, dueDate })
+    const task = await createTaskService(projectId, "6a86ef93cfac1a1f86ce2361", { title, description, priority, dueDate })
 
     return res
         .status(201)
@@ -55,7 +55,7 @@ const getProjectTasks = asyncHandler(async (req, res) => {
 const getSingleTask = asyncHandler(async (req, res) => {
     const { taskId } = req.params
 
-    const task = getSingleTaskService(taskId, req.user._id)
+    const task = await getSingleTaskService(taskId, "6a7725074b6d32df48ceb3a6")
 
     return res
         .status(200)
@@ -73,12 +73,12 @@ const updateTask = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Atleast one field is required")
     }
 
-    const task = await updateTaskService(taskId, userId, { title, description, dueDate })
+    const task = await updateTaskService(taskId, "6a7725074b6d32df48ceb3a6" , { title, description, dueDate })
 
     return res
-        .status(400)
+        .status(200)
         .json(
-            new ApiResponse(400, "Task Updated Successfully")
+            new ApiResponse(200, task, "Task Updated Successfully")
         )
 })
 
@@ -86,7 +86,7 @@ const updateTask = asyncHandler(async (req, res) => {
 const deleteTask = asyncHandler(async (req, res) => {
     const { taskId } = req.params
 
-    await deleteTaskService(taskId, "6a7724654b6d32df48ceb3a5")
+    await deleteTaskService(taskId, "6a7725074b6d32df48ceb3a6")
 
     return res
         .status(200)
@@ -104,8 +104,8 @@ const assignTask = asyncHandler(async (req, res) => {
 
     const task = await assignTaskService(
         taskId,
-        "6a7724654b6d32df48ceb3a5",
-        assigneeId
+        "6a7725074b6d32df48ceb3a6",
+        "6a86efb2cfac1a1f86ce2362"
     );
 
     return res
@@ -131,7 +131,7 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
 
     const task = await changeTaskStatusService(
         taskId,
-        req.user._id,
+        "6a86ef93cfac1a1f86ce2361",
         status
     );
 
@@ -146,7 +146,7 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
         );
 });
 
-// 8. Update Task status
+// 8. Update Task priority
 const changeTaskPriority = asyncHandler(async (req, res) => {
     const { taskId } = req.params;
     const { priority } = req.body;
@@ -157,7 +157,7 @@ const changeTaskPriority = asyncHandler(async (req, res) => {
 
     const task = await changeTaskPriorityService(
         taskId,
-        req.user._id,
+        "6a7725074b6d32df48ceb3a6",
         priority
     );
 
@@ -183,7 +183,7 @@ const setTaskDueDate = asyncHandler(async (req, res) => {
 
     const task = await setTaskDueDateService(
         taskId,
-        req.user._id,
+        "6a7725074b6d32df48ceb3a6",
         dueDate
     );
 
@@ -203,7 +203,7 @@ const searchTasks = asyncHandler(async (req,res)=>{
     const {projectId} = req.params
     const {search, status, priority, assignee} = req.query
 
-    const tasks = await searchTasksService(projectId, req.user._id, {search, status, priority, assignee})
+    const tasks = await searchTasksService(projectId, "6a7725074b6d32df48ceb3a6", {search, status, priority, assignee})
 
     return res
     .status(200)

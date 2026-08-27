@@ -96,7 +96,7 @@ const getSingleTask = async (taskId, userId) => {
 };
 
 // 4. Update Task
-const updateTask = async (taskId, userId, { name, description, dueDate }) => {
+const updateTask = async (taskId, userId, { title, description, dueDate }) => {
     const task = await Task.findById(taskId)
     if (!task) {
         throw new ApiError(404, "Task not found")
@@ -140,7 +140,7 @@ const updateTask = async (taskId, userId, { name, description, dueDate }) => {
 
 // 5. Delete Task
 const deleteTask = async (taskId, userId) => {
-    const task = await Task.findbyId(taskId)
+    const task = await Task.findById(taskId)
     if (!task) {
         throw new ApiError(400, "Task not found")
     }

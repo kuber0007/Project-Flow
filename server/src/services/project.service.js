@@ -158,7 +158,7 @@ const updateProjectMembers = async (projectId, userId, members) => {
         user: { $in: members }
     }).select("user")
 
-    if (workspaceMembers.length === members.length) {
+    if (workspaceMembers.length !== members.length) {
         throw new ApiError(400, "All project members must belong to workspace")
     }
 

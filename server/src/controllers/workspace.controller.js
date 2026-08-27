@@ -136,7 +136,7 @@ const getWorkspaceMembers = asyncHandler(async (req, res) => {
 
     const members = await getWorkspaceMembersService(
         workspaceId,
-        "6a7724654b6d32df48ceb3a5"
+        req.user._id        
     )
 
     return res
@@ -277,7 +277,7 @@ const acceptWorkspaceInvitation = asyncHandler(async (req, res) => {
 
     const member = await acceptWorkspaceInvitationService(
         invitationId,
-        "6a86ef93cfac1a1f86ce2361"
+        req.user._id
     );
 
     return res

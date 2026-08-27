@@ -7,14 +7,14 @@ const router = Router();
 
 router.post("/project/:projectId", createTask) //Checked
 router.get("/project/:projectId", getProjectTasks) //Checked
-router.get("/:taskId", getSingleTask)
-router.patch("/:taskId", updateTask)
-router.delete("/:taskId", deleteTask)
+router.get("/:taskId", getSingleTask) //Checked
+router.patch("/:taskId", updateTask) //Checked
+router.delete("/:taskId", deleteTask) //Checked
 
-router.post("/:taskId/assignee", assignTask)
-router.patch("/:taskId/status", changeTaskStatus)
-router.patch("/:taskId/priority", changeTaskPriority)
-router.patch("/:taskId/due-date", setTaskDueDate)
-router.get("/project/:projectId/search", searchTasks);
+router.post("/:taskId/assignee", assignTask) //Checked
+router.patch("/:taskId/status", changeTaskStatus) //Checked
+router.patch("/:taskId/priority", changeTaskPriority) //Checked
+router.patch("/:taskId/due-date", setTaskDueDate) //Checked
+router.get("/project/:projectId/search", searchTasks); //.............
 
 export default router;
