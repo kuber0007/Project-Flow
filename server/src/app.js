@@ -5,6 +5,7 @@ import workspaceRoutes from "./routes/workspace.route.js";
 import projectRoutes from "./routes/project.route.js"
 import taskRoutes from "./routes/task.route.js";
 import commentRoutes from "./routes/comment.route.js"
+import notificationRoutes from "./routes/notification.route.js"
 
 const app = express();
 app.use(cors());
@@ -21,6 +22,7 @@ app.use("/api/workspaces", workspaceRoutes)
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use("/api/auth", authRoutes);
 
