@@ -54,7 +54,7 @@ const getWorkspaces = asyncHandler(async (req, res) => {
     return res
         .json(
             new ApiResponse(
-                400,
+                200,
                 workspaces,
                 "Worspaces fetched Successfully"
             )

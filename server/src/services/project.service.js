@@ -1,5 +1,5 @@
 import Project from "../models/project.model.js";
-import ProjectMember from "../models/projectmember.model.js";
+import ProjectMember from "../models/projectMember.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
 import { ApiError } from "../utils/ApiError.js";
 

@@ -45,5 +45,5 @@ export const registerUser = asyncHandler(async (req,res)=>{
     }
     return res
     .status(201)
-    .json(new ApiResponse(true, "User registered successfully", createdUser))
+    .json(new ApiResponse(201, createdUser, "User registered successfully"))
 })

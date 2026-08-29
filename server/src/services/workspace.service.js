@@ -207,7 +207,7 @@ const removeWorkspaceMember = async (workspaceId, userId, requestorId) => {
         throw new ApiError(403, "You do not have access to this workspace")
     }
 
-    if (!["OWNER" || "ADMIN"].includes(requester.role)) {
+    if (!["OWNER","ADMIN"].includes(requester.role)) {
         throw new ApiError(403, "You cannot change member roles")
     }
 
@@ -536,7 +536,7 @@ const updateWorkspaceSettings = async (workspaceId, userId, { name, description,
 
 // 18. api ============= PATCH :workspaceId/transfer-ownership
 const transferOwnership = async (workspaceId, currentOwner, newOwnerId) => {
-    const membership = WorkspaceMember.findOne({
+    const membership = await WorkspaceMember.findOne({
         workspace: workspaceId,
         user: currentOwner,
         role: "OWNER"
@@ -557,7 +557,7 @@ const transferOwnership = async (workspaceId, currentOwner, newOwnerId) => {
         );
     }
 
-    if (currentOwnerId.toString() === newOwnerId.toString()) {
+    if (currentOwner.toString() === newOwnerId.toString()) {
         throw new ApiError(
             400,
             "You are already the workspace owner"
@@ -570,7 +570,7 @@ const transferOwnership = async (workspaceId, currentOwner, newOwnerId) => {
     await currentOwner.save();
     await newOwner.save();
 
-    const workspace = findByIdAndUpdate(
+    const workspace = await findByIdAndUpdate(
         workspaceId,
         {
             owner: newOwnerId,

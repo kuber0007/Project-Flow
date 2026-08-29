@@ -21,7 +21,7 @@ const getUnreadNotifications = async (userId) => {
 const deleteNotification = async (notificationId, userId) => {
     const notification = await Notification.findOne({
         _id: notificationId,
-        user: userId
+        recipient: userId
     })
 
     if (!notification) {

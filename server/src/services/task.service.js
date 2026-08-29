@@ -23,9 +23,9 @@ const createTask = async (projectId, userId, { title, description, priority, due
         throw new ApiError(400, "Task title is required")
     }
 
-    const task = Task.create({
+    const task = await Task.create({
         title: title.trim(),
-        description: description.trim(),
+        description: description?.trim() || "",
         project: projectId,
         createdBy: userId,
         priority: priority || "MEDIUM",
@@ -59,7 +59,7 @@ const getProjectTasks = async (projectId, userId) => {
     })
         .populate("assignee", "name email avatar")
         .populate("createdBy", "name email avatar")
-        .sort({ createdBy: -1 });
+        .sort({ createdAt: -1 });
 
     return tasks;
 }
@@ -355,7 +355,7 @@ const searchTasks = async (projectId, userId, filters) => {
 
     const tasks = await Task.find(query)
     .populate("assignee","name email avatar")
-    .populate("assignee","name email avatar")
+    .populate("createdBy","name email avatar")
     .sort({createdAt:-1})
 
     return tasks;
