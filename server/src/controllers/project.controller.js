@@ -8,19 +8,20 @@ import {
     getSingleProject as getSingleProjectService,
     updateProject as updateProjectService,
     deleteProject as deleteProjectService,
-    updateProjectMembers as updateProjectMembersService
+    updateProjectMembers as updateProjectMembersService,
+    searchProjects as searchProjectsService
 } from "../services/project.service.js"
 
 // 1. create project
 const createProject = asyncHandler(async (req, res) => {
     const { workspaceId } = req.params
-    const { name, description } = req.body
+    const { name, description, status } = req.body
 
     if (!name?.trim()) {
         throw new ApiError(400, "Project name is required");
     }
 
-    const Project = await createProjectService(workspaceId,"6a7725074b6d32df48ceb3a6", { name, description })
+    const Project = await createProjectService(workspaceId,"6a7725074b6d32df48ceb3a6", { name, description, status })
 
     return res
         .status(201)
@@ -58,9 +59,9 @@ const getSingleProject = asyncHandler(async(req,res)=>{
 // 4. Update Project 
 const updateProject = asyncHandler(async(req,res)=>{
     const {projectId} = req.params
-    const {name,description} = req.body
+    const {name,description,status} = req.body
 
-    const project = await updateProjectService(projectId,"6a7724654b6d32df48ceb3a5",{name,description})
+    const project = await updateProjectService(projectId,"6a7724654b6d32df48ceb3a5",{name,description,status})
     return res
     .status(200)
     .json(
@@ -106,11 +107,28 @@ const updateProjectMembers = asyncHandler(async (req, res) => {
     );
 });
 
+// 7. Search/Query Projects
+const searchProjects = asyncHandler(async(req,res)=>{
+    const {workspaceId} = req.params
+    const {search, status, createdBy} = req.query
+
+    const projects = await searchProjectsService(workspaceId, "6a7725074b6d32df48ceb3a6", {search,status,createdBy})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,projects,"Projects Fetched Successfully"
+        )
+    )
+})
+
 export {
     createProject, 
     getWorkspacesProjects,
     getSingleProject,
     updateProject,
     deleteProject,
-    updateProjectMembers
+    updateProjectMembers,
+    searchProjects
 }

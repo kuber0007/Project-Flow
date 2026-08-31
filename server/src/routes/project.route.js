@@ -5,13 +5,15 @@ import {
     getSingleProject,
     updateProject,
     deleteProject,
-    updateProjectMembers
+    updateProjectMembers,
+    searchProjects
 } from "../controllers/project.controller.js";
 
 const router = Router()
 
 router.post("/:workspaceId", createProject); // tested
 router.get("/workspace/:workspaceId", getWorkspacesProjects); // tested
+router.get("/workspace/:workspaceId/search", searchProjects);
 router.get("/:projectId", getSingleProject); // tested
 router.patch("/:projectId", updateProject); // tested
 router.delete("/:projectId", deleteProject); // tested

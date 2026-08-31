@@ -1,10 +1,11 @@
 import Project from "../models/project.model.js";
 import ProjectMember from "../models/projectMember.model.js";
+import Workspace from "../models/workspace.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
 // 1. Create a project
-const createProject = async (workspaceId, userId, { name, description }) => {
+const createProject = async (workspaceId, userId, { name, description, status }) => {
     const member = await WorkspaceMember.findOne({
         workspace: workspaceId,
         user: userId
@@ -24,6 +25,7 @@ const createProject = async (workspaceId, userId, { name, description }) => {
     const project = await Project.create({
         name: name.trim(),
         description: description?.trim() || "",
+        status: status || "NOT_STARTED",
         workspace: workspaceId,
         createdBy: userId
     })
@@ -69,7 +71,7 @@ const getSingleProject = async (projectId, userId) => {
 }
 
 // 4. update project
-const updateProject = async (projectId, userId, { name, description }) => {
+const updateProject = async (projectId, userId, { name, description, status }) => {
     const project = await Project.findById(projectId)
     if (!project) {
         throw new ApiError(404, "Project not found")
@@ -96,6 +98,14 @@ const updateProject = async (projectId, userId, { name, description }) => {
 
     if (description !== undefined) {
         project.description = description.trim();
+    }
+
+    if (status !== undefined) {
+        if (!["PLANNING", "IN_PROGRESS", "COMPLETED"].includes(status)) {
+            throw new ApiError(400, "Invalid project status");
+        }
+
+        project.status = status;
     }
     await project.save();
 
@@ -180,4 +190,55 @@ const updateProjectMembers = async (projectId, userId, members) => {
     }).populate("user", "name email avatar");
 }
 
-export { createProject, getWorkspacesProjects, getSingleProject, updateProject, deleteProject, updateProjectMembers };
+// 7. Search/query Project
+const searchProjects = async (workspaceId, userId, filters) => {
+    const member = await WorkspaceMember.findOne({
+        workspace: workspaceId,
+        user: userId
+    });
+
+    if (!member) {
+        throw new ApiError(
+            403,
+            "You do not have access to this workspace"
+        );
+    }
+
+    const query = {
+        workspace: workspaceId
+    };
+
+    if (filters.search) {
+        query.$or = [
+            {
+                name: {
+                    $regex: filters.search,
+                    $options: "i"
+                }
+            },
+            {
+                description: {
+                    $regex: filters.search,
+                    $options: "i"
+                }
+            }
+        ];
+    }
+
+    if (filters.status) {
+        query.status = filters.status;
+    }
+
+    if (filters.createdBy) {
+        query.createdBy = filters.createdBy;
+    }
+
+    const projects = await Project.find(query)
+        .populate("createdBy", "name email avatar")
+        .sort({ createdAt: -1 });
+
+    return projects;
+};
+
+export { createProject, getWorkspacesProjects, getSingleProject, updateProject, 
+    deleteProject, updateProjectMembers, searchProjects };

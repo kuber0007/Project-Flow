@@ -1,48 +1,53 @@
 import mongoose from "mongoose"
 
 const taskSchema = new mongoose.Schema({
-    title:{
-        type:String,
-        required:[true,"Task title is required"],
-        trim:true
+    title: {
+        type: String,
+        required: [true, "Task title is required"],
+        trim: true
     },
-    description:{
-        type:String,
-        trim:true,
-        default:""
+    description: {
+        type: String,
+        trim: true,
+        default: ""
     },
-    project:{
+    project: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"Project",
-        required:true
+        ref: "Project",
+        required: true
     },
-    createdBy:{
+    createdBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"User",
-        required:true
+        ref: "User",
+        required: true
     },
-    assignee:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:"User",
+    assignee: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
         // required:true
         default: null
     },
-    status:{
-        type:String,
-        enum:["TODO","IN_PROGRESS","REVIEW","DONE"],
-        default:"TODO"
+    status: {
+        type: String,
+        enum: ["TODO", "IN_PROGRESS", "REVIEW", "DONE"],
+        default: "TODO"
     },
-    priority:{
-        type:String,
-        enum:["LOW","MEDIUM","HIGH","URGENT"],
-        default:"MEDIUM"
+    priority: {
+        type: String,
+        enum: ["LOW", "MEDIUM", "HIGH", "URGENT"],
+        default: "MEDIUM"
     },
-    dueDate:{
-        type:Date,
-        default:null
+    status: {
+        type: String,
+        enum: ["NOT_STARTED", "ACTIVE", "COMPLETED"],
+        default: "NOT_STARTED"
+    },
+    dueDate: {
+        type: Date,
+        default: null
     }
-},{timestamps:true})
+}, { timestamps: true })
 
-const Task = mongoose.model("Task",taskSchema)
+const Task = mongoose.model("Task", taskSchema)
 
 export default Task;
