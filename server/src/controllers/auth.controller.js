@@ -1,49 +1,58 @@
-import User from "../models/user.model.js";
-import bcrypt from "bcryptjs";
-import {ApiError} from "../utils/ApiError.js";
-import {ApiResponse} from "../utils/ApiResponse.js";
-import {asyncHandler} from "../utils/asyncHandler.js";
-import validator from "validator";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import {
+    registerUser as registerUserService,
+    loginUser as loginUserService
+} from "../services/auth.service.js";
 
-export const registerUser = asyncHandler(async (req,res)=>{
-    //1. input from frontend
-    const {name,email,password} = req.body;
-
-    // 2.validate input(not empty)
-    if([name,email,password].some(field=>!field?.trim())){
-        throw new ApiError(400, "Please provide all the required fields");
-    }
-
-    // 3.validate email format
-    if(!validator.isEmail(email.trim())){
-        throw new ApiError(400, "Please provide a valid email address");
-    }
-
-    // 4. check existing user
-    const existingUser = await User.findOne({
-        email: email.toLowerCase().trim()
+//1. Register 
+const registerUser = asyncHandler(async (req, res) => {
+    const { name, email, password } = req.body;
+    const result = await registerUserService({
+        name,
+        email,
+        password
     });
 
-    if(existingUser){
-        throw new ApiError(400, "User with this email already exists");
-    }
-
-    // 5. hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 6. create user
-    const user = await User.create({
-        name:name.trim(),
-        email:email.toLowerCase().trim(),
-        password:hashedPassword
-    })
-
-    // 7. remove password and send response
-    const createdUser = await User.findById(user._id).select("-password");
-    if(!createdUser){
-        throw new ApiError(500, "User creation failed");
-    }
     return res
-    .status(201)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"))
-})
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                result,
+                "User registered successfully"
+            )
+        );
+});
+
+// 2. Login 
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const result = await loginUserService({
+        email,
+        password
+    });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                result,
+                "User logged in successfully"
+            )
+        );
+});
+
+// 3. Logout 
+const logoutUser = asyncHandler(async (req, res) => {
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            null,
+            "User logged out successfully"
+        )
+    );
+});
+
+export { registerUser, loginUser, logoutUser };
