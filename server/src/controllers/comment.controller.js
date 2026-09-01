@@ -17,7 +17,7 @@ const addComment = asyncHandler(async (req, res) => {
 
   const comment = await addCommentService(
     taskId,
-    "6a7725074b6d32df48ceb3a6",
+    req.user._id,
     content
   );
 
@@ -36,7 +36,7 @@ const addComment = asyncHandler(async (req, res) => {
 const getTaskComments = asyncHandler(async(req,res)=>{
     const {taskId} = req.params
 
-    const comment = await getTaskCommentsService(taskId, "6a7725074b6d32df48ceb3a6")
+    const comment = await getTaskCommentsService(taskId, req.user._id)
 
     return res
     .status(200)
@@ -51,7 +51,7 @@ const deleteComment = asyncHandler(async (req, res) => {
 
   await deleteCommentService(
     commentId,
-    "6a7725074b6d32df48ceb3a6"
+    req.user._id
   );
 
   return res

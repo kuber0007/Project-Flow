@@ -66,7 +66,7 @@ const getWorkspace = asyncHandler(async (req, res) => {
     const { workspaceId } = req.params
 
     const result = await getWorkspaceById(
-        workspaceId, req.user.id
+        workspaceId, req.user._id
     )
 
     return res
@@ -149,7 +149,7 @@ const getWorkspaceMembers = asyncHandler(async (req, res) => {
 // 7. GET Member
 const getWorkspaceMember = asyncHandler(async (req, res) => {
     const { workspaceId, userId } = req.params
-    const member = await getWorkspaceMemberService(workspaceId, userId, "6a7724654b6d32df48ceb3a5")
+    const member = await getWorkspaceMemberService(workspaceId, userId, req.user._id)
 
     return res
         .status(200)
@@ -163,7 +163,7 @@ const getWorkspaceMember = asyncHandler(async (req, res) => {
 const updateMemberRole = asyncHandler(async (req, res) => {
     const { workspaceId, userId } = req.params;
     const { role } = req.body
-    const member = await updateMemberRoleService(workspaceId, req.user._id, userId, role)
+    const member = await updateMemberRoleService(workspaceId, userId, req.user._id, role)
 
     return res
         .status(200)
@@ -181,8 +181,8 @@ const removeWorkspaceMember = asyncHandler(async (req, res) => {
 
     await removeWorkspaceMemberService(
         workspaceId,
-        req.user._id,
-        userId
+        userId,
+        req.user._id
     );
 
     return res
@@ -297,7 +297,7 @@ const rejectWorkspaceInvitation = asyncHandler(async (req, res) => {
 
     const invitation = await rejectWorkspaceInvitationService(
         invitationId,
-        "6a86efc0cfac1a1f86ce2363"
+        req.user._id
     );
 
     return res
@@ -338,7 +338,7 @@ const updateWorkspaceSettings = asyncHandler(async (req, res) => {
 
     const workspace = await updateWorkspaceSettingsService(
         workspaceId,
-        "6a7725074b6d32df48ceb3a6",
+        req.user._id,
         {
             name,
             description,
@@ -361,7 +361,7 @@ const updateWorkspaceSettings = asyncHandler(async (req, res) => {
 const transferOwnership = asyncHandler(async(req,res)=>{
     const {workspaceId} = req.params
     const { newOwnerId } = req.body;
-    const workspace = transferOwnershipService(workspaceId, req.user._id, newOwnerId)
+    const workspace = await transferOwnershipService(workspaceId, req.user._id, newOwnerId)
     return res
     .status(200)
     .json(

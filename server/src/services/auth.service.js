@@ -58,7 +58,7 @@ const registerUser = async ({ name, email, password }) => {
 const loginUser = async ({email, password}) =>{
 
     // 1. validate inputs
-    if(!email.trim() || !password.trim()){
+    if(!email?.trim() || !password?.trim()){
         throw new ApiError(400, "Email and password are required")
     }
 
@@ -89,5 +89,38 @@ const loginUser = async ({email, password}) =>{
     return {user:loggedInUser, accessToken}
 }
 
+const getCurrentUser = async (userId) => {
+  const user = await User.findById(userId).select("-password");
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-export { registerUser, loginUser };
+  return user;
+};
+
+const changePassword = async (userId, {oldPassword,newPassword}) =>{
+    if(!oldPassword?.trim() || !newPassword?.trim()){
+        throw new ApiError(400, "Old and new Password are Required")
+    }
+
+    const user = await User.findById(userId)
+    if(!user){
+        throw new ApiError(404, "User not Found")
+    }
+    
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password)
+    if(!isOldPasswordValid){
+        throw new ApiError(400, "Old Password is Incorrect")
+    }
+
+    if(oldPassword === newPassword){
+        throw new ApiError(400, "Password should not be same as old password")
+    }
+
+    user.password =  await bcrypt.hash(newPassword,12)
+
+    await user.save()
+    return true;
+}
+
+export { registerUser, loginUser, getCurrentUser, changePassword };

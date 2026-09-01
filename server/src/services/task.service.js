@@ -120,7 +120,7 @@ const updateTask = async (taskId, userId, { title, description, dueDate }) => {
 
     if (title !== undefined) {
         if (!title.trim()) {
-            throw new ApiError("Task Title cannot be empty")
+            throw new ApiError(400,"Task Title cannot be empty")
         }
         task.title = title.trim();
     }

@@ -7,7 +7,7 @@ import { getNotifications as getNotificationsService,
 
 // 1. Get Notification
 const getNotifications = asyncHandler(async(req,res)=>{
-    const notifications = await getNotificationsService("6a7725074b6d32df48ceb3a6")
+    const notifications = await getNotificationsService(req.user._id)
 
     return res
     .status(200)
@@ -18,7 +18,7 @@ const getNotifications = asyncHandler(async(req,res)=>{
 
 // 2. Get unread notifications
 const getUnreadNotifications = asyncHandler(async(req,res)=>{
-    const notifications = await getUnreadNotificationsService("6a7725074b6d32df48ceb3a6")
+    const notifications = await getUnreadNotificationsService(req.user._id)
 
     return res
     .status(200)
@@ -33,7 +33,7 @@ const getUnreadNotifications = asyncHandler(async(req,res)=>{
 const deleteNotification = asyncHandler(async(req,res)=>{
     const {notificationId} = req.params
 
-    await deleteNotificationService(notificationId, "6a7725074b6d32df48ceb3a6")
+    await deleteNotificationService(notificationId, req.user._id)
 
     return res
     .status(200)

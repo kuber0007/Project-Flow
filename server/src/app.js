@@ -13,7 +13,7 @@ app.use(express.json());
 
 app.get("/api/health",(req,res)=>{
     res.json({
-        status: 400,
+        status: 200,
         message: "Server is configured and running successfully"
     })
 })

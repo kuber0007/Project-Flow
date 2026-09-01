@@ -2,8 +2,11 @@ import { createTask, getProjectTasks, getSingleTask, updateTask, deleteTask,
     assignTask, changeTaskStatus, changeTaskPriority, setTaskDueDate, searchTasks
 } from "../controllers/task.controller.js";
 import { Router } from "express";
+import { verifyJWT } from "../middleware/auth.middleware.js";
 
-const router = Router();
+const router = Router()
+
+router.use(verifyJWT);
 
 router.post("/project/:projectId", createTask) //Checked
 router.get("/project/:projectId", getProjectTasks) //Checked

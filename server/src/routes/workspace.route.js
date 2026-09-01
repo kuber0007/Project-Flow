@@ -18,14 +18,17 @@ import { createWorkspace,
     updateWorkspaceSettings,
     transferOwnership
 } from "../controllers/workspace.controller.js"
+import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = express.Router()
 
-router.post("/",createWorkspace) - //tested
-router.get("/",getWorkspaces)- //tested
-router.get("/:workspaceId",getWorkspace)- //tested
-router.patch("/:workspaceId",updateWorkspace) - //tested
-router.delete("/:workspaceId",deleteWorkspace) - //tested
+router.use(verifyJWT);
+
+router.post("/",createWorkspace)//tested
+router.get("/",getWorkspaces) //tested
+router.get("/:workspaceId",getWorkspace) //tested
+router.patch("/:workspaceId",updateWorkspace) //tested
+router.delete("/:workspaceId",deleteWorkspace) //tested
 
 router.get("/:workspaceId/members",getWorkspaceMembers) // - tested
 router.get("/:workspaceId/members/:userId",getWorkspaceMember) // - tested

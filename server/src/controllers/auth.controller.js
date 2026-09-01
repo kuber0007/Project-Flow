@@ -2,7 +2,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import {
     registerUser as registerUserService,
-    loginUser as loginUserService
+    loginUser as loginUserService,
+    getCurrentUser as getCurrentUserService,
+    changePassword as changePasswordService,
 } from "../services/auth.service.js";
 
 //1. Register 
@@ -55,4 +57,33 @@ const logoutUser = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, loginUser, logoutUser };
+// 4. Get Current User
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await getCurrentUserService(req.user._id);
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            user,
+            "Current user fetched successfully"
+        )
+    );
+});
+
+// 5. Change password 
+const changePassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = req.body
+
+    await changePasswordService(req.user._id, { oldPassword, newPassword })
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            null,
+            "Password changed successfully"
+        )
+    );
+
+})
+
+export { registerUser, loginUser, logoutUser, getCurrentUser, changePassword };

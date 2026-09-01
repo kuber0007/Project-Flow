@@ -21,7 +21,7 @@ const createProject = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Project name is required");
     }
 
-    const Project = await createProjectService(workspaceId,"6a7725074b6d32df48ceb3a6", { name, description, status })
+    const Project = await createProjectService(workspaceId, req.user._id, { name, description, status })
 
     return res
         .status(201)
@@ -34,7 +34,7 @@ const createProject = asyncHandler(async (req, res) => {
 const getWorkspacesProjects = asyncHandler(async (req, res) => {
     const {workspaceId} = req.params
 
-    const projects = await getWorkspacesProjectsService(workspaceId,"6a7724654b6d32df48ceb3a5")
+    const projects = await getWorkspacesProjectsService(workspaceId, req.user._id)
 
     return res
     .status(200)
@@ -45,7 +45,7 @@ const getWorkspacesProjects = asyncHandler(async (req, res) => {
 const getSingleProject = asyncHandler(async(req,res)=>{
     const {projectId} = req.params
 
-    const project = await getSingleProjectService(projectId, "6a7724654b6d32df48ceb3a5")
+    const project = await getSingleProjectService(projectId, req.user._id)
 
     return res
     .status(200)
@@ -61,7 +61,7 @@ const updateProject = asyncHandler(async(req,res)=>{
     const {projectId} = req.params
     const {name,description,status} = req.body
 
-    const project = await updateProjectService(projectId,"6a7724654b6d32df48ceb3a5",{name,description,status})
+    const project = await updateProjectService(projectId, req.user._id ,{name,description,status})
     return res
     .status(200)
     .json(
@@ -73,7 +73,7 @@ const updateProject = asyncHandler(async(req,res)=>{
 const deleteProject = asyncHandler(async(req,res)=>{
     const {projectId} = req.params
 
-    const project = await deleteProjectService(projectId, "6a7724654b6d32df48ceb3a5")
+    const project = await deleteProjectService(projectId, req.user._id )
 
     return res
     .status(200)
@@ -92,7 +92,7 @@ const updateProjectMembers = asyncHandler(async (req, res) => {
 
   const updatedMembers = await updateProjectMembersService(
     projectId,
-    "6a7725074b6d32df48ceb3a6",
+    req.user._id,
     members
   );
 
@@ -112,7 +112,7 @@ const searchProjects = asyncHandler(async(req,res)=>{
     const {workspaceId} = req.params
     const {search, status, createdBy} = req.query
 
-    const projects = await searchProjectsService(workspaceId, "6a7725074b6d32df48ceb3a6", {search,status,createdBy})
+    const projects = await searchProjectsService(workspaceId, req.user._id, {search,status,createdBy})
 
     return res
     .status(200)

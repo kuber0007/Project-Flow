@@ -154,7 +154,7 @@ const getWorkspaceMember = async (workspaceId, userId, requestorId) => {
     )
 
     if (!member) {
-        throw new ApiError("Workspace member not found")
+        throw new ApiError(400, "Workspace member not found")
     }
 
     return member;
@@ -320,8 +320,6 @@ const createWorkspaceInvite = async (workspaceId, requestorId, email, role) => {
 
 // 12. api ============= GET /api/workspaces/:workspaceId/invitations
 const getWorkspaceInvitations = async (workspaceId, requesterId) => {
-    console.log("workspaceId:", workspaceId);
-    console.log("requesterId:", requesterId);
     const requester = await WorkspaceMember.findOne({
         workspace: workspaceId,
         user: requesterId
@@ -535,29 +533,37 @@ const updateWorkspaceSettings = async (workspaceId, userId, { name, description,
 };
 
 // 18. api ============= PATCH :workspaceId/transfer-ownership
-const transferOwnership = async (workspaceId, currentOwner, newOwnerId) => {
-    const membership = await WorkspaceMember.findOne({
-        workspace: workspaceId,
-        user: currentOwner,
-        role: "OWNER"
-    })
+const transferOwnership = async (workspaceId, currentOwnerId, newOwnerId) => {
 
-    if (!membership) {
-        throw new ApiError(400, "Only the workspace owner can transfer ownership")
+    const currentOwner = await WorkspaceMember.findOne({
+        workspace: workspaceId,
+        user: currentOwnerId,
+        role: "OWNER"
+    });
+
+    if (!currentOwner) {
+        throw new ApiError(
+            403,
+            "Only the workspace owner can transfer ownership"
+        );
     }
 
     const newOwner = await WorkspaceMember.findOne({
         workspace: workspaceId,
-        user: newOwnerId,
+        user: newOwnerId
     });
 
     if (!newOwner) {
         throw new ApiError(
-            404, "New owner must be a workspace member"
+            404,
+            "New owner must be a workspace member"
         );
     }
 
-    if (currentOwner.toString() === newOwnerId.toString()) {
+    if (
+        currentOwnerId.toString() ===
+        newOwnerId.toString()
+    ) {
         throw new ApiError(
             400,
             "You are already the workspace owner"
@@ -570,24 +576,15 @@ const transferOwnership = async (workspaceId, currentOwner, newOwnerId) => {
     await currentOwner.save();
     await newOwner.save();
 
-    const workspace = await findByIdAndUpdate(
-        workspaceId,
-        {
-            owner: newOwnerId,
-        },
-        {
-            new: true,
-            runValidators: true
-        }
-    )
-
-    if (!workspace) {
-        throw new ApiError(404, "Workspace not found");
-    }
+    const workspace =
+        await Workspace.findByIdAndUpdate(
+            workspaceId,
+            { owner: newOwnerId },
+            { new: true, runValidators: true }
+        );
 
     return workspace;
-
-}
+};
 
 export {
     createWorkspace,

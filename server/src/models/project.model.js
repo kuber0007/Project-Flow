@@ -20,6 +20,11 @@ const projectSchema = new Schema({
         type:Schema.Types.ObjectId,
         ref:"User",
         required: true
+    },
+    status: {
+        type: String,
+        enum: ["NOT_STARTED", "ACTIVE", "COMPLETED"],
+        default: "NOT_STARTED"
     }
 },{timestamps:true})
 

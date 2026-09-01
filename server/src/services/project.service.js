@@ -46,7 +46,7 @@ const getWorkspacesProjects = async (workspaceId, userId) => {
 
     const projects = await Project.find({
         workspace: workspaceId
-    }).sort({ created: -1 })
+    }).sort({ createdAt: -1 })
 
     return projects
 }
@@ -101,7 +101,7 @@ const updateProject = async (projectId, userId, { name, description, status }) =
     }
 
     if (status !== undefined) {
-        if (!["PLANNING", "IN_PROGRESS", "COMPLETED"].includes(status)) {
+        if (!["NOT_STARTED", "ACTIVE", "COMPLETED"].includes(status)) {
             throw new ApiError(400, "Invalid project status");
         }
 

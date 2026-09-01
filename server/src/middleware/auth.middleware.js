@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 const verifyJWT = asyncHandler(async (req, res, next) => {
     const token = req.header("Authorization")?.replace("Bearer ", "")
     if (!token) {
-        throw new ApiError(403, "Unauthorized request")
+        throw new ApiError(401, "Unauthorized request")
     }
 
     try {
