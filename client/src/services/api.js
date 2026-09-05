@@ -7,53 +7,39 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(token && {
-        Authorization: `Bearer ${token}`,
-      }),
+
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+
       ...(options.headers || {}),
     },
   });
 
-  const result = await response.json();
+  let data = null;
 
-  if (response.status === 401) {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
-    return;
+  const contentType =
+    response.headers.get("content-type");
+
+  if (contentType?.includes("application/json")) {
+    data = await response.json();
   }
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+    }
+
     throw new Error(
-      result?.message || "Something went wrong"
+      data?.message ||
+        "Something went wrong with the request"
     );
   }
 
-  return result;
+  return data;
 };
-
-export const getWorkspaces = () =>
-  apiRequest("/workspaces");
-
-export const getWorkspace = (workspaceId) =>
-  apiRequest(`/workspaces/${workspaceId}`);
-
-export const getWorkspaceMembers = (workspaceId) =>
-  apiRequest(`/workspaces/${workspaceId}/members`);
-
-export const getWorkspaceInvitations = (workspaceId) =>
-  apiRequest(`/workspaces/${workspaceId}/invitations`);
-
-export const getWorkspaceProjects = (workspaceId) =>
-  apiRequest(`/projects/workspace/${workspaceId}`);
-
-export const getProjectTasks = (projectId) =>
-  apiRequest(`/tasks/project/${projectId}`);
-
-export const getNotifications = () =>
-  apiRequest("/notifications");
-
-export const getUnreadNotifications = () =>
-  apiRequest("/notifications/unread");
 
 export default apiRequest;
