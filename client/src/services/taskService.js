@@ -97,10 +97,14 @@ const deleteTask = async (taskId) => {
 
 const assignTask = async (
   taskId,
-  assignee
+  assigneeId
 ) => {
   if (!taskId) {
     throw new Error("Task ID is required");
+  }
+
+  if (!assigneeId) {
+    throw new Error("Assignee ID is required");
   }
 
   const result = await apiRequest(
@@ -108,7 +112,7 @@ const assignTask = async (
     {
       method: "PATCH",
       body: JSON.stringify({
-        assignee,
+        assigneeId,
       }),
     }
   );

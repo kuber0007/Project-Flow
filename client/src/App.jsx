@@ -11,12 +11,13 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject";
-
+import ProjectDetails from "./pages/ProjectDetails";
+import TaskDetails from "./pages/TaskDetails";
+import CreateTask from "./pages/CreateTask";
 
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
         <Route
@@ -46,10 +47,24 @@ function App() {
 
         <Route
           path="/projects/new"
-          element={
-            <CreateProject />
-          }
+          element={<CreateProject />}
         />
+
+        <Route
+          path="/projects/:projectId"
+          element={<ProjectDetails />}
+        />
+
+        <Route
+          path="/projects/:projectId/tasks/new"
+          element={<CreateTask />}
+        />
+
+        <Route
+          path="/tasks/:taskId"
+          element={<TaskDetails />}
+        />
+        
 
         <Route
           path="*"
@@ -62,7 +77,6 @@ function App() {
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
