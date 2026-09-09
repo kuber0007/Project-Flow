@@ -5,6 +5,27 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Users,
+  CheckSquare,
+  Search,
+  Plus,
+  BriefcaseBusiness,
+  ChevronDown,
+  Sun,
+  Settings,
+  ChevronRight,
+  LogOut,
+  User,
+  Check,
+  AlertCircle,
+  CircleCheck,
+  ClipboardList,
+  Clock3,
+} from "lucide-react";
+
 import { logoutUser } from "../services/authService";
 
 import {
@@ -19,6 +40,14 @@ import {
 import {
   getProjectTasks,
 } from "../services/taskService";
+
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const WORKSPACE_STORAGE_KEY =
+  "selectedWorkspaceId";
 
 
 /* =========================================================
@@ -64,11 +93,16 @@ function Dashboard() {
      LOADING / ERROR
   ======================================================= */
 
-  const [loading, setLoading] = useState(Boolean(token));
+  const [loading, setLoading] =
+    useState(Boolean(token));
 
-  const [workspaceDataLoading, setWorkspaceDataLoading] = useState(false);
+  const [
+    workspaceDataLoading,
+    setWorkspaceDataLoading,
+  ] = useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
 
   /* =======================================================
@@ -81,8 +115,10 @@ function Dashboard() {
   const [workspace, setWorkspace] =
     useState(null);
 
-  const [showWorkspaceMenu, setShowWorkspaceMenu] =
-    useState(false);
+  const [
+    showWorkspaceMenu,
+    setShowWorkspaceMenu,
+  ] = useState(false);
 
 
   /* =======================================================
@@ -103,8 +139,10 @@ function Dashboard() {
      PROFILE
   ======================================================= */
 
-  const [showProfileMenu, setShowProfileMenu] =
-    useState(false);
+  const [
+    showProfileMenu,
+    setShowProfileMenu,
+  ] = useState(false);
 
 
   /* =======================================================
@@ -119,115 +157,151 @@ function Dashboard() {
 
   /* =======================================================
      LOAD WORKSPACES
+     
+     IMPORTANT:
+     getWorkspaces() already normalizes the backend
+     membership response.
+     
+     Therefore:
+     
+     workspaces = [
+       {
+         _id,
+         name,
+         description,
+         role,
+         membershipId
+       }
+     ]
   ======================================================= */
 
   useEffect(() => {
-    if(!token) {
+    if (!token) {
       return;
     }
 
     let cancelled = false;
 
-    const loadWorkspaces = async () => {
-      try {
-        setLoading(true);
-        setError("");
+    const loadWorkspaces =
+      async () => {
+        try {
+          setLoading(true);
+          setError("");
 
-        const result =
-          await getWorkspaces();
+          const result =
+            await getWorkspaces();
 
-        if (cancelled) {
-          return;
-        }
+          if (cancelled) {
+            return;
+          }
 
-        const memberships =
-          Array.isArray(result)
-            ? result
-            : [];
+          /*
+           * NEW WORKSPACE DATA SCHEME
+           *
+           * The service has already converted:
+           *
+           * membership.workspace
+           *
+           * into:
+           *
+           * workspace
+           */
 
-        setWorkspaces(memberships);
+          const workspaceList =
+            Array.isArray(result)
+              ? result
+              : Array.isArray(
+                result?.workspaces
+              )
+                ? result.workspaces
+                : [];
 
-        /*
-         * Convert workspace memberships
-         * into actual workspace objects.
-         */
+          setWorkspaces(
+            workspaceList
+          );
 
-        const availableWorkspaces =
-          memberships
-            .map(
-              (membership) =>
-                membership?.workspace
-            )
-            .filter(
-              (item) => item?._id
+          /* =============================================
+             NO WORKSPACES
+          ============================================= */
+
+          if (
+            workspaceList.length === 0
+          ) {
+            setWorkspace(null);
+
+            localStorage.removeItem(
+              WORKSPACE_STORAGE_KEY
             );
 
-        if (
-          availableWorkspaces.length === 0
-        ) {
-          setWorkspace(null);
+            return;
+          }
 
-          localStorage.removeItem(
-            "selectedWorkspaceId"
+          /* =============================================
+             RESTORE SAVED WORKSPACE
+          ============================================= */
+
+          const savedWorkspaceId =
+            localStorage.getItem(
+              WORKSPACE_STORAGE_KEY
+            );
+
+          const savedWorkspace =
+            workspaceList.find(
+              (item) =>
+                String(
+                  item?._id ||
+                  item?.id
+                ) ===
+                String(
+                  savedWorkspaceId
+                )
+            );
+
+          /*
+           * Use saved workspace if it still exists.
+           * Otherwise use first available workspace.
+           */
+
+          const selectedWorkspace =
+            savedWorkspace ||
+            workspaceList[0];
+
+          setWorkspace(
+            selectedWorkspace
           );
 
-          return;
-        }
+          const selectedWorkspaceId =
+            selectedWorkspace?._id ||
+            selectedWorkspace?.id;
 
-        /*
-         * Restore previously selected
-         * workspace if it still exists.
-         */
+          if (
+            selectedWorkspaceId
+          ) {
+            localStorage.setItem(
+              WORKSPACE_STORAGE_KEY,
+              selectedWorkspaceId
+            );
+          }
+        } catch (err) {
+          if (cancelled) {
+            return;
+          }
 
-        const savedWorkspaceId =
-          localStorage.getItem(
-            "selectedWorkspaceId"
+          console.error(
+            "Failed to load workspaces:",
+            err
           );
 
-        const savedWorkspace =
-          availableWorkspaces.find(
-            (item) =>
-              item._id ===
-              savedWorkspaceId
+          setError(
+            err?.message ||
+            "Failed to load workspaces"
           );
-
-        /*
-         * If no saved workspace exists,
-         * select the first workspace.
-         */
-
-        const selectedWorkspace =
-          savedWorkspace ||
-          availableWorkspaces[0];
-
-        setWorkspace(
-          selectedWorkspace
-        );
-
-        localStorage.setItem(
-          "selectedWorkspaceId",
-          selectedWorkspace._id
-        );
-      } catch (err) {
-        if (cancelled) {
-          return;
+        } finally {
+          if (!cancelled) {
+            setLoading(false);
+          }
         }
-
-        console.error(
-          "Failed to load workspaces:",
-          err
-        );
-
-        setError(
-          err?.message ||
-          "Failed to load workspaces"
-        );
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
+      };
 
     loadWorkspaces();
 
@@ -243,166 +317,156 @@ function Dashboard() {
 
   useEffect(() => {
     if (!workspace?._id) {
-      const clearWorkspaceData = setTimeout(() => {
-        setMembers([]);
-        setProjects([]);
-        setTasks([]);
-      }, 0);
+      setMembers([]);
+      setProjects([]);
+      setTasks([]);
 
-      return () => clearTimeout(clearWorkspaceData);
+      return;
     }
 
     let cancelled = false;
 
-    const loadWorkspaceData = async () => {
-      try {
-        setWorkspaceDataLoading(true);
-        setError("");
-
-        /*
-         * First load:
-         *
-         * 1. Members
-         * 2. Projects
-         */
-
-        const [
-          membersResult,
-          projectsResult,
-        ] = await Promise.all([
-          getWorkspaceMembers(
-            workspace._id
-          ),
-
-          getWorkspaceProjects(
-            workspace._id
-          ),
-        ]);
-
-        if (cancelled) {
-          return;
-        }
-
-        const workspaceMembers =
-          Array.isArray(membersResult)
-            ? membersResult
-            : [];
-
-        const workspaceProjects =
-          Array.isArray(projectsResult)
-            ? projectsResult
-            : [];
-
-        setMembers(
-          workspaceMembers
-        );
-
-        setProjects(
-          workspaceProjects
-        );
-
-
-        /* =================================================
-           LOAD TASKS
-        ================================================= */
-
-        if (
-          workspaceProjects.length === 0
-        ) {
-          setTasks([]);
-          return;
-        }
-
-        /*
-         * Make one API request for every
-         * project in the workspace.
-         */
-
-        const taskResults =
-          await Promise.all(
-            workspaceProjects.map(
-              async (project) => {
-                if (!project?._id) {
-                  return [];
-                }
-
-                try {
-                  console.log(
-                    "Loading tasks for project:",
-                    project._id
-                  );
-
-                  const result =
-                    await getProjectTasks(
-                      project._id
-                    );
-
-                  console.log(
-                    "Tasks returned:",
-                    project._id,
-                    result
-                  );
-
-                  return Array.isArray(
-                    result
-                  )
-                    ? result
-                    : [];
-                } catch (taskError) {
-                  console.error(
-                    "Task API failed for project:",
-                    project._id,
-                    taskError
-                  );
-
-                  return [];
-                }
-              }
-            )
+    const loadWorkspaceData =
+      async () => {
+        try {
+          setWorkspaceDataLoading(
+            true
           );
 
-        if (cancelled) {
-          return;
+          setError("");
+
+          const [
+            membersResult,
+            projectsResult,
+          ] = await Promise.all([
+            getWorkspaceMembers(
+              workspace._id
+            ),
+
+            getWorkspaceProjects(
+              workspace._id
+            ),
+          ]);
+
+          if (cancelled) {
+            return;
+          }
+
+          const workspaceMembers =
+            Array.isArray(
+              membersResult
+            )
+              ? membersResult
+              : [];
+
+          const workspaceProjects =
+            Array.isArray(
+              projectsResult
+            )
+              ? projectsResult
+              : [];
+
+          setMembers(
+            workspaceMembers
+          );
+
+          setProjects(
+            workspaceProjects
+          );
+
+
+          /* =============================================
+             LOAD TASKS
+          ============================================= */
+
+          if (
+            workspaceProjects.length ===
+            0
+          ) {
+            setTasks([]);
+            return;
+          }
+
+          const taskResults =
+            await Promise.all(
+              workspaceProjects.map(
+                async (project) => {
+                  if (!project?._id) {
+                    return [];
+                  }
+
+                  try {
+                    const result =
+                      await getProjectTasks(
+                        project._id
+                      );
+
+                    const projectTasks =
+                      Array.isArray(
+                        result
+                      )
+                        ? result
+                        : [];
+
+                    return projectTasks.map(
+                      (task) => ({
+                        ...task,
+
+                        projectId:
+                          project._id,
+
+                        projectName:
+                          project?.name ||
+                          "Untitled Project",
+                      })
+                    );
+                  } catch (
+                  taskError
+                  ) {
+                    console.error(
+                      `Failed to load tasks for project ${project._id}:`,
+                      taskError
+                    );
+
+                    return [];
+                  }
+                }
+              )
+            );
+
+          if (cancelled) {
+            return;
+          }
+
+          setTasks(
+            taskResults.flat()
+          );
+        } catch (err) {
+          if (cancelled) {
+            return;
+          }
+
+          console.error(
+            "Failed to load workspace data:",
+            err
+          );
+
+          setMembers([]);
+          setProjects([]);
+          setTasks([]);
+
+          setError(
+            err?.message ||
+            "Unable to load the selected workspace."
+          );
+        } finally {
+          if (!cancelled) {
+            setWorkspaceDataLoading(
+              false
+            );
+          }
         }
-
-        /*
-         * Combine all project task arrays
-         * into one task array.
-         */
-
-        const allTasks =
-          taskResults.flat();
-
-        console.log(
-          "All dashboard tasks:",
-          allTasks
-        );
-
-        setTasks(allTasks);
-      } catch (err) {
-        if (cancelled) {
-          return;
-        }
-
-        console.error(
-          "Failed to load workspace data:",
-          err
-        );
-
-        setMembers([]);
-        setProjects([]);
-        setTasks([]);
-
-        setError(
-          err?.message ||
-          "Failed to load workspace data"
-        );
-      } finally {
-        if (!cancelled) {
-          setWorkspaceDataLoading(false);
-        }
-      }
-    };
+      };
 
     loadWorkspaceData();
 
@@ -413,44 +477,17 @@ function Dashboard() {
 
 
   /* =======================================================
-     WORKSPACE SWITCH
+     AUTH REDIRECT
   ======================================================= */
 
-  const handleWorkspaceChange = (
-    selectedWorkspace
-  ) => {
-    if (!selectedWorkspace?._id) {
-      return;
-    }
-
-    setWorkspace(
-      selectedWorkspace
+  if (!token) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
     );
-
-    localStorage.setItem(
-      "selectedWorkspaceId",
-      selectedWorkspace._id
-    );
-
-    setShowWorkspaceMenu(false);
-  };
-
-
-  /* =======================================================
-     LOGOUT
-  ======================================================= */
-
-  const handleLogout = () => {
-    logoutUser();
-
-    localStorage.removeItem(
-      "selectedWorkspaceId"
-    );
-
-    navigate("/login", {
-      replace: true,
-    });
-  };
+  }
 
 
   /* =======================================================
@@ -459,6 +496,57 @@ function Dashboard() {
 
   const userName =
     user?.name || "User";
+
+
+  /* =======================================================
+     WORKSPACE SWITCH
+  ======================================================= */
+
+  const handleWorkspaceChange =
+    (selectedWorkspace) => {
+      if (
+        !selectedWorkspace?._id
+      ) {
+        return;
+      }
+
+      setWorkspace(
+        selectedWorkspace
+      );
+
+      localStorage.setItem(
+        WORKSPACE_STORAGE_KEY,
+        selectedWorkspace._id
+      );
+
+      setShowWorkspaceMenu(
+        false
+      );
+    };
+
+
+  /* =======================================================
+     LOGOUT
+  ======================================================= */
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error(
+        "Logout failed:",
+        err
+      );
+    } finally {
+      localStorage.removeItem(
+        WORKSPACE_STORAGE_KEY
+      );
+
+      navigate("/login", {
+        replace: true,
+      });
+    }
+  };
 
 
   /* =======================================================
@@ -471,7 +559,9 @@ function Dashboard() {
   const completedProjects =
     projects.filter(
       (project) =>
-        project?.status ===
+        String(
+          project?.status || ""
+        ).toUpperCase() ===
         "COMPLETED"
     ).length;
 
@@ -481,10 +571,14 @@ function Dashboard() {
   const todoTasks =
     tasks.filter(
       (task) =>
-        task?.status === "TODO"
+        String(
+          task?.status || ""
+        ).toUpperCase() ===
+        "TODO"
     );
 
-  const today = new Date();
+  const today =
+    new Date();
 
   today.setHours(
     0,
@@ -495,15 +589,25 @@ function Dashboard() {
 
   const overdueTasks =
     tasks.filter((task) => {
+      if (!task?.dueDate) {
+        return false;
+      }
+
+      const status =
+        String(
+          task?.status || ""
+        ).toUpperCase();
+
       if (
-        !task?.dueDate ||
-        task?.status === "DONE"
+        status === "DONE"
       ) {
         return false;
       }
 
       const dueDate =
-        new Date(task.dueDate);
+        new Date(
+          task.dueDate
+        );
 
       if (
         Number.isNaN(
@@ -520,7 +624,9 @@ function Dashboard() {
         0
       );
 
-      return dueDate < today;
+      return (
+        dueDate < today
+      );
     });
 
 
@@ -528,7 +634,9 @@ function Dashboard() {
      HELPERS
   ======================================================= */
 
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
     if (!date) {
       return "No date";
     }
@@ -555,41 +663,67 @@ function Dashboard() {
   };
 
 
-  const getProjectStatusClass = (
-    status
-  ) => {
-    switch (status) {
-      case "ACTIVE":
+  const getProjectStatusClass =
+    (status) => {
+      const normalized =
+        String(
+          status || ""
+        ).toUpperCase();
+
+      if (
+        normalized ===
+        "ACTIVE"
+      ) {
         return "active";
+      }
 
-      case "COMPLETED":
+      if (
+        normalized ===
+        "COMPLETED"
+      ) {
         return "completed";
+      }
 
-      default:
-        return "not-started";
-    }
-  };
+      return "not-started";
+    };
+
+
+  const getProjectStatusLabel =
+    (status) => {
+      if (!status) {
+        return "NOT STARTED";
+      }
+
+      return String(
+        status
+      )
+        .replaceAll(
+          "_",
+          " "
+        )
+        .toUpperCase();
+    };
+
+
+  const getPriorityLabel =
+    (priority) => {
+      if (!priority) {
+        return "NO PRIORITY";
+      }
+
+      return `${String(
+        priority
+      )
+        .replaceAll(
+          "_",
+          " "
+        )
+        .toUpperCase()} priority`;
+    };
 
 
   /* =======================================================
-     AUTH REDIRECT
-     
-     IMPORTANT:
-     This is AFTER every hook.
-  ======================================================= */
-
-  if (!token) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
-  }
-
-
-  /* =======================================================
-     INITIAL LOADING
+     LOADING
   ======================================================= */
 
   if (loading) {
@@ -617,7 +751,7 @@ function Dashboard() {
 
 
   /* =======================================================
-     DASHBOARD UI
+     UI
   ======================================================= */
 
   return (
@@ -634,7 +768,7 @@ function Dashboard() {
           className="dashboard-brand"
         >
           <span className="dashboard-brand-icon">
-            ✓
+            P
           </span>
 
           <span>
@@ -651,25 +785,27 @@ function Dashboard() {
             to="/dashboard"
             className="dashboard-nav-item active"
           >
-            <span>▦</span>
-            Dashboard
+            <LayoutDashboard size={18} strokeWidth={1.8} />
+            <span>Dashboard</span>
           </Link>
+
 
           <Link
             to="/projects"
             className="dashboard-nav-item"
           >
-            <span>□</span>
-            Projects
+            <FolderKanban size={18} strokeWidth={1.8} />
+            <span>Projects</span>
           </Link>
 
           <Link
             to="/team"
             className="dashboard-nav-item"
           >
-            <span>♧</span>
-            Team
+            <Users size={18} strokeWidth={1.8} />
+            <span>Team</span>
           </Link>
+
 
           <div className="dashboard-task-link">
 
@@ -677,17 +813,25 @@ function Dashboard() {
               to="/tasks"
               className="dashboard-nav-item"
             >
-              <span>☑</span>
+              <CheckSquare
+                size={18}
+                strokeWidth={1.8}
+              />
 
-              My Tasks
+              <span>
+                My Tasks
+              </span>
 
               <small>
-                {totalTasks}
+                {todoTasks.length}
               </small>
             </Link>
 
             <span className="dashboard-arrow">
-              ›
+              <ChevronRight
+                size={15}
+                strokeWidth={1.8}
+              />
             </span>
 
           </div>
@@ -705,13 +849,21 @@ function Dashboard() {
               PROJECTS
             </span>
 
-            <Link to="/projects">
-              →
+            <Link
+              to="/projects"
+              aria-label="View all projects"
+            >
+              <ChevronRight
+                size={14}
+                strokeWidth={1.8}
+              />
             </Link>
 
           </div>
 
-          {projects.length === 0 ? (
+
+          {projects.length ===
+            0 ? (
             <div className="sidebar-empty-projects">
               No projects yet
             </div>
@@ -734,8 +886,8 @@ function Dashboard() {
 
                     <span
                       className={`project-dot ${index % 2 === 0
-                          ? "blue"
-                          : "purple"
+                        ? "blue"
+                        : "purple"
                         }`}
                     />
 
@@ -786,7 +938,10 @@ function Dashboard() {
             </div>
 
             <span className="profile-arrow">
-              ˅
+              <ChevronDown
+                size={15}
+                strokeWidth={1.8}
+              />
             </span>
 
           </button>
@@ -795,34 +950,36 @@ function Dashboard() {
           {showProfileMenu && (
             <div className="profile-dropdown">
 
-              <Link
-                to="/profile"
-                className="profile-dropdown-item"
-                onClick={() =>
-                  setShowProfileMenu(
-                    false
-                  )
-                }
-              >
+              <div className="profile-dropdown-user">
+
+                <strong>
+                  {userName}
+                </strong>
+
                 <span>
-                  👤
+                  {user?.email || ""}
                 </span>
 
-                Profile
-              </Link>
+              </div>
+
 
               <button
                 type="button"
-                className="profile-dropdown-item logout-item"
+                className="profile-logout-button"
                 onClick={
                   handleLogout
                 }
               >
+
                 <span>
-                  ↪
+                  <Settings
+                    size={15}
+                    strokeWidth={1.8}
+                  />
                 </span>
 
                 Logout
+
               </button>
 
             </div>
@@ -845,9 +1002,10 @@ function Dashboard() {
 
           <div className="dashboard-search">
 
-            <span>
-              ⌕
-            </span>
+            <Search
+              size={17}
+              strokeWidth={1.8}
+            />
 
             <input
               type="search"
@@ -879,8 +1037,14 @@ function Dashboard() {
               >
 
                 <span className="workspace-selector-icon">
-                  ◈
+
+                  <BriefcaseBusiness
+                    size={16}
+                    strokeWidth={1.8}
+                  />
+
                 </span>
+
 
                 <span className="workspace-selector-content">
 
@@ -895,8 +1059,14 @@ function Dashboard() {
 
                 </span>
 
+
                 <span className="workspace-selector-arrow">
-                  ˅
+
+                  <ChevronDown
+                    size={15}
+                    strokeWidth={1.8}
+                  />
+
                 </span>
 
               </button>
@@ -914,11 +1084,9 @@ function Dashboard() {
 
                     {workspaces.map(
                       (
-                        membership,
+                        item,
                         index
                       ) => {
-                        const item =
-                          membership?.workspace;
 
                         if (
                           !item?._id
@@ -927,8 +1095,12 @@ function Dashboard() {
                         }
 
                         const selected =
-                          workspace?._id ===
-                          item._id;
+                          String(
+                            workspace?._id
+                          ) ===
+                          String(
+                            item._id
+                          );
 
                         return (
                           <button
@@ -938,8 +1110,8 @@ function Dashboard() {
                             }
                             type="button"
                             className={`workspace-dropdown-item ${selected
-                                ? "selected"
-                                : ""
+                              ? "selected"
+                              : ""
                               }`}
                             onClick={() =>
                               handleWorkspaceChange(
@@ -949,13 +1121,16 @@ function Dashboard() {
                           >
 
                             <span className="workspace-dropdown-icon">
+
                               {item?.name
                                 ?.charAt(
                                   0
                                 )
                                 ?.toUpperCase() ||
                                 "W"}
+
                             </span>
+
 
                             <span className="workspace-dropdown-info">
 
@@ -965,15 +1140,21 @@ function Dashboard() {
                               </strong>
 
                               <small>
-                                {membership?.role ||
+                                {item?.role ||
                                   "MEMBER"}
                               </small>
 
                             </span>
 
+
                             {selected && (
                               <span className="workspace-dropdown-check">
-                                ✓
+
+                                <Check
+                                  size={16}
+                                  strokeWidth={2}
+                                />
+
                               </span>
                             )}
 
@@ -981,6 +1162,55 @@ function Dashboard() {
                         );
                       }
                     )}
+
+
+                    {/* CREATE NEW WORKSPACE */}
+
+                    <div
+                      style={{
+                        height:
+                          "1px",
+                        margin:
+                          "6px 4px",
+                        background:
+                          "#eef2f7",
+                      }}
+                    />
+
+
+                    <button
+                      type="button"
+                      className="workspace-dropdown-item"
+                      onClick={() =>
+                        navigate(
+                          "/workspaces/new"
+                        )
+                      }
+                    >
+
+                      <span className="workspace-dropdown-icon">
+
+                        <Plus
+                          size={16}
+                          strokeWidth={1.9}
+                        />
+
+                      </span>
+
+
+                      <span className="workspace-dropdown-info">
+
+                        <strong>
+                          Create new workspace
+                        </strong>
+
+                        <small>
+                          Start a new workspace
+                        </small>
+
+                      </span>
+
+                    </button>
 
                   </div>
                 )}
@@ -991,15 +1221,28 @@ function Dashboard() {
             <button
               type="button"
               className="dashboard-icon-button"
+              aria-label="Toggle theme"
             >
-              ☼
+
+              <Sun
+                size={17}
+                strokeWidth={1.8}
+              />
+
             </button>
+
 
             <button
               type="button"
               className="dashboard-icon-button"
+              aria-label="Settings"
             >
-              ⚙
+
+              <Settings
+                size={17}
+                strokeWidth={1.8}
+              />
+
             </button>
 
           </div>
@@ -1019,7 +1262,12 @@ function Dashboard() {
             <div className="dashboard-error">
 
               <span>
-                !
+
+                <AlertCircle
+                  size={15}
+                  strokeWidth={1.8}
+                />
+
               </span>
 
               <p>
@@ -1045,7 +1293,12 @@ function Dashboard() {
             <section className="dashboard-empty-state">
 
               <div className="dashboard-empty-icon">
-                ◈
+
+                <BriefcaseBusiness
+                  size={25}
+                  strokeWidth={1.7}
+                />
+
               </div>
 
               <h2>
@@ -1055,6 +1308,13 @@ function Dashboard() {
               <p>
                 You don't have a workspace yet.
               </p>
+
+              <Link
+                to="/workspaces/new"
+                className="empty-state-button"
+              >
+                Create Workspace
+              </Link>
 
             </section>
           ) : (
@@ -1079,15 +1339,19 @@ function Dashboard() {
 
                 </div>
 
+
                 <Link
                   to="/projects/new"
                   className="new-project-button"
                 >
-                  <span>
-                    +
-                  </span>
+
+                  <Plus
+                    size={17}
+                    strokeWidth={2}
+                  />
 
                   New Project
+
                 </Link>
 
               </section>
@@ -1119,13 +1383,20 @@ function Dashboard() {
                     <article className="dashboard-stat-card">
 
                       <div className="stat-card-top">
+
                         <span>
                           Total Projects
                         </span>
 
                         <span className="stat-icon blue">
-                          □
+
+                          <FolderKanban
+                            size={16}
+                            strokeWidth={1.8}
+                          />
+
                         </span>
+
                       </div>
 
                       <strong>
@@ -1142,13 +1413,20 @@ function Dashboard() {
                     <article className="dashboard-stat-card">
 
                       <div className="stat-card-top">
+
                         <span>
                           Completed Projects
                         </span>
 
                         <span className="stat-icon green">
-                          ✓
+
+                          <CheckSquare
+                            size={16}
+                            strokeWidth={1.8}
+                          />
+
                         </span>
+
                       </div>
 
                       <strong>
@@ -1165,13 +1443,20 @@ function Dashboard() {
                     <article className="dashboard-stat-card">
 
                       <div className="stat-card-top">
+
                         <span>
                           Total Tasks
                         </span>
 
                         <span className="stat-icon purple">
-                          ♧
+
+                          <CheckSquare
+                            size={16}
+                            strokeWidth={1.8}
+                          />
+
                         </span>
+
                       </div>
 
                       <strong>
@@ -1188,13 +1473,20 @@ function Dashboard() {
                     <article className="dashboard-stat-card">
 
                       <div className="stat-card-top">
+
                         <span>
                           Overdue Tasks
                         </span>
 
                         <span className="stat-icon orange">
-                          !
+
+                          <AlertCircle
+                            size={16}
+                            strokeWidth={1.8}
+                          />
+
                         </span>
+
                       </div>
 
                       <strong>
@@ -1234,7 +1526,9 @@ function Dashboard() {
 
                         </div>
 
-                        <Link to="/projects">
+                        <Link
+                          to="/projects"
+                        >
                           View all →
                         </Link>
 
@@ -1246,7 +1540,12 @@ function Dashboard() {
                         <div className="dashboard-panel-empty">
 
                           <span>
-                            □
+
+                            <FolderKanban
+                              size={26}
+                              strokeWidth={1.7}
+                            />
+
                           </span>
 
                           <h3>
@@ -1324,8 +1623,9 @@ function Dashboard() {
                                           project?.status
                                         )}`}
                                       >
-                                        {project?.status ||
-                                          "NOT STARTED"}
+                                        {getProjectStatusLabel(
+                                          project?.status
+                                        )}
                                       </span>
 
                                     </div>
@@ -1334,13 +1634,11 @@ function Dashboard() {
                                     <div className="project-meta">
 
                                       <span>
-                                        ◷
+                                        Created{" "}
+                                        {formatDate(
+                                          project?.createdAt
+                                        )}
                                       </span>
-
-                                      Created{" "}
-                                      {formatDate(
-                                        project?.createdAt
-                                      )}
 
                                     </div>
 
@@ -1369,7 +1667,12 @@ function Dashboard() {
                           <div className="panel-title-with-icon">
 
                             <span className="panel-small-icon">
-                              ♧
+
+                              <CheckSquare
+                                size={13}
+                                strokeWidth={1.8}
+                              />
+
                             </span>
 
                             <h2>
@@ -1377,6 +1680,7 @@ function Dashboard() {
                             </h2>
 
                           </div>
+
 
                           <span className="task-count green-count">
                             {todoTasks.length}
@@ -1417,9 +1721,9 @@ function Dashboard() {
                                     <div>
 
                                       <span>
-                                        {task?.priority ||
-                                          "MEDIUM"}{" "}
-                                        priority
+                                        {getPriorityLabel(
+                                          task?.priority
+                                        )}
                                       </span>
 
                                       {task?.dueDate && (
@@ -1452,7 +1756,12 @@ function Dashboard() {
                           <div className="panel-title-with-icon">
 
                             <span className="panel-small-icon warning">
-                              !
+
+                              <AlertCircle
+                                size={13}
+                                strokeWidth={1.8}
+                              />
+
                             </span>
 
                             <h2>
@@ -1460,6 +1769,7 @@ function Dashboard() {
                             </h2>
 
                           </div>
+
 
                           <span className="task-count red-count">
                             {overdueTasks.length}
@@ -1500,9 +1810,9 @@ function Dashboard() {
                                     <div>
 
                                       <span>
-                                        {task?.priority ||
-                                          "MEDIUM"}{" "}
-                                        priority
+                                        {getPriorityLabel(
+                                          task?.priority
+                                        )}
                                       </span>
 
                                       <span>
@@ -1554,8 +1864,14 @@ function Dashboard() {
                     <div className="activity-item">
 
                       <div className="activity-icon">
-                        ◈
+
+                        <BriefcaseBusiness
+                          size={16}
+                          strokeWidth={1.8}
+                        />
+
                       </div>
+
 
                       <div>
 
@@ -1575,6 +1891,7 @@ function Dashboard() {
 
                       </div>
 
+
                       <time>
                         {projects.length}{" "}
                         {projects.length ===
@@ -1589,8 +1906,14 @@ function Dashboard() {
                     <div className="activity-item">
 
                       <div className="activity-icon purple">
-                        ✓
+
+                        <CheckSquare
+                          size={16}
+                          strokeWidth={1.8}
+                        />
+
                       </div>
+
 
                       <div>
 
@@ -1605,6 +1928,7 @@ function Dashboard() {
                         </p>
 
                       </div>
+
 
                       <time>
                         {totalTasks} total
@@ -1627,5 +1951,6 @@ function Dashboard() {
     </div>
   );
 }
+
 
 export default Dashboard;

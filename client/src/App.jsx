@@ -16,7 +16,7 @@ import ProjectDetails from "./pages/ProjectDetails";
 import TaskDetails from "./pages/TaskDetails";
 import CreateTask from "./pages/CreateTask";
 import Team from "./pages/Team";
-
+import CreateNewWorkspace from "./pages/CreateNewWorkspace";
 
 function App() {
   return (
@@ -72,6 +72,11 @@ function App() {
         <Route
           path="/team"
           element={<Team />}
+        />
+
+        <Route
+          path="/workspaces/new"
+          element={<CreateNewWorkspace />}
         />
 
         <Route

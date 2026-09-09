@@ -287,6 +287,7 @@ const updateProjectMembers = async (
     members
 ) => {
 
+    // 1. Validate project
     const project = await Project.findById(
         projectId
     );
@@ -298,6 +299,8 @@ const updateProjectMembers = async (
         );
     }
 
+
+    // 2. Verify requester belongs to workspace
     const workspaceMember =
         await WorkspaceMember.findOne({
             workspace: project.workspace,
@@ -311,6 +314,7 @@ const updateProjectMembers = async (
         );
     }
 
+    // 3. Only OWNER / ADMIN can manage members
     if (
         !["OWNER", "ADMIN"].includes(
             workspaceMember.role
@@ -322,6 +326,8 @@ const updateProjectMembers = async (
         );
     }
 
+
+    // 4. Validate request body
     if (!Array.isArray(members)) {
         throw new ApiError(
             400,
@@ -329,38 +335,78 @@ const updateProjectMembers = async (
         );
     }
 
+    // 5. Clean submitted IDs
     const uniqueMembers = [
         ...new Set(
-            members.map(
-                (memberId) =>
-                    String(memberId)
-            )
+            members
+                .filter(Boolean)
+                .map(
+                    (memberId) =>
+                        String(memberId)
+                )
         )
     ];
 
+    // 6. Get ACTUAL workspace members
     const workspaceMembers =
         await WorkspaceMember.find({
             workspace: project.workspace,
             user: {
                 $in: uniqueMembers
             }
-        }).select("user");
+        })
+        .select("user");
 
-    if (
-        workspaceMembers.length !==
-        uniqueMembers.length
-    ) {
+    // 7. Create set of valid workspace users
+    const validWorkspaceUserIds =
+        new Set(
+            workspaceMembers.map(
+                (member) =>
+                    String(member.user)
+            )
+        );
+
+
+    // ==========================================
+    // 8. Check submitted IDs
+    //
+    // If frontend tries to add someone who
+    // genuinely isn't in this workspace,
+    // reject it.
+    // ==========================================
+
+    const invalidMemberIds =
+        uniqueMembers.filter(
+            (memberId) =>
+                !validWorkspaceUserIds.has(
+                    String(memberId)
+                )
+        );
+
+
+    if (invalidMemberIds.length > 0) {
+
         throw new ApiError(
             400,
-            "All project members must belong to workspace"
+            "One or more selected members do not belong to this workspace"
         );
     }
+
+
+    // ==========================================
+    // 9. Replace project's member list
+    //
+    // This automatically removes stale/old
+    // ProjectMember records that are not part
+    // of the submitted valid list.
+    // ==========================================
 
     await ProjectMember.deleteMany({
         project: projectId
     });
 
-    if (uniqueMembers.length) {
+    // 10. Insert valid members
+    if (uniqueMembers.length > 0) {
 
         await ProjectMember.insertMany(
             uniqueMembers.map(
@@ -372,16 +418,25 @@ const updateProjectMembers = async (
         );
     }
 
-    return ProjectMember.find({
-        project: projectId
-    })
-    .populate(
-        "user",
-        "name email avatar"
-    )
-    .sort({
-        createdAt: 1
-    });
+
+    // ==========================================
+    // 11. Return fresh database state
+    // ==========================================
+
+    const updatedMembers =
+        await ProjectMember.find({
+            project: projectId
+        })
+        .populate(
+            "user",
+            "name email avatar"
+        )
+        .sort({
+            createdAt: 1
+        });
+
+
+    return updatedMembers;
 };
 
 

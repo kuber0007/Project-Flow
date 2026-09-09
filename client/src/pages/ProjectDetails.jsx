@@ -19,8 +19,17 @@ const ProjectDetails = () => {
     const navigate = useNavigate();
 
 
+    /* =========================================================
+       PROJECT / TASK STATE
+    ========================================================= */
+
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
+
+
+    /* =========================================================
+       PROJECT MEMBER STATE
+    ========================================================= */
 
     const [projectMembers, setProjectMembers] =
         useState([]);
@@ -28,6 +37,13 @@ const ProjectDetails = () => {
     const [workspaceMembers, setWorkspaceMembers] =
         useState([]);
 
+    const [selectedMemberIds, setSelectedMemberIds] =
+        useState([]);
+
+
+    /* =========================================================
+       LOADING STATE
+    ========================================================= */
 
     const [loading, setLoading] =
         useState(true);
@@ -42,6 +58,10 @@ const ProjectDetails = () => {
         useState(false);
 
 
+    /* =========================================================
+       ERROR STATE
+    ========================================================= */
+
     const [error, setError] =
         useState("");
 
@@ -52,14 +72,139 @@ const ProjectDetails = () => {
         useState("");
 
 
+    /* =========================================================
+       MEMBER MODAL STATE
+    ========================================================= */
+
     const [showMemberModal, setShowMemberModal] =
         useState(false);
 
-    const [selectedMemberIds, setSelectedMemberIds] =
-        useState([]);
-
     const [memberSuccess, setMemberSuccess] =
         useState("");
+
+
+    /* =========================================================
+       HELPER:
+       GET USER FROM A MEMBER OBJECT
+       
+       WorkspaceMember / ProjectMember can return:
+       
+       {
+           user: {
+               _id,
+               name,
+               email
+           }
+       }
+
+       OR:
+
+       {
+           user: "USER_ID"
+       }
+    ========================================================= */
+
+    const getMemberUser = (member) => {
+
+        if (!member) {
+            return null;
+        }
+
+        if (
+            member.user &&
+            typeof member.user === "object"
+        ) {
+            return member.user;
+        }
+
+        return null;
+    };
+
+
+    /* =========================================================
+       HELPER:
+       GET USER ID
+
+       IMPORTANT:
+       We ALWAYS want USER ID here.
+
+       We do NOT want:
+       WorkspaceMember._id
+       ProjectMember._id
+       
+       We want:
+       member.user._id
+       OR
+       member.user
+    ========================================================= */
+
+    const getMemberUserId = (member) => {
+
+        if (!member) {
+            return null;
+        }
+
+        if (
+            typeof member.user === "string"
+        ) {
+            return member.user;
+        }
+
+        if (
+            member.user &&
+            typeof member.user === "object"
+        ) {
+            return member.user._id || null;
+        }
+
+        /*
+         * Some APIs may directly return a user object.
+         */
+        if (member._id) {
+            return member._id;
+        }
+
+        return null;
+    };
+
+
+    /* =========================================================
+       HELPER:
+       NORMALIZE API LIST
+    ========================================================= */
+
+    const normalizeList = (result) => {
+
+        if (Array.isArray(result)) {
+            return result;
+        }
+
+        if (
+            Array.isArray(
+                result?.data
+            )
+        ) {
+            return result.data;
+        }
+
+        if (
+            Array.isArray(
+                result?.members
+            )
+        ) {
+            return result.members;
+        }
+
+        if (
+            Array.isArray(
+                result?.data?.members
+            )
+        ) {
+            return result.data.members;
+        }
+
+        return [];
+    };
 
 
     /* =========================================================
@@ -68,6 +213,9 @@ const ProjectDetails = () => {
 
     useEffect(() => {
 
+        let cancelled = false;
+
+
         const loadProject = async () => {
 
             try {
@@ -75,10 +223,20 @@ const ProjectDetails = () => {
                 setLoading(true);
                 setError("");
 
-                const data =
-                    await getProject(projectId);
 
-                setProject(data);
+                const data =
+                    await getProject(
+                        projectId
+                    );
+
+
+                if (!cancelled) {
+
+                    setProject(
+                        data
+                    );
+                }
+
 
             } catch (err) {
 
@@ -87,21 +245,36 @@ const ProjectDetails = () => {
                     err
                 );
 
-                setError(
-                    err.message ||
-                    "Failed to load project"
-                );
+
+                if (!cancelled) {
+
+                    setError(
+                        err.message ||
+                        "Failed to load project"
+                    );
+                }
+
 
             } finally {
 
-                setLoading(false);
+                if (!cancelled) {
+
+                    setLoading(false);
+                }
             }
         };
 
 
         if (projectId) {
+
             loadProject();
         }
+
+
+        return () => {
+
+            cancelled = true;
+        };
 
     }, [projectId]);
 
@@ -112,6 +285,9 @@ const ProjectDetails = () => {
 
     useEffect(() => {
 
+        let cancelled = false;
+
+
         const loadTasks = async () => {
 
             try {
@@ -119,25 +295,26 @@ const ProjectDetails = () => {
                 setTasksLoading(true);
                 setTasksError("");
 
+
                 const data =
                     await getProjectTasks(
                         projectId
                     );
 
-                const taskList =
-                    Array.isArray(data)
-                        ? data
-                        : Array.isArray(
-                            data?.tasks
-                        )
-                            ? data.tasks
-                            : Array.isArray(
-                                data?.data
-                            )
-                                ? data.data
-                                : [];
 
-                setTasks(taskList);
+                const taskList =
+                    normalizeList(
+                        data
+                    );
+
+
+                if (!cancelled) {
+
+                    setTasks(
+                        taskList
+                    );
+                }
+
 
             } catch (err) {
 
@@ -146,63 +323,283 @@ const ProjectDetails = () => {
                     err
                 );
 
-                setTasksError(
-                    err.message ||
-                    "Failed to load tasks"
-                );
+
+                if (!cancelled) {
+
+                    setTasksError(
+                        err.message ||
+                        "Failed to load tasks"
+                    );
+                }
+
 
             } finally {
 
-                setTasksLoading(false);
+                if (!cancelled) {
+
+                    setTasksLoading(false);
+                }
             }
         };
 
 
         if (projectId) {
+
             loadTasks();
         }
+
+
+        return () => {
+
+            cancelled = true;
+        };
 
     }, [projectId]);
 
 
     /* =========================================================
-       LOAD PROJECT MEMBERS
+       GET WORKSPACE ID SAFELY
+
+       project.workspace can be:
+
+       "WORKSPACE_ID"
+
+       OR:
+
+       {
+           _id: "WORKSPACE_ID"
+       }
     ========================================================= */
 
-    const loadProjectMembers = async () => {
+    const getWorkspaceId = () => {
+
+        if (!project?.workspace) {
+            return null;
+        }
+
+
+        if (
+            typeof project.workspace ===
+            "string"
+        ) {
+            return project.workspace;
+        }
+
+
+        return (
+            project.workspace?._id ||
+            null
+        );
+    };
+
+
+    /* =========================================================
+       LOAD PROJECT MEMBERS
+
+       IMPORTANT FIX
+
+       We fetch:
+
+       1. Current project members
+       2. Current workspace members
+
+       Then compare them using USER IDs.
+
+       This prevents stale ProjectMember records from
+       breaking the update operation.
+    ========================================================= */
+
+    const loadProjectMembers = async (
+        openModal = false
+    ) => {
+
+        if (!projectId) {
+            return;
+        }
+
+
+        const workspaceId =
+            getWorkspaceId();
+
+
+        if (!workspaceId) {
+
+            setMembersError(
+                "Project workspace could not be determined."
+            );
+
+            return;
+        }
+
 
         try {
 
             setMembersLoading(true);
             setMembersError("");
 
-            const data =
-                await getProjectMembers(
+
+            const [
+                projectMembersResult,
+                workspaceMembersResult,
+            ] = await Promise.all([
+
+                getProjectMembers(
                     projectId
+                ),
+
+                getWorkspaceMembers(
+                    workspaceId
+                ),
+
+            ]);
+
+
+            /* =================================================
+               NORMALIZE BOTH RESPONSES
+            ================================================= */
+
+            const currentProjectMembers =
+                normalizeList(
+                    projectMembersResult
                 );
 
-            const memberList =
-                Array.isArray(data)
-                    ? data
-                    : Array.isArray(
-                        data?.members
-                    )
-                        ? data.members
-                        : [];
+
+            const currentWorkspaceMembers =
+                normalizeList(
+                    workspaceMembersResult
+                );
+
+
+            /* =================================================
+               CREATE SET OF CURRENT WORKSPACE USER IDS
+
+               Example:
+
+               WorkspaceMember:
+               {
+                   _id: "MEMBERSHIP_ID",
+                   user: "USER_ID"
+               }
+
+               We store:
+
+               USER_ID
+
+               NOT:
+
+               MEMBERSHIP_ID
+            ================================================= */
+
+            const validWorkspaceUserIds =
+                new Set();
+
+
+            currentWorkspaceMembers.forEach(
+                (member) => {
+
+                    const userId =
+                        getMemberUserId(
+                            member
+                        );
+
+
+                    if (userId) {
+
+                        validWorkspaceUserIds.add(
+                            String(userId)
+                        );
+                    }
+                }
+            );
+
+
+            /* =================================================
+               KEEP ONLY PROJECT MEMBERS WHO ARE STILL
+               CURRENT MEMBERS OF THIS WORKSPACE.
+
+               This handles old/stale ProjectMember records.
+
+               Example:
+
+               ProjectMember:
+               A ✅
+               B ✅
+               C ❌ old workspace member
+
+               WorkspaceMember:
+               A
+               B
+
+               Result:
+
+               A
+               B
+            ================================================= */
+
+            const validProjectMembers =
+                currentProjectMembers.filter(
+                    (member) => {
+
+                        const userId =
+                            getMemberUserId(
+                                member
+                            );
+
+
+                        if (!userId) {
+                            return false;
+                        }
+
+
+                        return validWorkspaceUserIds.has(
+                            String(userId)
+                        );
+                    }
+                );
+
+
+            /* =================================================
+               SET CLEAN STATE
+            ================================================= */
 
             setProjectMembers(
-                memberList
+                validProjectMembers
             );
 
-            setSelectedMemberIds(
-                memberList
-                    .map((member) =>
-                        typeof member.user === "string"
-                            ? member.user
-                            : member.user?._id
+
+            setWorkspaceMembers(
+                currentWorkspaceMembers
+            );
+
+
+            /* =================================================
+               SELECTED IDS MUST ALWAYS BE USER IDS
+            ================================================= */
+
+            const selectedIds =
+                validProjectMembers
+                    .map(
+                        (member) =>
+                            getMemberUserId(
+                                member
+                            )
                     )
                     .filter(Boolean)
+                    .map(String);
+
+
+            setSelectedMemberIds(
+                selectedIds
             );
+
+
+            if (openModal) {
+
+                setShowMemberModal(
+                    true
+                );
+            }
+
 
         } catch (err) {
 
@@ -211,33 +608,68 @@ const ProjectDetails = () => {
                 err
             );
 
+
             setMembersError(
                 err.message ||
                 "Failed to load project members"
             );
 
+
+            if (openModal) {
+
+                setShowMemberModal(
+                    true
+                );
+            }
+
+
         } finally {
 
-            setMembersLoading(false);
+            setMembersLoading(
+                false
+            );
         }
     };
 
 
     /* =========================================================
-       LOAD PROJECT MEMBERS (ON MOUNT)
-       -- Without this, the "Project Members" preview card
-          always shows "No project members" on page load,
-          because projectMembers only ever got populated as
-          a side effect of opening the manage-members modal.
+       LOAD MEMBERS AUTOMATICALLY AFTER PROJECT LOAD
+
+       This fixes:
+
+       Refresh
+       ↓
+       Project members disappear
+
+       Now:
+
+       Refresh
+       ↓
+       Project loads
+       ↓
+       Workspace ID available
+       ↓
+       Members load
     ========================================================= */
 
     useEffect(() => {
 
-        if (projectId) {
-            loadProjectMembers();
+        if (
+            projectId &&
+            project &&
+            getWorkspaceId()
+        ) {
+
+            loadProjectMembers(
+                false
+            );
         }
 
-    }, [projectId]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        projectId,
+        project?.workspace,
+    ]);
 
 
     /* =========================================================
@@ -246,86 +678,13 @@ const ProjectDetails = () => {
 
     const handleOpenMembers = async () => {
 
-        setShowMemberModal(true);
         setMemberSuccess("");
         setMembersError("");
 
-        try {
 
-            setMembersLoading(true);
-
-            const [
-                currentMembers,
-                allWorkspaceMembers
-            ] = await Promise.all([
-                getProjectMembers(
-                    projectId
-                ),
-                getWorkspaceMembers(
-                    project.workspace
-                ),
-            ]);
-
-
-            const currentList =
-                Array.isArray(
-                    currentMembers
-                )
-                    ? currentMembers
-                    : Array.isArray(
-                        currentMembers?.members
-                    )
-                        ? currentMembers.members
-                        : [];
-
-
-            const workspaceList =
-                Array.isArray(
-                    allWorkspaceMembers
-                )
-                    ? allWorkspaceMembers
-                    : Array.isArray(
-                        allWorkspaceMembers?.members
-                    )
-                        ? allWorkspaceMembers.members
-                        : [];
-
-
-            setProjectMembers(
-                currentList
-            );
-
-            setWorkspaceMembers(
-                workspaceList
-            );
-
-
-            setSelectedMemberIds(
-                currentList
-                    .map((member) =>
-                        typeof member.user === "string"
-                            ? member.user
-                            : member.user?._id
-                    )
-                    .filter(Boolean)
-            );
-
-        } catch (err) {
-
-            console.error(
-                "Failed to load member data:",
-                err
-            );
-
-            setMembersError(
-                err.message ||
-                "Failed to load member data"
-            );
-
-        } finally {
-
-            setMembersLoading(false);
-        }
+        await loadProjectMembers(
+            true
+        );
     };
 
 
@@ -339,18 +698,34 @@ const ProjectDetails = () => {
             return;
         }
 
-        setShowMemberModal(false);
+
+        setShowMemberModal(
+            false
+        );
+
+
         setMembersError("");
         setMemberSuccess("");
 
-        setSelectedMemberIds(
+
+        /*
+         * Restore selected IDs from the last saved
+         * project member state.
+         */
+        const savedIds =
             projectMembers
-                .map((member) =>
-                    typeof member.user === "string"
-                        ? member.user
-                        : member.user?._id
+                .map(
+                    (member) =>
+                        getMemberUserId(
+                            member
+                        )
                 )
                 .filter(Boolean)
+                .map(String);
+
+
+        setSelectedMemberIds(
+            savedIds
         );
     };
 
@@ -363,24 +738,72 @@ const ProjectDetails = () => {
         memberId
     ) => {
 
+        if (!memberId) {
+            return;
+        }
+
+
+        const normalizedId =
+            String(memberId);
+
+
         setSelectedMemberIds(
             (previous) => {
 
+                const previousIds =
+                    previous.map(
+                        String
+                    );
+
+
                 if (
-                    previous.includes(
-                        memberId
+                    previousIds.includes(
+                        normalizedId
                     )
                 ) {
 
-                    return previous.filter(
+                    return previousIds.filter(
                         (id) =>
-                            id !== memberId
+                            id !== normalizedId
                     );
                 }
 
+
+                /*
+                 * Safety check:
+                 * Only allow users who currently belong
+                 * to this workspace.
+                 */
+
+                const belongsToWorkspace =
+                    workspaceMembers.some(
+                        (member) => {
+
+                            const userId =
+                                getMemberUserId(
+                                    member
+                                );
+
+                            return (
+                                userId &&
+                                String(userId) ===
+                                    normalizedId
+                            );
+                        }
+                    );
+
+
+                if (
+                    !belongsToWorkspace
+                ) {
+
+                    return previousIds;
+                }
+
+
                 return [
-                    ...previous,
-                    memberId
+                    ...previousIds,
+                    normalizedId,
                 ];
             }
         );
@@ -389,6 +812,15 @@ const ProjectDetails = () => {
 
     /* =========================================================
        SAVE PROJECT MEMBERS
+
+       IMPORTANT FIX
+
+       Before sending anything to backend:
+
+       - remove duplicates
+       - remove empty IDs
+       - make sure every ID belongs to workspace
+       - send USER IDs only
     ========================================================= */
 
     const handleSaveMembers = async () => {
@@ -399,43 +831,118 @@ const ProjectDetails = () => {
             setMembersError("");
             setMemberSuccess("");
 
-            const updated =
-                await updateProjectMembers(
-                    projectId,
+
+            /* =================================================
+               NORMALIZE SELECTED IDS
+            ================================================= */
+
+            const cleanSelectedIds = [
+                ...new Set(
                     selectedMemberIds
+                        .filter(Boolean)
+                        .map(String)
+                ),
+            ];
+
+
+            /* =================================================
+               BUILD CURRENT WORKSPACE USER ID SET
+            ================================================= */
+
+            const validWorkspaceUserIds =
+                new Set();
+
+
+            workspaceMembers.forEach(
+                (member) => {
+
+                    const userId =
+                        getMemberUserId(
+                            member
+                        );
+
+
+                    if (userId) {
+
+                        validWorkspaceUserIds.add(
+                            String(userId)
+                        );
+                    }
+                }
+            );
+
+
+            /* =================================================
+               VALIDATE SELECTED USERS
+
+               This is a frontend safety check.
+
+               Backend ALSO validates this.
+
+               The backend remains the final authority.
+            ================================================= */
+
+            const invalidIds =
+                cleanSelectedIds.filter(
+                    (id) =>
+                        !validWorkspaceUserIds.has(
+                            String(id)
+                        )
                 );
 
-            const updatedList =
-                Array.isArray(updated)
-                    ? updated
-                    : Array.isArray(
-                        updated?.members
-                    )
-                        ? updated.members
-                        : [];
 
-            setProjectMembers(
-                updatedList
+            if (
+                invalidIds.length > 0
+            ) {
+
+                throw new Error(
+                    "One or more selected members do not belong to this workspace."
+                );
+            }
+
+
+            /* =================================================
+               SEND ONLY VALID USER IDS
+            ================================================= */
+
+            await updateProjectMembers(
+                projectId,
+                cleanSelectedIds
             );
 
-            setSelectedMemberIds(
-                updatedList
-                    .map((member) =>
-                        typeof member.user === "string"
-                            ? member.user
-                            : member.user?._id
-                    )
-                    .filter(Boolean)
+
+            /* =================================================
+               IMPORTANT:
+               RE-FETCH DATABASE STATE
+
+               Do NOT rely only on PATCH response.
+
+               MongoDB becomes the source of truth.
+            ================================================= */
+
+            await loadProjectMembers(
+                false
             );
+
 
             setMemberSuccess(
                 "Project members updated successfully."
             );
 
+
+            /*
+             * Close after a short success message.
+             */
             setTimeout(() => {
-                setShowMemberModal(false);
+
+                setShowMemberModal(
+                    false
+                );
+
                 setMemberSuccess("");
+
             }, 900);
+
 
         } catch (err) {
 
@@ -444,14 +951,18 @@ const ProjectDetails = () => {
                 err
             );
 
+
             setMembersError(
                 err.message ||
                 "Failed to update project members"
             );
 
+
         } finally {
 
-            setSavingMembers(false);
+            setSavingMembers(
+                false
+            );
         }
     };
 
@@ -549,6 +1060,7 @@ const ProjectDetails = () => {
             return "Unknown";
         }
 
+
         return status
             .replaceAll(
                 "_",
@@ -575,16 +1087,20 @@ const ProjectDetails = () => {
             return "Not available";
         }
 
+
         const parsedDate =
             new Date(date);
+
 
         if (
             Number.isNaN(
                 parsedDate.getTime()
             )
         ) {
+
             return "Not available";
         }
+
 
         return parsedDate.toLocaleDateString(
             "en-US",
@@ -620,18 +1136,21 @@ const ProjectDetails = () => {
     const totalTasks =
         tasks.length;
 
+
     const completedTasks =
         tasks.filter(
             (task) =>
                 task?.status === "DONE"
         ).length;
 
+
     const progressPercentage =
         totalTasks > 0
             ? Math.round(
-                (completedTasks /
-                    totalTasks) *
-                100
+                (
+                    completedTasks /
+                    totalTasks
+                ) * 100
             )
             : 0;
 
@@ -738,12 +1257,13 @@ const ProjectDetails = () => {
     ========================================================= */
 
     return (
+
         <div className="project-details-page">
 
 
-            {/* =========================
+            {/* =================================================
                 SIDEBAR
-            ========================= */}
+            ================================================= */}
 
             <aside className="project-details-sidebar">
 
@@ -771,6 +1291,7 @@ const ProjectDetails = () => {
                         }
                     >
                         <span>⌂</span>
+
                         Dashboard
                     </button>
 
@@ -785,6 +1306,7 @@ const ProjectDetails = () => {
                         }
                     >
                         <span>▣</span>
+
                         Projects
                     </button>
 
@@ -798,6 +1320,7 @@ const ProjectDetails = () => {
                         }
                     >
                         <span>♙</span>
+
                         Team
                     </button>
 
@@ -811,6 +1334,7 @@ const ProjectDetails = () => {
                         }
                     >
                         <span>✓</span>
+
                         Tasks
                     </button>
 
@@ -820,8 +1344,11 @@ const ProjectDetails = () => {
                 <div className="project-details-sidebar-bottom">
 
                     <button type="button">
+
                         <span>⚙</span>
+
                         Settings
+
                     </button>
 
                 </div>
@@ -829,16 +1356,16 @@ const ProjectDetails = () => {
             </aside>
 
 
-            {/* =========================
+            {/* =================================================
                 MAIN
-            ========================= */}
+            ================================================= */}
 
             <main className="project-details-main">
 
 
-                {/* =========================
+                {/* =================================================
                     TOPBAR
-                ========================= */}
+                ================================================= */}
 
                 <header className="project-details-topbar">
 
@@ -870,16 +1397,16 @@ const ProjectDetails = () => {
                 </header>
 
 
-                {/* =========================
+                {/* =================================================
                     CONTENT
-                ========================= */}
+                ================================================= */}
 
                 <section className="project-details-content">
 
 
-                    {/* =========================
+                    {/* =================================================
                         PROJECT HEADER
-                    ========================= */}
+                    ================================================= */}
 
                     <div className="project-details-header">
 
@@ -916,9 +1443,9 @@ const ProjectDetails = () => {
                     </div>
 
 
-                    {/* =========================
+                    {/* =================================================
                         PROJECT SUMMARY
-                    ========================= */}
+                    ================================================= */}
 
                     <div className="project-details-grid">
 
@@ -973,9 +1500,9 @@ const ProjectDetails = () => {
                     </div>
 
 
-                    {/* =========================
+                    {/* =================================================
                         PROJECT OVERVIEW
-                    ========================= */}
+                    ================================================= */}
 
                     <div className="project-details-section">
 
@@ -1061,9 +1588,9 @@ const ProjectDetails = () => {
                     </div>
 
 
-                    {/* =========================
+                    {/* =================================================
                         TASKS
-                    ========================= */}
+                    ================================================= */}
 
                     <div className="project-details-section">
 
@@ -1254,9 +1781,9 @@ const ProjectDetails = () => {
                     </div>
 
 
-                    {/* =========================
+                    {/* =================================================
                         PROJECT MEMBERS
-                    ========================= */}
+                    ================================================= */}
 
                     <div className="project-details-section">
 
@@ -1282,11 +1809,38 @@ const ProjectDetails = () => {
                                 onClick={
                                     handleOpenMembers
                                 }
+                                disabled={
+                                    membersLoading
+                                }
                             >
-                                Manage Members
+                                {membersLoading
+                                    ? "Loading..."
+                                    : "Manage Members"}
                             </button>
 
                         </div>
+
+
+                        {membersError &&
+                            !showMemberModal && (
+
+                                <div className="project-details-task-error">
+
+                                    <p>
+                                        {membersError}
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            handleOpenMembers
+                                        }
+                                    >
+                                        Try Again
+                                    </button>
+
+                                </div>
+                            )}
 
 
                         {projectMembers.length === 0 ? (
@@ -1316,24 +1870,29 @@ const ProjectDetails = () => {
                                     (member) => {
 
                                         const user =
-                                            typeof member.user ===
-                                            "object"
-                                                ? member.user
-                                                : null;
+                                            getMemberUser(
+                                                member
+                                            );
 
                                         const userId =
-                                            typeof member.user ===
-                                            "string"
-                                                ? member.user
-                                                : user?._id;
+                                            getMemberUserId(
+                                                member
+                                            );
+
 
                                         if (!userId) {
                                             return null;
                                         }
 
+
                                         return (
+
                                             <div
-                                                key={userId}
+                                                key={
+                                                    String(
+                                                        userId
+                                                    )
+                                                }
                                                 className="project-member-preview-item"
                                             >
 
@@ -1359,9 +1918,11 @@ const ProjectDetails = () => {
                                                     </strong>
 
                                                     {user?.email && (
+
                                                         <span>
                                                             {user.email}
                                                         </span>
+
                                                     )}
 
                                                 </div>
@@ -1381,9 +1942,9 @@ const ProjectDetails = () => {
             </main>
 
 
-            {/* =========================
+            {/* =================================================
                 MEMBER MODAL
-            ========================= */}
+            ================================================= */}
 
             {showMemberModal && (
 
@@ -1397,6 +1958,7 @@ const ProjectDetails = () => {
                             event.target ===
                             event.currentTarget
                         ) {
+
                             handleCloseMembers();
                         }
                     }}
@@ -1405,7 +1967,9 @@ const ProjectDetails = () => {
                     <div className="project-members-modal">
 
 
-                        {/* HEADER */}
+                        {/* =================================================
+                            HEADER
+                        ================================================= */}
 
                         <div className="project-members-modal-header">
 
@@ -1436,6 +2000,7 @@ const ProjectDetails = () => {
                                 disabled={
                                     savingMembers
                                 }
+                                aria-label="Close member management"
                             >
                                 ×
                             </button>
@@ -1443,7 +2008,9 @@ const ProjectDetails = () => {
                         </div>
 
 
-                        {/* CONTENT */}
+                        {/* =================================================
+                            CONTENT
+                        ================================================= */}
 
                         <div className="project-members-modal-content">
 
@@ -1471,6 +2038,10 @@ const ProjectDetails = () => {
                                         type="button"
                                         onClick={
                                             handleOpenMembers
+                                        }
+                                        disabled={
+                                            membersLoading ||
+                                            savingMembers
                                         }
                                     >
                                         Try Again
@@ -1501,30 +2072,41 @@ const ProjectDetails = () => {
                                         (member) => {
 
                                             const user =
-                                                typeof member.user ===
-                                                "object"
-                                                    ? member.user
-                                                    : null;
+                                                getMemberUser(
+                                                    member
+                                                );
 
                                             const userId =
-                                                typeof member.user ===
-                                                "string"
-                                                    ? member.user
-                                                    : user?._id;
+                                                getMemberUserId(
+                                                    member
+                                                );
+
 
                                             if (!userId) {
                                                 return null;
                                             }
 
-                                            const isSelected =
-                                                selectedMemberIds.includes(
+
+                                            const normalizedUserId =
+                                                String(
                                                     userId
                                                 );
+
+
+                                            const isSelected =
+                                                selectedMemberIds
+                                                    .map(String)
+                                                    .includes(
+                                                        normalizedUserId
+                                                    );
+
 
                                             return (
 
                                                 <label
-                                                    key={userId}
+                                                    key={
+                                                        normalizedUserId
+                                                    }
                                                     className={`project-member-option ${
                                                         isSelected
                                                             ? "selected"
@@ -1539,7 +2121,7 @@ const ProjectDetails = () => {
                                                         }
                                                         onChange={() =>
                                                             handleToggleMember(
-                                                                userId
+                                                                normalizedUserId
                                                             )
                                                         }
                                                         disabled={
@@ -1570,17 +2152,21 @@ const ProjectDetails = () => {
                                                         </strong>
 
                                                         {user?.email && (
+
                                                             <span>
                                                                 {user.email}
                                                             </span>
+
                                                         )}
 
                                                     </div>
 
 
                                                     <div className="project-member-option-role">
+
                                                         {member.role ||
                                                             "MEMBER"}
+
                                                     </div>
 
                                                 </label>
@@ -1594,20 +2180,27 @@ const ProjectDetails = () => {
                         </div>
 
 
-                        {/* FOOTER */}
+                        {/* =================================================
+                            FOOTER
+                        ================================================= */}
 
                         <div className="project-members-modal-footer">
 
                             <div className="project-members-selected-count">
 
                                 <strong>
-                                    {selectedMemberIds.length}
+                                    {
+                                        selectedMemberIds.length
+                                    }
                                 </strong>
 
                                 <span>
-                                    {selectedMemberIds.length === 1
-                                        ? "member selected"
-                                        : "members selected"}
+                                    {
+                                        selectedMemberIds.length ===
+                                        1
+                                            ? "member selected"
+                                            : "members selected"
+                                    }
                                 </span>
 
                             </div>
@@ -1651,10 +2244,16 @@ const ProjectDetails = () => {
                         </div>
 
 
+                        {/* =================================================
+                            SUCCESS MESSAGE
+                        ================================================= */}
+
                         {memberSuccess && (
 
                             <div className="project-members-success">
+
                                 {memberSuccess}
+
                             </div>
 
                         )}

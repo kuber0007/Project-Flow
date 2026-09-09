@@ -2,14 +2,134 @@ import apiRequest from "./api";
 
 
 /* =========================================================
+   NORMALIZE WORKSPACE MEMBERSHIP
+
+   Backend GET /workspaces returns:
+
+   {
+     _id: membershipId,
+     workspace: {
+       _id,
+       name,
+       description,
+       ...
+     },
+     user: userId,
+     role: "ADMIN"
+   }
+
+   The actual workspace ID is:
+   membership.workspace._id
+========================================================= */
+
+const normalizeWorkspaceMembership = (
+  membership
+) => {
+
+  if (!membership) {
+    return null;
+  }
+
+  const workspace =
+    membership.workspace;
+
+  if (
+    !workspace ||
+    typeof workspace !== "object" ||
+    !workspace._id
+  ) {
+    return null;
+  }
+
+  return {
+    ...workspace,
+
+    role:
+      membership.role ||
+      "MEMBER",
+
+    membershipId:
+      membership._id,
+  };
+};
+
+
+/* =========================================================
    GET MY WORKSPACES
 ========================================================= */
 
 const getWorkspaces = async () => {
-  const result =
-    await apiRequest("/workspaces");
 
-  return result?.data ?? result;
+  const result =
+    await apiRequest(
+      "/workspaces"
+    );
+
+
+  const memberships =
+    Array.isArray(result?.data)
+      ? result.data
+      : Array.isArray(result)
+        ? result
+        : [];
+
+
+  return memberships
+    .map(
+      normalizeWorkspaceMembership
+    )
+    .filter(Boolean);
+};
+
+
+/* =========================================================
+   CREATE WORKSPACE
+========================================================= */
+
+const createWorkspace = async ({
+  name,
+  description = "",
+}) => {
+
+  const cleanName =
+    name?.trim();
+
+  const cleanDescription =
+    description?.trim() || "";
+
+
+  if (!cleanName) {
+
+    throw new Error(
+      "Workspace name is required."
+    );
+  }
+
+
+  const result =
+    await apiRequest(
+      "/workspaces",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          name: cleanName,
+          description:
+            cleanDescription,
+        }),
+      }
+    );
+
+
+  /*
+   * Backend returns the newly created
+   * Workspace directly inside data.
+   */
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -20,18 +140,25 @@ const getWorkspaces = async () => {
 const getWorkspace = async (
   workspaceId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}`
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -42,18 +169,25 @@ const getWorkspace = async (
 const getWorkspaceMembers = async (
   workspaceId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}/members`
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -65,18 +199,28 @@ const getWorkspaceMember = async (
   workspaceId,
   memberId
 ) => {
-  if (!workspaceId || !memberId) {
+
+  if (
+    !workspaceId ||
+    !memberId
+  ) {
+
     throw new Error(
-      "Workspace ID and member ID are required"
+      "Workspace ID and member ID are required."
     );
   }
+
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}/members/${memberId}`
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -89,23 +233,30 @@ const updateMemberRole = async (
   memberId,
   role
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   if (!memberId) {
+
     throw new Error(
-      "Member ID is required"
+      "Member ID is required."
     );
   }
 
+
   if (!role) {
+
     throw new Error(
-      "Member role is required"
+      "Member role is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -119,7 +270,11 @@ const updateMemberRole = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -131,17 +286,22 @@ const removeWorkspaceMember = async (
   workspaceId,
   memberId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
 
+
   if (!memberId) {
+
     throw new Error(
-      "Member ID is required"
+      "Member ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -151,7 +311,11 @@ const removeWorkspaceMember = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -162,11 +326,14 @@ const removeWorkspaceMember = async (
 const leaveWorkspace = async (
   workspaceId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -176,7 +343,11 @@ const leaveWorkspace = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -187,18 +358,25 @@ const leaveWorkspace = async (
 const getWorkspaceInvitations = async (
   workspaceId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}/invitations`
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -211,17 +389,22 @@ const createWorkspaceInvitation = async (
   email,
   role
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
 
+
   if (!email?.trim()) {
+
     throw new Error(
-      "Email is required"
+      "Email is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -230,13 +413,19 @@ const createWorkspaceInvitation = async (
         method: "POST",
 
         body: JSON.stringify({
-          email: email.trim(),
+          email:
+            email.trim(),
+
           role,
         }),
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -248,11 +437,17 @@ const cancelWorkspaceInvitation = async (
   workspaceId,
   invitationId
 ) => {
-  if (!workspaceId || !invitationId) {
+
+  if (
+    !workspaceId ||
+    !invitationId
+  ) {
+
     throw new Error(
-      "Workspace ID and invitation ID are required"
+      "Workspace ID and invitation ID are required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -262,7 +457,11 @@ const cancelWorkspaceInvitation = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -273,11 +472,14 @@ const cancelWorkspaceInvitation = async (
 const acceptWorkspaceInvitation = async (
   invitationId
 ) => {
+
   if (!invitationId) {
+
     throw new Error(
-      "Invitation ID is required"
+      "Invitation ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -287,7 +489,11 @@ const acceptWorkspaceInvitation = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -298,11 +504,14 @@ const acceptWorkspaceInvitation = async (
 const rejectWorkspaceInvitation = async (
   invitationId
 ) => {
+
   if (!invitationId) {
+
     throw new Error(
-      "Invitation ID is required"
+      "Invitation ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -312,7 +521,11 @@ const rejectWorkspaceInvitation = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -323,18 +536,25 @@ const rejectWorkspaceInvitation = async (
 const getWorkspaceSettings = async (
   workspaceId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}/settings`
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -346,11 +566,14 @@ const updateWorkspaceSettings = async (
   workspaceId,
   data
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -358,11 +581,17 @@ const updateWorkspaceSettings = async (
       {
         method: "PATCH",
 
-        body: JSON.stringify(data),
+        body: JSON.stringify(
+          data
+        ),
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
@@ -374,17 +603,22 @@ const transferOwnership = async (
   workspaceId,
   newOwnerId
 ) => {
+
   if (!workspaceId) {
+
     throw new Error(
-      "Workspace ID is required"
+      "Workspace ID is required."
     );
   }
 
+
   if (!newOwnerId) {
+
     throw new Error(
-      "New owner ID is required"
+      "New owner ID is required."
     );
   }
+
 
   const result =
     await apiRequest(
@@ -398,12 +632,17 @@ const transferOwnership = async (
       }
     );
 
-  return result?.data ?? result;
+
+  return (
+    result?.data ??
+    result
+  );
 };
 
 
 export {
   getWorkspaces,
+  createWorkspace,
   getWorkspace,
   getWorkspaceMembers,
   getWorkspaceMember,
