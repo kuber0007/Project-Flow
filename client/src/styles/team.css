@@ -1,0 +1,905 @@
+/* =========================================================
+   TEAM PAGE
+========================================================= */
+
+.team-page {
+  min-height: 100vh;
+  display: flex;
+
+  background: #f8faff;
+  color: #1e293b;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.team-main {
+  width: calc(100% - 232px);
+
+  min-height: 100vh;
+
+  margin-left: 232px;
+}
+
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+.team-topbar {
+  height: 70px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 38px;
+
+  border-bottom: 1px solid #e7ebf3;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.9
+  );
+}
+
+.team-back {
+  border: 0;
+
+  background: transparent;
+
+  color: #718096;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.team-back:hover {
+  color: #4f6fd8;
+}
+
+.team-user {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.team-user-avatar {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eef3ff;
+
+  color: #4f6fd8;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.team-content {
+  max-width: 1100px;
+
+  margin: 0 auto;
+
+  padding: 42px 38px 70px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.team-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-bottom: 28px;
+}
+
+.team-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #7183b5;
+
+  font-size: 10px;
+  font-weight: 750;
+
+  letter-spacing: 0.12em;
+}
+
+.team-header h1 {
+  margin: 0 0 7px;
+
+  color: #1e293b;
+
+  font-size: 29px;
+  line-height: 1.2;
+}
+
+.team-header p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 13px;
+}
+
+.team-dashboard-button {
+  height: 40px;
+
+  padding: 0 15px;
+
+  border: 1px solid #e1e7f0;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #475569;
+
+  font-family: inherit;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.team-dashboard-button:hover {
+  background: #f8faff;
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.team-error,
+.team-success {
+  margin-bottom: 18px;
+
+  padding: 12px 14px;
+
+  border-radius: 9px;
+
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.team-error {
+  border: 1px solid #ffd6d6;
+
+  background: #fff5f5;
+
+  color: #dc2626;
+}
+
+.team-success {
+  border: 1px solid #ccebd8;
+
+  background: #f0fbf4;
+
+  color: #15803d;
+}
+
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.team-stats {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.team-stat-card {
+  padding: 19px 20px;
+
+  border: 1px solid #e5eaf4;
+  border-radius: 13px;
+
+  background: #ffffff;
+}
+
+.team-stat-card span {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.team-stat-card strong {
+  color: #334155;
+
+  font-size: 22px;
+}
+
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.team-section {
+  overflow: hidden;
+
+  border: 1px solid #e5eaf4;
+  border-radius: 15px;
+
+  background: #ffffff;
+}
+
+.team-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 21px 22px;
+
+  border-bottom: 1px solid #eef1f6;
+}
+
+.team-section-header h2 {
+  margin: 0 0 5px;
+
+  color: #334155;
+
+  font-size: 16px;
+}
+
+.team-section-header p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+.team-search {
+  width: 235px;
+  height: 39px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 0 11px;
+
+  border: 1px solid #e0e6ef;
+  border-radius: 8px;
+
+  background: #ffffff;
+}
+
+.team-search span {
+  color: #94a3b8;
+
+  font-size: 17px;
+}
+
+.team-search input {
+  width: 100%;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 12px;
+}
+
+.team-search input::placeholder {
+  color: #a3adbc;
+}
+
+
+/* =========================================================
+   MEMBER LIST
+========================================================= */
+
+.team-member-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.team-member-row {
+  min-height: 78px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(260px, 1fr)
+    160px
+    100px;
+
+  align-items: center;
+
+  gap: 20px;
+
+  padding: 12px 22px;
+
+  border-bottom: 1px solid #f0f2f6;
+}
+
+.team-member-row:last-child {
+  border-bottom: 0;
+}
+
+
+/* =========================================================
+   MEMBER USER
+========================================================= */
+
+.team-member-user {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  min-width: 0;
+}
+
+.team-member-avatar {
+  width: 40px;
+  height: 40px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eef3ff;
+
+  color: #4f6fd8;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.team-member-info {
+  min-width: 0;
+}
+
+.team-member-name {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 0;
+}
+
+.team-member-name strong {
+  overflow: hidden;
+
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-member-name span {
+  flex-shrink: 0;
+
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: #f1f5f9;
+
+  color: #64748b;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.team-member-info p {
+  overflow: hidden;
+
+  margin: 4px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   ROLE
+========================================================= */
+
+.team-member-role {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.team-member-role select {
+  width: 120px;
+  height: 36px;
+
+  padding: 0 10px;
+
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #475569;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  outline: none;
+
+  cursor: pointer;
+}
+
+.team-member-role select:focus {
+  border-color: #8aa8f5;
+
+  box-shadow:
+    0 0 0 3px #eef3ff;
+}
+
+
+/* =========================================================
+   ROLE BADGES
+========================================================= */
+
+.team-role {
+  display: inline-flex;
+  align-items: center;
+
+  height: 28px;
+
+  padding: 0 9px;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 750;
+
+  letter-spacing: 0.04em;
+}
+
+.team-role-owner {
+  background: #f3efff;
+  color: #7657c8;
+}
+
+.team-role-admin {
+  background: #eef3ff;
+  color: #4f6fd8;
+}
+
+.team-role-member {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.team-role-viewer {
+  background: #f7f4ed;
+  color: #8a7445;
+}
+
+
+/* =========================================================
+   REMOVE
+========================================================= */
+
+.team-remove-button {
+  height: 34px;
+
+  padding: 0 10px;
+
+  border: 1px solid #f3d4d4;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #dc5555;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.team-remove-button:hover {
+  background: #fff6f6;
+}
+
+.team-remove-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.team-empty {
+  min-height: 260px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.team-empty-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 12px;
+
+  border-radius: 13px;
+
+  background: #f1f5f9;
+
+  color: #94a3b8;
+
+  font-size: 20px;
+}
+
+.team-empty h3 {
+  margin: 0 0 5px;
+
+  color: #475569;
+
+  font-size: 14px;
+}
+
+.team-empty p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   DANGER AREA
+========================================================= */
+
+.team-danger-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-top: 20px;
+  padding: 21px 22px;
+
+  border: 1px solid #f1dede;
+  border-radius: 15px;
+
+  background: #fffdfd;
+}
+
+.team-danger-section > div span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #c47a7a;
+
+  font-size: 9px;
+  font-weight: 750;
+
+  letter-spacing: 0.1em;
+}
+
+.team-danger-section h2 {
+  margin: 0 0 5px;
+
+  color: #475569;
+
+  font-size: 14px;
+}
+
+.team-danger-section p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+
+.team-leave-button {
+  flex-shrink: 0;
+
+  height: 38px;
+
+  padding: 0 13px;
+
+  border: 1px solid #efcccc;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #dc5555;
+
+  font-family: inherit;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.team-leave-button:hover {
+  background: #fff5f5;
+}
+
+.team-leave-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.team-loading {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f8faff;
+}
+
+.team-loading-card {
+  text-align: center;
+}
+
+.team-spinner {
+  width: 30px;
+  height: 30px;
+
+  margin: 0 auto 15px;
+
+  border: 3px solid #e7ebf3;
+
+  border-top-color: #4f8df7;
+
+  border-radius: 50%;
+
+  animation:
+    teamSpin
+    0.8s linear infinite;
+}
+
+@keyframes teamSpin {
+
+  to {
+    transform: rotate(360deg);
+  }
+
+}
+
+.team-loading-card h2 {
+  margin: 0 0 5px;
+
+  color: #334155;
+
+  font-size: 16px;
+}
+
+.team-loading-card p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   EMPTY PAGE
+========================================================= */
+
+.team-empty-page {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.team-empty-page h2 {
+  margin: 0 0 7px;
+
+  color: #334155;
+}
+
+.team-empty-page p {
+  margin: 0 0 18px;
+
+  color: #94a3b8;
+}
+
+.team-empty-page button {
+  height: 40px;
+
+  padding: 0 15px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: #4f8df7;
+
+  color: #ffffff;
+
+  font-family: inherit;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .team-sidebar {
+    width: 190px;
+  }
+
+  .team-main {
+    width: calc(100% - 190px);
+    margin-left: 190px;
+  }
+
+  .team-member-row {
+    grid-template-columns:
+      minmax(200px, 1fr)
+      120px
+      80px;
+  }
+
+  .team-member-role select {
+    width: 100px;
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .team-sidebar {
+    display: none;
+  }
+
+  .team-main {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .team-topbar {
+    padding: 0 18px;
+  }
+
+  .team-content {
+    padding: 28px 16px 50px;
+  }
+
+  .team-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .team-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .team-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .team-search {
+    width: 100%;
+  }
+
+  .team-member-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+
+    padding: 17px;
+  }
+
+  .team-member-role {
+    justify-content: flex-start;
+  }
+
+  .team-member-action {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .team-danger-section {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+}

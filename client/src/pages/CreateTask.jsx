@@ -1,285 +1,329 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import { createTask } from "../services/taskService";
+import { getProject } from "../services/projectService";
 
 const CreateTask = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
 
+  const [project, setProject] = useState(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    priority: "MEDIUM",
     status: "TODO",
+    priority: "MEDIUM",
     dueDate: "",
   });
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  /* =========================================================
+     LOAD PROJECT
+  ========================================================= */
 
-    setFormData((previous) => ({
-      ...previous,
+  useEffect(() => {
+    const loadProject = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getProject(projectId);
+        setProject(data);
+      } catch (err) {
+        setError(
+          err?.message || "Failed to load project"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (projectId) {
+      loadProject();
+    }
+  }, [projectId]);
+
+  /* =========================================================
+     HANDLE INPUT
+  ========================================================= */
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
     }));
-
-    // Clear validation error when user starts typing
-    if (name === "title" && value.trim()) {
-      setError("");
-    }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  /* =========================================================
+     CREATE TASK
+  ========================================================= */
 
-    const title = formData.title.trim();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    if (!title) {
+    if (!formData.title.trim()) {
       setError("Task title is required");
       return;
     }
 
-    if (!projectId) {
-      setError("Project ID is missing");
-      return;
-    }
-
     try {
-      setLoading(true);
+      setCreating(true);
       setError("");
 
-      await createTask(
-        projectId,
-        {
-          title,
-          description: formData.description.trim(),
-          priority: formData.priority,
-          status: formData.status,
-          dueDate: formData.dueDate || null,
-        }
-      );
+      const taskData = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        status: formData.status,
+        priority: formData.priority,
+      };
 
+      if (formData.dueDate) {
+        taskData.dueDate = formData.dueDate;
+      }
+
+      await createTask(projectId, taskData);
+
+      // Go back to project details after successful creation
       navigate(`/projects/${projectId}`);
     } catch (err) {
-      console.error("Failed to create task:", err);
-
       setError(
-        err.message || "Failed to create task"
+        err?.message || "Failed to create task"
       );
     } finally {
-      setLoading(false);
+      setCreating(false);
     }
   };
 
-  return (
-    <div className="create-task-page">
+  /* =========================================================
+     LOADING
+  ========================================================= */
 
-      <main className="create-task-main">
+  if (loading) {
+    return (
+      <div className="create-task-page">
+        <div className="create-task-container">
+          <p>Loading project...</p>
+        </div>
+      </div>
+    );
+  }
 
-        <div className="create-task-content">
+  /* =========================================================
+     ERROR / PROJECT NOT FOUND
+  ========================================================= */
+
+  if (!project && error) {
+    return (
+      <div className="create-task-page">
+        <div className="create-task-container">
+          <div className="create-task-error">
+            {error}
+          </div>
 
           <button
             type="button"
-            className="create-task-back"
-            onClick={() =>
-              navigate(`/projects/${projectId}`)
-            }
-            disabled={loading}
+            onClick={() => navigate("/projects")}
           >
-            ← Back to Project
+            Back to Projects
           </button>
+        </div>
+      </div>
+    );
+  }
 
-          <div className="create-task-header">
+  /* =========================================================
+     UI
+  ========================================================= */
+
+  return (
+    <div className="create-task-page">
+      <div className="create-task-container">
+
+        {/* Header */}
+        <div className="create-task-header">
+          <div>
+            <button
+              type="button"
+              className="back-button"
+              onClick={() =>
+                navigate(`/projects/${projectId}`)
+              }
+            >
+              ← Back to Project
+            </button>
 
             <h1>Create Task</h1>
 
-            <p>
-              Add a new task to this project.
-            </p>
+            {project && (
+              <p>
+                Create a new task in{" "}
+                <strong>{project.name}</strong>
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="create-task-error">
+            {error}
+          </div>
+        )}
+
+        {/* Form */}
+        <form
+          className="create-task-form"
+          onSubmit={handleSubmit}
+        >
+          {/* Title */}
+          <div className="form-group">
+            <label htmlFor="title">
+              Task Title
+            </label>
+
+            <input
+              id="title"
+              name="title"
+              type="text"
+              placeholder="Enter task title"
+              value={formData.title}
+              onChange={handleChange}
+              disabled={creating}
+              autoFocus
+            />
+          </div>
+
+          {/* Description */}
+          <div className="form-group">
+            <label htmlFor="description">
+              Description
+            </label>
+
+            <textarea
+              id="description"
+              name="description"
+              placeholder="Describe the task..."
+              value={formData.description}
+              onChange={handleChange}
+              disabled={creating}
+              rows={6}
+            />
+          </div>
+
+          {/* Status + Priority */}
+          <div className="form-row">
+
+            <div className="form-group">
+              <label htmlFor="status">
+                Status
+              </label>
+
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                disabled={creating}
+              >
+                <option value="TODO">
+                  To Do
+                </option>
+
+                <option value="IN_PROGRESS">
+                  In Progress
+                </option>
+
+                <option value="IN_REVIEW">
+                  In Review
+                </option>
+
+                <option value="COMPLETED">
+                  Completed
+                </option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="priority">
+                Priority
+              </label>
+
+              <select
+                id="priority"
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                disabled={creating}
+              >
+                <option value="LOW">
+                  Low
+                </option>
+
+                <option value="MEDIUM">
+                  Medium
+                </option>
+
+                <option value="HIGH">
+                  High
+                </option>
+
+                <option value="URGENT">
+                  Urgent
+                </option>
+              </select>
+            </div>
 
           </div>
 
-          <form
-            className="create-task-form"
-            onSubmit={handleSubmit}
-          >
+          {/* Due Date */}
+          <div className="form-group">
+            <label htmlFor="dueDate">
+              Due Date
+            </label>
 
-            {error && (
-              <div className="create-task-error">
-                {error}
-              </div>
-            )}
+            <input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={handleChange}
+              disabled={creating}
+            />
+          </div>
 
-            {/* Task Title */}
+          {/* Actions */}
+          <div className="create-task-actions">
 
-            <div className="create-task-field">
+            <button
+              type="button"
+              className="cancel-button"
+              onClick={() =>
+                navigate(`/projects/${projectId}`)
+              }
+              disabled={creating}
+            >
+              Cancel
+            </button>
 
-              <label htmlFor="title">
-                Task Title
-              </label>
+            <button
+              type="submit"
+              className="create-task-button"
+              disabled={creating}
+            >
+              {creating
+                ? "Creating..."
+                : "Create Task"}
+            </button>
 
-              <input
-                id="title"
-                name="title"
-                type="text"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Enter task title"
-                disabled={loading}
-                autoFocus
-              />
-
-            </div>
-
-            {/* Description */}
-
-            <div className="create-task-field">
-
-              <label htmlFor="description">
-                Description
-              </label>
-
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Describe the task..."
-                rows="5"
-                disabled={loading}
-              />
-
-            </div>
-
-            {/* Status + Priority */}
-
-            <div className="create-task-row">
-
-              <div className="create-task-field">
-
-                <label htmlFor="status">
-                  Status
-                </label>
-
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-
-                  <option value="TODO">
-                    To Do
-                  </option>
-
-                  <option value="IN_PROGRESS">
-                    In Progress
-                  </option>
-
-                  <option value="REVIEW">
-                    Review
-                  </option>
-
-                  <option value="DONE">
-                    Done
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div className="create-task-field">
-
-                <label htmlFor="priority">
-                  Priority
-                </label>
-
-                <select
-                  id="priority"
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-
-                  <option value="LOW">
-                    Low
-                  </option>
-
-                  <option value="MEDIUM">
-                    Medium
-                  </option>
-
-                  <option value="HIGH">
-                    High
-                  </option>
-
-                  <option value="URGENT">
-                    Urgent
-                  </option>
-
-                </select>
-
-              </div>
-
-            </div>
-
-            {/* Due Date */}
-
-            <div className="create-task-field">
-
-              <label htmlFor="dueDate">
-                Due Date
-              </label>
-
-              <input
-                id="dueDate"
-                name="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={handleChange}
-                disabled={loading}
-              />
-
-            </div>
-
-            {/* Actions */}
-
-            <div className="create-task-actions">
-
-              <button
-                type="button"
-                className="create-task-cancel"
-                onClick={() =>
-                  navigate(`/projects/${projectId}`)
-                }
-                disabled={loading}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="create-task-submit"
-                disabled={loading}
-              >
-                {loading
-                  ? "Creating..."
-                  : "Create Task"}
-              </button>
-
-            </div>
-
-          </form>
-
-        </div>
-
-      </main>
-
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

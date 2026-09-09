@@ -1,0 +1,654 @@
+/* =========================================================
+   PROJECT MEMBERS PREVIEW
+========================================================= */
+
+.project-members-preview {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(240px, 1fr)
+    );
+    gap: 12px;
+    padding: 22px 24px;
+}
+
+.project-member-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 13px;
+
+    border: 1px solid #edf0f6;
+    border-radius: 11px;
+
+    background: #fbfcff;
+}
+
+.project-member-preview-avatar {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: linear-gradient(
+        135deg,
+        #eef3ff,
+        #e9eaff
+    );
+
+    color: #4f6fd8;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.project-member-preview-item strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #334155;
+
+    font-size: 13px;
+}
+
+.project-member-preview-item span {
+    display: block;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   MODAL OVERLAY
+========================================================= */
+
+.project-members-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background: rgba(
+        15,
+        23,
+        42,
+        0.42
+    );
+
+    backdrop-filter: blur(4px);
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.project-members-modal {
+    width: 100%;
+    max-width: 620px;
+
+    max-height: min(
+        720px,
+        calc(100vh - 48px)
+    );
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border: 1px solid #e5eaf4;
+    border-radius: 18px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 24px 70px rgba(
+            15,
+            23,
+            42,
+            0.18
+        );
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.project-members-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 25px 26px 22px;
+
+    border-bottom: 1px solid #eef1f6;
+}
+
+.project-members-modal-header span {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #7183b5;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.12em;
+}
+
+.project-members-modal-header h2 {
+    margin: 0 0 7px;
+
+    color: #1e293b;
+
+    font-size: 21px;
+    line-height: 1.25;
+}
+
+.project-members-modal-header p {
+    max-width: 450px;
+
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.project-members-close {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #e5eaf4;
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    color: #64748b;
+
+    font-size: 22px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.project-members-close:hover {
+    background: #f8faff;
+    color: #334155;
+}
+
+
+/* =========================================================
+   MODAL CONTENT
+========================================================= */
+
+.project-members-modal-content {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 16px 20px;
+}
+
+
+/* =========================================================
+   MEMBER LIST
+========================================================= */
+
+.project-members-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.project-member-option {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px;
+
+    border: 1px solid #edf0f6;
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.project-member-option:hover {
+    border-color: #cfd9ec;
+
+    background: #fbfcff;
+}
+
+.project-member-option.selected {
+    border-color: #c7d5fa;
+
+    background: #f7f9ff;
+
+    box-shadow:
+        0 0 0 2px rgba(
+            79,
+            141,
+            247,
+            0.06
+        );
+}
+
+.project-member-option input {
+    width: 17px;
+    height: 17px;
+
+    flex-shrink: 0;
+
+    margin: 0;
+
+    accent-color: #4f8df7;
+
+    cursor: pointer;
+}
+
+.project-member-option-avatar {
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eef3ff;
+
+    color: #4f6fd8;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.project-member-option-info {
+    min-width: 0;
+
+    flex: 1;
+}
+
+.project-member-option-info strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 650;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-member-option-info span {
+    display: block;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-member-option-role {
+    flex-shrink: 0;
+
+    padding: 5px 9px;
+
+    border-radius: 999px;
+
+    background: #f1f5f9;
+
+    color: #64748b;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.03em;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.project-members-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    padding: 16px 20px;
+
+    border-top: 1px solid #eef1f6;
+
+    background: #fcfdff;
+}
+
+.project-members-selected-count {
+    display: flex;
+    align-items: baseline;
+
+    gap: 5px;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+.project-members-selected-count strong {
+    color: #334155;
+
+    font-size: 15px;
+}
+
+.project-members-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+.project-members-cancel,
+.project-members-save {
+    height: 40px;
+
+    padding: 0 16px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.project-members-cancel {
+    border: 1px solid #e1e7f0;
+
+    background: #ffffff;
+
+    color: #475569;
+}
+
+.project-members-cancel:hover {
+    background: #f8faff;
+}
+
+.project-members-save {
+    border: none;
+
+    background: linear-gradient(
+        135deg,
+        #4f8df7,
+        #6366f1
+    );
+
+    color: #ffffff;
+
+    box-shadow:
+        0 5px 12px rgba(
+            79,
+            141,
+            247,
+            0.18
+        );
+}
+
+.project-members-save:hover {
+    opacity: 0.93;
+}
+
+.project-members-cancel:disabled,
+.project-members-save:disabled,
+.project-members-close:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.project-members-success {
+    margin: 0 20px 16px;
+
+    padding: 11px 13px;
+
+    border: 1px solid #ccebd8;
+    border-radius: 9px;
+
+    background: #f0fbf4;
+
+    color: #15803d;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.project-members-loading {
+    min-height: 260px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+}
+
+.project-members-spinner {
+    width: 30px;
+    height: 30px;
+
+    border: 3px solid #e8edf5;
+
+    border-top-color: #4f8df7;
+
+    border-radius: 50%;
+
+    animation:
+        projectMembersSpin
+        0.8s linear infinite;
+}
+
+@keyframes projectMembersSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.project-members-error {
+    min-height: 260px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 14px;
+
+    text-align: center;
+}
+
+.project-members-error p {
+    margin: 0;
+
+    color: #dc2626;
+
+    font-size: 13px;
+}
+
+.project-members-error button {
+    height: 38px;
+
+    padding: 0 14px;
+
+    border: 1px solid #e5eaf4;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #475569;
+
+    font-family: inherit;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.project-members-empty {
+    min-height: 260px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+.project-members-empty h3 {
+    margin: 0 0 6px;
+
+    color: #334155;
+
+    font-size: 15px;
+}
+
+.project-members-empty p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .project-members-overlay {
+        padding: 12px;
+    }
+
+    .project-members-modal {
+        max-height: calc(
+            100vh - 24px
+        );
+
+        border-radius: 15px;
+    }
+
+    .project-members-modal-header {
+        padding: 20px;
+    }
+
+    .project-members-modal-content {
+        padding: 12px;
+    }
+
+    .project-members-modal-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .project-members-actions {
+        width: 100%;
+    }
+
+    .project-members-cancel,
+    .project-members-save {
+        flex: 1;
+    }
+
+    .project-member-option-role {
+        display: none;
+    }
+
+}

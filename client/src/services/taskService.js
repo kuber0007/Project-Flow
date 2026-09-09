@@ -110,7 +110,7 @@ const assignTask = async (
   const result = await apiRequest(
     `/tasks/${taskId}/assignee`,
     {
-      method: "PATCH",
+      method: "POST",
       body: JSON.stringify({
         assigneeId,
       }),
@@ -206,28 +206,44 @@ const searchTasks = async (
   const params = new URLSearchParams();
 
   if (filters.search) {
-    params.append("search", filters.search);
+    params.append(
+      "search",
+      filters.search
+    );
   }
 
   if (filters.status) {
-    params.append("status", filters.status);
+    params.append(
+      "status",
+      filters.status
+    );
   }
 
   if (filters.priority) {
-    params.append("priority", filters.priority);
+    params.append(
+      "priority",
+      filters.priority
+    );
   }
 
   if (filters.assignee) {
-    params.append("assignee", filters.assignee);
+    params.append(
+      "assignee",
+      filters.assignee
+    );
   }
 
-  const queryString = params.toString();
+  const queryString =
+    params.toString();
 
   const endpoint =
     `/tasks/project/${projectId}/search` +
-    (queryString ? `?${queryString}` : "");
+    (queryString
+      ? `?${queryString}`
+      : "");
 
-  const result = await apiRequest(endpoint);
+  const result =
+    await apiRequest(endpoint);
 
   return result?.data ?? result;
 };

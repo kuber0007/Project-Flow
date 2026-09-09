@@ -1,25 +1,40 @@
 import Project from "../models/project.model.js";
 import ProjectMember from "../models/projectMember.model.js";
-import Workspace from "../models/workspace.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
+
 // 1. Create a project
-const createProject = async (workspaceId, userId, { name, description, status }) => {
+const createProject = async (
+    workspaceId,
+    userId,
+    { name, description, status }
+) => {
+
     const member = await WorkspaceMember.findOne({
         workspace: workspaceId,
         user: userId
-    })
+    });
+
     if (!member) {
-        throw new ApiError(403, "You don't have access to this Workspace")
+        throw new ApiError(
+            403,
+            "You don't have access to this Workspace"
+        );
     }
 
     if (!["OWNER", "ADMIN"].includes(member.role)) {
-        throw new ApiError(403, "Only Owner or Admin can create Project")
+        throw new ApiError(
+            403,
+            "Only Owner or Admin can create Project"
+        );
     }
 
     if (!name?.trim()) {
-        throw new ApiError(400, "Project name is required");
+        throw new ApiError(
+            400,
+            "Project name is required"
+        );
     }
 
     const project = await Project.create({
@@ -28,174 +43,360 @@ const createProject = async (workspaceId, userId, { name, description, status })
         status: status || "NOT_STARTED",
         workspace: workspaceId,
         createdBy: userId
-    })
+    });
 
-    return project
-}
+    return project;
+};
+
 
 // 2. Get workspace projects
-const getWorkspacesProjects = async (workspaceId, userId) => {
+const getWorkspacesProjects = async (
+    workspaceId,
+    userId
+) => {
+
     const member = await WorkspaceMember.findOne({
         workspace: workspaceId,
         user: userId
-    })
+    });
 
     if (!member) {
-        throw new ApiError(403, "You don't have access to this workspace")
+        throw new ApiError(
+            403,
+            "You don't have access to this workspace"
+        );
     }
 
     const projects = await Project.find({
         workspace: workspaceId
-    }).sort({ createdAt: -1 })
+    }).sort({
+        createdAt: -1
+    });
 
-    return projects
-}
+    return projects;
+};
+
 
 // 3. Get Single Project
-const getSingleProject = async (projectId, userId) => {
+const getSingleProject = async (
+    projectId,
+    userId
+) => {
+
     const project = await Project.findById(projectId);
 
     if (!project) {
-        throw new ApiError(404, "Project not found");
-    }
-
-    const member = await WorkspaceMember.findOne({
-        workspace: project.workspace,
-        user: userId,
-    });
-
-    if (!member) {
-        throw new ApiError(403, "You do not have access to this project");
-    }
-    return project;
-}
-
-// 4. update project
-const updateProject = async (projectId, userId, { name, description, status }) => {
-    const project = await Project.findById(projectId)
-    if (!project) {
-        throw new ApiError(404, "Project not found")
+        throw new ApiError(
+            404,
+            "Project not found"
+        );
     }
 
     const member = await WorkspaceMember.findOne({
         workspace: project.workspace,
         user: userId
-    })
+    });
+
     if (!member) {
-        throw new ApiError(403, "You do not have access to this workspace")
+        throw new ApiError(
+            403,
+            "You do not have access to this project"
+        );
+    }
+
+    return project;
+};
+
+
+// 4. Update project
+const updateProject = async (
+    projectId,
+    userId,
+    { name, description, status }
+) => {
+
+    const project = await Project.findById(
+        projectId
+    );
+
+    if (!project) {
+        throw new ApiError(
+            404,
+            "Project not found"
+        );
+    }
+
+    const member = await WorkspaceMember.findOne({
+        workspace: project.workspace,
+        user: userId
+    });
+
+    if (!member) {
+        throw new ApiError(
+            403,
+            "You do not have access to this workspace"
+        );
     }
 
     if (!["OWNER", "ADMIN"].includes(member.role)) {
-        throw new ApiError(403, "Only Owner or Admin can update project")
+        throw new ApiError(
+            403,
+            "Only Owner or Admin can update project"
+        );
     }
 
     if (name !== undefined) {
+
         if (!name.trim()) {
-            throw new ApiError(400, "Project name cannot be empty");
+            throw new ApiError(
+                400,
+                "Project name cannot be empty"
+            );
         }
+
         project.name = name.trim();
     }
 
     if (description !== undefined) {
-        project.description = description.trim();
+        project.description =
+            description.trim();
     }
 
     if (status !== undefined) {
-        if (!["NOT_STARTED", "ACTIVE", "COMPLETED"].includes(status)) {
-            throw new ApiError(400, "Invalid project status");
+
+        if (
+            ![
+                "NOT_STARTED",
+                "ACTIVE",
+                "COMPLETED"
+            ].includes(status)
+        ) {
+            throw new ApiError(
+                400,
+                "Invalid project status"
+            );
         }
 
         project.status = status;
     }
+
     await project.save();
 
     return project;
-}
+};
 
-// 5. delete project
-const deleteProject = async (projectId, userId) => {
-    const project = await Project.findById(projectId)
+
+// 5. Delete project
+const deleteProject = async (
+    projectId,
+    userId
+) => {
+
+    const project = await Project.findById(
+        projectId
+    );
+
     if (!project) {
-        throw new ApiError(404, "Project not found")
+        throw new ApiError(
+            404,
+            "Project not found"
+        );
     }
 
     const member = await WorkspaceMember.findOne({
         workspace: project.workspace,
         user: userId
-    })
+    });
+
     if (!member) {
-        throw new ApiError(403, "You do not have access to this workspace")
+        throw new ApiError(
+            403,
+            "You do not have access to this workspace"
+        );
     }
 
     if (!["OWNER", "ADMIN"].includes(member.role)) {
-        throw new ApiError(403, "Only Owner or Admin can delete project")
+        throw new ApiError(
+            403,
+            "Only Owner or Admin can delete project"
+        );
     }
 
-    await Project.findByIdAndDelete(projectId)
+    await Project.findByIdAndDelete(
+        projectId
+    );
+
+    await ProjectMember.deleteMany({
+        project: projectId
+    });
 
     return project;
+};
 
-}
 
-// 6. update Project Members 
-const updateProjectMembers = async (projectId, userId, members) => {
+// 6. Get Project Members
+const getProjectMembers = async (
+    projectId,
+    userId
+) => {
 
-    //Basic verification--------------------------------
-    const project = await Project.findById(projectId)
+    const project = await Project.findById(
+        projectId
+    );
+
     if (!project) {
-        throw new ApiError(404, "Project not found")
+        throw new ApiError(
+            404,
+            "Project not found"
+        );
     }
 
-    const member = await WorkspaceMember.findOne({
-        workspace: project.workspace,
-        user: userId
-    })
-    if (!member) {
-        throw new ApiError(403, "You do not have access to this workspace")
+    const workspaceMember =
+        await WorkspaceMember.findOne({
+            workspace: project.workspace,
+            user: userId
+        });
+
+    if (!workspaceMember) {
+        throw new ApiError(
+            403,
+            "You do not have access to this project"
+        );
     }
 
-    if (!["OWNER", "ADMIN"].includes(member.role)) {
-        throw new ApiError(403, "Only Owner or Admin can update members")
+    const projectMembers =
+        await ProjectMember.find({
+            project: projectId
+        })
+        .populate(
+            "user",
+            "name email avatar"
+        )
+        .sort({
+            createdAt: 1
+        });
+
+    return projectMembers;
+};
+
+
+// 7. Update Project Members
+const updateProjectMembers = async (
+    projectId,
+    userId,
+    members
+) => {
+
+    const project = await Project.findById(
+        projectId
+    );
+
+    if (!project) {
+        throw new ApiError(
+            404,
+            "Project not found"
+        );
     }
-    //----------------------------------------------------------------------
+
+    const workspaceMember =
+        await WorkspaceMember.findOne({
+            workspace: project.workspace,
+            user: userId
+        });
+
+    if (!workspaceMember) {
+        throw new ApiError(
+            403,
+            "You do not have access to this workspace"
+        );
+    }
+
+    if (
+        !["OWNER", "ADMIN"].includes(
+            workspaceMember.role
+        )
+    ) {
+        throw new ApiError(
+            403,
+            "Only Owner or Admin can update members"
+        );
+    }
 
     if (!Array.isArray(members)) {
-        throw new ApiError(400, "Members must be an array");
+        throw new ApiError(
+            400,
+            "Members must be an array"
+        );
     }
 
-    const workspaceMembers = await WorkspaceMember.find({
-        workspace: project.workspace,
-        user: { $in: members }
-    }).select("user")
+    const uniqueMembers = [
+        ...new Set(
+            members.map(
+                (memberId) =>
+                    String(memberId)
+            )
+        )
+    ];
 
-    if (workspaceMembers.length !== members.length) {
-        throw new ApiError(400, "All project members must belong to workspace")
+    const workspaceMembers =
+        await WorkspaceMember.find({
+            workspace: project.workspace,
+            user: {
+                $in: uniqueMembers
+            }
+        }).select("user");
+
+    if (
+        workspaceMembers.length !==
+        uniqueMembers.length
+    ) {
+        throw new ApiError(
+            400,
+            "All project members must belong to workspace"
+        );
     }
 
     await ProjectMember.deleteMany({
         project: projectId
-    })
+    });
 
-    if (members.length) {
+    if (uniqueMembers.length) {
+
         await ProjectMember.insertMany(
-            members.map((memberId) => ({
-                project: projectId,
-                user: memberId,
-            }))
-        )
+            uniqueMembers.map(
+                (memberId) => ({
+                    project: projectId,
+                    user: memberId
+                })
+            )
+        );
     }
 
     return ProjectMember.find({
-        project: projectId,
-    }).populate("user", "name email avatar");
-}
-
-// 7. Search/query Project
-const searchProjects = async (workspaceId, userId, filters) => {
-    const member = await WorkspaceMember.findOne({
-        workspace: workspaceId,
-        user: userId
+        project: projectId
+    })
+    .populate(
+        "user",
+        "name email avatar"
+    )
+    .sort({
+        createdAt: 1
     });
+};
+
+
+// 8. Search/query Project
+const searchProjects = async (
+    workspaceId,
+    userId,
+    filters
+) => {
+
+    const member =
+        await WorkspaceMember.findOne({
+            workspace: workspaceId,
+            user: userId
+        });
 
     if (!member) {
         throw new ApiError(
@@ -209,6 +410,7 @@ const searchProjects = async (workspaceId, userId, filters) => {
     };
 
     if (filters.search) {
+
         query.$or = [
             {
                 name: {
@@ -230,15 +432,31 @@ const searchProjects = async (workspaceId, userId, filters) => {
     }
 
     if (filters.createdBy) {
-        query.createdBy = filters.createdBy;
+        query.createdBy =
+            filters.createdBy;
     }
 
-    const projects = await Project.find(query)
-        .populate("createdBy", "name email avatar")
-        .sort({ createdAt: -1 });
+    const projects =
+        await Project.find(query)
+        .populate(
+            "createdBy",
+            "name email avatar"
+        )
+        .sort({
+            createdAt: -1
+        });
 
     return projects;
 };
 
-export { createProject, getWorkspacesProjects, getSingleProject, updateProject, 
-    deleteProject, updateProjectMembers, searchProjects };
+
+export {
+    createProject,
+    getWorkspacesProjects,
+    getSingleProject,
+    updateProject,
+    deleteProject,
+    getProjectMembers,
+    updateProjectMembers,
+    searchProjects
+};

@@ -1,27 +1,91 @@
 import { Router } from "express";
-import { 
+
+import {
     createProject,
     getWorkspacesProjects,
     getSingleProject,
     updateProject,
     deleteProject,
+    getProjectMembers,
     updateProjectMembers,
     searchProjects
 } from "../controllers/project.controller.js";
+
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
-const router = Router()
+
+const router = Router();
+
 
 router.use(verifyJWT);
 
-router.post("/:workspaceId", createProject); // tested
-router.get("/workspace/:workspaceId", getWorkspacesProjects); // tested
-router.get("/workspace/:workspaceId/search", searchProjects); //tested
-router.get("/:projectId", getSingleProject); // tested
-router.patch("/:projectId", updateProject); // tested
-router.delete("/:projectId", deleteProject); // tested
 
-router.patch("/:projectId/members", updateProjectMembers); // tested
+/* ================= PROJECT CREATION ================= */
+
+router.post(
+    "/:workspaceId",
+    createProject
+);
+
+
+/* ================= WORKSPACE PROJECTS ================= */
+
+router.get(
+    "/workspace/:workspaceId",
+    getWorkspacesProjects
+);
+
+
+/* ================= PROJECT SEARCH ================= */
+
+router.get(
+    "/workspace/:workspaceId/search",
+    searchProjects
+);
+
+
+/* ================= PROJECT MEMBERS ================= */
+
+/*
+   IMPORTANT:
+   This must come BEFORE /:projectId
+   so "members" is treated as a route,
+   not as a project ID.
+*/
+
+router.get(
+    "/:projectId/members",
+    getProjectMembers
+);
+
+router.patch(
+    "/:projectId/members",
+    updateProjectMembers
+);
+
+
+/* ================= SINGLE PROJECT ================= */
+
+router.get(
+    "/:projectId",
+    getSingleProject
+);
+
+
+/* ================= UPDATE PROJECT ================= */
+
+router.patch(
+    "/:projectId",
+    updateProject
+);
+
+
+/* ================= DELETE PROJECT ================= */
+
+router.delete(
+    "/:projectId",
+    deleteProject
+);
 
 
 export default router;

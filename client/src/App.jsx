@@ -4,6 +4,7 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import "./App.css";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,10 +15,13 @@ import CreateProject from "./pages/CreateProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import TaskDetails from "./pages/TaskDetails";
 import CreateTask from "./pages/CreateTask";
+import Team from "./pages/Team";
+
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
 
         <Route
@@ -64,7 +68,11 @@ function App() {
           path="/tasks/:taskId"
           element={<TaskDetails />}
         />
-        
+
+        <Route
+          path="/team"
+          element={<Team />}
+        />
 
         <Route
           path="*"
@@ -77,8 +85,10 @@ function App() {
         />
 
       </Routes>
+
     </BrowserRouter>
   );
 }
+
 
 export default App;

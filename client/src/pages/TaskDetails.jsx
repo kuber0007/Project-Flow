@@ -5,18 +5,25 @@ import {
   getTask,
   updateTask,
   deleteTask,
+  assignTask,
   changeTaskStatus,
   changeTaskPriority,
   setTaskDueDate,
 } from "../services/taskService";
+
+import { getWorkspaceMembers } from "../services/workspaceService";
+import { getProject } from "../services/projectService";
+
 
 const TaskDetails = () => {
   const { taskId } = useParams();
   const navigate = useNavigate();
 
   const [task, setTask] = useState(null);
+  const [members, setMembers] = useState([]);
 
   const [loading, setLoading] = useState(true);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -30,6 +37,56 @@ const TaskDetails = () => {
     description: "",
   });
 
+  const [selectedAssignee, setSelectedAssignee] = useState("");
+
+
+  /* ================= GET PROJECT ID ================= */
+
+  const getProjectId = (taskData) => {
+    if (!taskData?.project) {
+      return null;
+    }
+
+    if (typeof taskData.project === "string") {
+      return taskData.project;
+    }
+
+    return taskData.project?._id || null;
+  };
+
+
+  /* ================= GET WORKSPACE ID ================= */
+
+  const getWorkspaceId = (project) => {
+    if (!project?.workspace) {
+      return null;
+    }
+
+    if (typeof project.workspace === "string") {
+      return project.workspace;
+    }
+
+    return project.workspace?._id || null;
+  };
+
+
+  /* ================= CURRENT ASSIGNEE ID ================= */
+
+  const getAssigneeId = (assignee) => {
+    if (!assignee) {
+      return "";
+    }
+
+    if (typeof assignee === "string") {
+      return assignee;
+    }
+
+    return assignee?._id || "";
+  };
+
+
+  /* ================= LOAD TASK ================= */
+
   const loadTask = async () => {
     try {
       setLoading(true);
@@ -40,44 +97,111 @@ const TaskDetails = () => {
       setTask(data);
 
       setFormData({
-        title: data?.title || data?.name || "",
+        title: data?.title || "",
         description: data?.description || "",
       });
+
+      setSelectedAssignee(
+        getAssigneeId(data?.assignee)
+      );
+
+      return data;
     } catch (err) {
       console.error("Failed to load task:", err);
-      setError(err.message || "Failed to load task");
+
+      setError(
+        err.message || "Failed to load task"
+      );
+
+      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (taskId) {
-      loadTask();
+
+  /* ================= LOAD WORKSPACE MEMBERS ================= */
+
+  const loadMembers = async (taskData) => {
+    try {
+      const projectId = getProjectId(taskData);
+
+      if (!projectId) {
+        return;
+      }
+
+      setLoadingMembers(true);
+
+      const project = await getProject(projectId);
+
+      const workspaceId = getWorkspaceId(project);
+
+      if (!workspaceId) {
+        return;
+      }
+
+      const result =
+        await getWorkspaceMembers(workspaceId);
+
+      const memberList = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.members)
+          ? result.members
+          : [];
+
+      setMembers(memberList);
+    } catch (err) {
+      console.error(
+        "Failed to load workspace members:",
+        err
+      );
+    } finally {
+      setLoadingMembers(false);
     }
-  }, [taskId]);
-
-  const getProjectId = () => {
-    if (!task?.project) return null;
-
-    if (typeof task.project === "string") {
-      return task.project;
-    }
-
-    return task.project?._id;
   };
 
+
+  /* ================= INITIAL LOAD ================= */
+
+  useEffect(() => {
+    if (!taskId) {
+      return;
+    }
+
+    const loadPage = async () => {
+      const taskData = await loadTask();
+
+      if (taskData) {
+        await loadMembers(taskData);
+      }
+    };
+
+    loadPage();
+  }, [taskId]);
+
+
+  /* ================= FORMAT VALUE ================= */
+
   const formatValue = (value) => {
-    if (!value) return "Not available";
+    if (!value) {
+      return "Not available";
+    }
 
     return value
       .replaceAll("_", " ")
       .toLowerCase()
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+      .replace(/\b\w/g, (char) =>
+        char.toUpperCase()
+      );
   };
 
+
+  /* ================= FORMAT DATE ================= */
+
   const formatDate = (date) => {
-    if (!date) return "Not available";
+    if (!date) {
+      return "Not available";
+    }
 
     const parsedDate = new Date(date);
 
@@ -85,15 +209,23 @@ const TaskDetails = () => {
       return "Not available";
     }
 
-    return parsedDate.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return parsedDate.toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }
+    );
   };
 
+
+  /* ================= DATE INPUT ================= */
+
   const getDateInputValue = (date) => {
-    if (!date) return "";
+    if (!date) {
+      return "";
+    }
 
     const parsedDate = new Date(date);
 
@@ -104,6 +236,9 @@ const TaskDetails = () => {
     return parsedDate.toISOString().split("T")[0];
   };
 
+
+  /* ================= SUCCESS MESSAGE ================= */
+
   const showSuccess = (message) => {
     setSuccess(message);
 
@@ -111,6 +246,9 @@ const TaskDetails = () => {
       setSuccess("");
     }, 2500);
   };
+
+
+  /* ================= FORM CHANGE ================= */
 
   const handleFormChange = (event) => {
     const { name, value } = event.target;
@@ -120,6 +258,9 @@ const TaskDetails = () => {
       [name]: value,
     }));
   };
+
+
+  /* ================= SAVE CHANGES ================= */
 
   const handleUpdate = async (event) => {
     event.preventDefault();
@@ -133,34 +274,89 @@ const TaskDetails = () => {
       setSaving(true);
       setError("");
 
-      const result = await updateTask(taskId, {
+      /* ---------- UPDATE BASIC TASK DATA ---------- */
+
+      const updatedTask = await updateTask(
+        taskId,
+        {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+        }
+      );
+
+      let nextTask = {
+        ...task,
+        ...(updatedTask || {}),
         title: formData.title.trim(),
         description: formData.description.trim(),
-      });
+      };
 
-      const updatedTask =
-        result?.data || result || task;
 
-      setTask((previous) => ({
-        ...previous,
-        ...updatedTask,
-        title:
-          updatedTask?.title ||
-          formData.title.trim(),
-        description:
-          updatedTask?.description ||
-          formData.description.trim(),
-      }));
+      /* ---------- UPDATE ASSIGNEE ---------- */
+
+      const currentAssigneeId =
+        getAssigneeId(task?.assignee);
+
+      if (
+        selectedAssignee &&
+        selectedAssignee !== currentAssigneeId
+      ) {
+        const assignmentResult =
+          await assignTask(
+            taskId,
+            selectedAssignee
+          );
+
+        const selectedMember =
+          members.find((member) => {
+            const memberUserId =
+              typeof member.user === "string"
+                ? member.user
+                : member.user?._id;
+
+            return (
+              memberUserId === selectedAssignee
+            );
+          });
+
+        const selectedUser =
+          selectedMember?.user || null;
+
+        nextTask = {
+          ...nextTask,
+          assignee:
+            assignmentResult?.assignee ||
+            assignmentResult?.data?.assignee ||
+            selectedUser ||
+            {
+              _id: selectedAssignee,
+            },
+        };
+      }
+
+      setTask(nextTask);
 
       setEditing(false);
-      showSuccess("Task updated successfully");
+
+      showSuccess(
+        "Task updated successfully"
+      );
     } catch (err) {
-      console.error("Failed to update task:", err);
-      setError(err.message || "Failed to update task");
+      console.error(
+        "Failed to save task:",
+        err
+      );
+
+      setError(
+        err.message || "Failed to save task"
+      );
     } finally {
       setSaving(false);
     }
   };
+
+
+  /* ================= STATUS CHANGE ================= */
 
   const handleStatusChange = async (event) => {
     const status = event.target.value;
@@ -169,7 +365,10 @@ const TaskDetails = () => {
       setSaving(true);
       setError("");
 
-      await changeTaskStatus(taskId, status);
+      await changeTaskStatus(
+        taskId,
+        status
+      );
 
       setTask((previous) => ({
         ...previous,
@@ -178,12 +377,21 @@ const TaskDetails = () => {
 
       showSuccess("Status updated");
     } catch (err) {
-      console.error("Failed to change status:", err);
-      setError(err.message || "Failed to change status");
+      console.error(
+        "Failed to change status:",
+        err
+      );
+
+      setError(
+        err.message || "Failed to change status"
+      );
     } finally {
       setSaving(false);
     }
   };
+
+
+  /* ================= PRIORITY CHANGE ================= */
 
   const handlePriorityChange = async (event) => {
     const priority = event.target.value;
@@ -192,7 +400,10 @@ const TaskDetails = () => {
       setSaving(true);
       setError("");
 
-      await changeTaskPriority(taskId, priority);
+      await changeTaskPriority(
+        taskId,
+        priority
+      );
 
       setTask((previous) => ({
         ...previous,
@@ -201,21 +412,35 @@ const TaskDetails = () => {
 
       showSuccess("Priority updated");
     } catch (err) {
-      console.error("Failed to change priority:", err);
-      setError(err.message || "Failed to change priority");
+      console.error(
+        "Failed to change priority:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Failed to change priority"
+      );
     } finally {
       setSaving(false);
     }
   };
 
+
+  /* ================= DUE DATE CHANGE ================= */
+
   const handleDueDateChange = async (event) => {
-    const dueDate = event.target.value || null;
+    const dueDate =
+      event.target.value || null;
 
     try {
       setSaving(true);
       setError("");
 
-      await setTaskDueDate(taskId, dueDate);
+      await setTaskDueDate(
+        taskId,
+        dueDate
+      );
 
       setTask((previous) => ({
         ...previous,
@@ -224,19 +449,31 @@ const TaskDetails = () => {
 
       showSuccess("Due date updated");
     } catch (err) {
-      console.error("Failed to change due date:", err);
-      setError(err.message || "Failed to change due date");
+      console.error(
+        "Failed to change due date:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Failed to change due date"
+      );
     } finally {
       setSaving(false);
     }
   };
+
+
+  /* ================= DELETE TASK ================= */
 
   const handleDelete = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this task?"
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     try {
       setDeleting(true);
@@ -244,82 +481,145 @@ const TaskDetails = () => {
 
       await deleteTask(taskId);
 
-      const projectId = getProjectId();
+      const projectId =
+        getProjectId(task);
 
       if (projectId) {
-        navigate(`/projects/${projectId}`);
+        navigate(
+          `/projects/${projectId}`
+        );
       } else {
         navigate("/projects");
       }
     } catch (err) {
-      console.error("Failed to delete task:", err);
-      setError(err.message || "Failed to delete task");
+      console.error(
+        "Failed to delete task:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Failed to delete task"
+      );
+
       setDeleting(false);
     }
   };
+
+
+  /* ================= CANCEL EDIT ================= */
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+
+    setFormData({
+      title: task?.title || "",
+      description:
+        task?.description || "",
+    });
+
+    setSelectedAssignee(
+      getAssigneeId(task?.assignee)
+    );
+
+    setError("");
+  };
+
+
+  /* ================= LOADING ================= */
 
   if (loading) {
     return (
       <div className="task-details-loading">
         <div className="task-details-loader"></div>
+
         <p>Loading task...</p>
       </div>
     );
   }
 
+
+  /* ================= ERROR ================= */
+
   if (error && !task) {
     return (
       <div className="task-details-error-page">
         <div className="task-details-error-card">
-          <h2>Unable to load task</h2>
+
+          <h2>
+            Unable to load task
+          </h2>
+
           <p>{error}</p>
 
           <button
             type="button"
-            onClick={() => navigate("/projects")}
+            onClick={() =>
+              navigate("/projects")
+            }
           >
             ← Back to Projects
           </button>
+
         </div>
       </div>
     );
   }
+
+
+  /* ================= NO TASK ================= */
 
   if (!task) {
     return (
       <div className="task-details-error-page">
         <div className="task-details-error-card">
+
           <h2>Task not found</h2>
 
           <button
             type="button"
-            onClick={() => navigate("/projects")}
+            onClick={() =>
+              navigate("/projects")
+            }
           >
             ← Back to Projects
           </button>
+
         </div>
       </div>
     );
   }
 
-  const projectId = getProjectId();
+
+  const projectId =
+    getProjectId(task);
+
+
+  /* ================= UI ================= */
 
   return (
     <div className="task-details-page">
 
       <main className="task-details-main">
 
+        {/* ---------- BACK ---------- */}
+
         <button
           type="button"
           className="task-details-back"
           onClick={() =>
             projectId
-              ? navigate(`/projects/${projectId}`)
+              ? navigate(
+                  `/projects/${projectId}`
+                )
               : navigate("/projects")
           }
         >
           ← Back to Project
         </button>
+
+
+        {/* ---------- SUCCESS ---------- */}
 
         {success && (
           <div className="task-details-success">
@@ -327,13 +627,17 @@ const TaskDetails = () => {
           </div>
         )}
 
+
+        {/* ---------- ERROR ---------- */}
+
         {error && (
           <div className="task-details-inline-error">
             {error}
           </div>
         )}
 
-        {/* Header */}
+
+        {/* ---------- HEADER ---------- */}
 
         <div className="task-details-header">
 
@@ -354,10 +658,10 @@ const TaskDetails = () => {
             ) : (
               <h1>
                 {task.title ||
-                  task.name ||
                   "Untitled Task"}
               </h1>
             )}
+
 
             {editing ? (
               <textarea
@@ -379,7 +683,8 @@ const TaskDetails = () => {
 
         </div>
 
-        {/* Summary */}
+
+        {/* ---------- STATUS / PRIORITY / DATE ---------- */}
 
         <div className="task-details-grid">
 
@@ -388,36 +693,67 @@ const TaskDetails = () => {
             <span>Status</span>
 
             <select
-              value={task.status || "TODO"}
-              onChange={handleStatusChange}
+              value={
+                task.status || "TODO"
+              }
+              onChange={
+                handleStatusChange
+              }
               disabled={saving}
             >
-              <option value="TODO">To Do</option>
+              <option value="TODO">
+                To Do
+              </option>
+
               <option value="IN_PROGRESS">
                 In Progress
               </option>
-              <option value="REVIEW">Review</option>
-              <option value="DONE">Done</option>
+
+              <option value="REVIEW">
+                Review
+              </option>
+
+              <option value="DONE">
+                Done
+              </option>
             </select>
 
           </div>
+
 
           <div className="task-details-card">
 
             <span>Priority</span>
 
             <select
-              value={task.priority || "MEDIUM"}
-              onChange={handlePriorityChange}
+              value={
+                task.priority ||
+                "MEDIUM"
+              }
+              onChange={
+                handlePriorityChange
+              }
               disabled={saving}
             >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-              <option value="URGENT">Urgent</option>
+              <option value="LOW">
+                Low
+              </option>
+
+              <option value="MEDIUM">
+                Medium
+              </option>
+
+              <option value="HIGH">
+                High
+              </option>
+
+              <option value="URGENT">
+                Urgent
+              </option>
             </select>
 
           </div>
+
 
           <div className="task-details-card">
 
@@ -425,8 +761,12 @@ const TaskDetails = () => {
 
             <input
               type="date"
-              value={getDateInputValue(task.dueDate)}
-              onChange={handleDueDateChange}
+              value={getDateInputValue(
+                task.dueDate
+              )}
+              onChange={
+                handleDueDateChange
+              }
               disabled={saving}
             />
 
@@ -434,53 +774,82 @@ const TaskDetails = () => {
 
         </div>
 
-        {/* Information */}
+
+        {/* ---------- TASK INFORMATION ---------- */}
 
         <section className="task-details-section">
 
           <div className="task-details-section-header">
-            <h2>Task Information</h2>
+
+            <h2>
+              Task Information
+            </h2>
+
           </div>
+
 
           <div className="task-details-information">
 
             <div>
               <span>Task ID</span>
-              <strong>{task._id}</strong>
+
+              <strong>
+                {task._id}
+              </strong>
             </div>
+
 
             <div>
               <span>Status</span>
+
               <strong>
-                {formatValue(task.status)}
+                {formatValue(
+                  task.status
+                )}
               </strong>
             </div>
+
 
             <div>
               <span>Priority</span>
+
               <strong>
-                {formatValue(task.priority)}
+                {formatValue(
+                  task.priority
+                )}
               </strong>
             </div>
+
 
             <div>
               <span>Due Date</span>
+
               <strong>
-                {formatDate(task.dueDate)}
+                {formatDate(
+                  task.dueDate
+                )}
               </strong>
             </div>
+
 
             <div>
               <span>Created</span>
+
               <strong>
-                {formatDate(task.createdAt)}
+                {formatDate(
+                  task.createdAt
+                )}
               </strong>
             </div>
 
+
             <div>
               <span>Updated</span>
+
               <strong>
-                {formatDate(task.updatedAt)}
+                {formatDate(
+                  task.updatedAt
+                )}
               </strong>
             </div>
 
@@ -488,49 +857,165 @@ const TaskDetails = () => {
 
         </section>
 
-        {/* Assignee */}
+
+        {/* ---------- ASSIGNEE ---------- */}
 
         <section className="task-details-section">
 
           <div className="task-details-section-header">
-            <h2>Assignee</h2>
+
+            <h2>
+              Assignee
+            </h2>
+
           </div>
 
-          <div className="task-details-assignee">
 
-            {task.assignee ? (
-              <>
-                <div className="task-details-avatar">
-                  {(task.assignee.name || "U")
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
+          {/* NORMAL MODE */}
 
-                <div>
-                  <strong>
-                    {task.assignee.name ||
+          {!editing && (
+            <div className="task-details-assignee">
+
+              {task.assignee ? (
+                <>
+                  <div className="task-details-avatar">
+
+                    {(
+                      task.assignee.name ||
                       task.assignee.email ||
-                      "Assigned User"}
-                  </strong>
+                      "U"
+                    )
+                      .charAt(0)
+                      .toUpperCase()}
 
-                  {task.assignee.email && (
-                    <p>{task.assignee.email}</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p>No user assigned to this task.</p>
-            )}
+                  </div>
 
-          </div>
+
+                  <div>
+
+                    <strong>
+                      {task.assignee.name ||
+                        task.assignee.email ||
+                        "Assigned User"}
+                    </strong>
+
+                    {task.assignee.email && (
+                      <p>
+                        {task.assignee.email}
+                      </p>
+                    )}
+
+                  </div>
+                </>
+              ) : (
+                <p>
+                  No user assigned to this task.
+                </p>
+              )}
+
+            </div>
+          )}
+
+
+          {/* EDIT MODE */}
+
+          {editing && (
+            <div className="task-details-assignee-control">
+
+              <label htmlFor="assignee">
+                Assign Task To
+              </label>
+
+
+              <select
+                id="assignee"
+                value={selectedAssignee}
+                onChange={(event) =>
+                  setSelectedAssignee(
+                    event.target.value
+                  )
+                }
+                disabled={
+                  loadingMembers ||
+                  saving
+                }
+              >
+
+                <option value="">
+                  {loadingMembers
+                    ? "Loading workspace members..."
+                    : "Select a member"}
+                </option>
+
+
+                {members.map((member) => {
+
+                  const user =
+                    typeof member.user ===
+                    "object"
+                      ? member.user
+                      : null;
+
+                  const userId =
+                    typeof member.user ===
+                    "string"
+                      ? member.user
+                      : user?._id;
+
+                  if (!userId) {
+                    return null;
+                  }
+
+                  return (
+                    <option
+                      key={userId}
+                      value={userId}
+                    >
+                      {user?.name ||
+                        user?.email ||
+                        "Workspace Member"}
+                    </option>
+                  );
+                })}
+
+              </select>
+
+            </div>
+          )}
 
         </section>
 
-        {/* Actions */}
+
+        {/* ---------- ACTIONS ---------- */}
 
         <div className="task-details-actions">
 
-          {editing ? (
+          {!editing ? (
+            <button
+              type="button"
+              className="task-details-edit-button"
+              onClick={() => {
+                setEditing(true);
+                setError("");
+
+                setFormData({
+                  title:
+                    task.title || "",
+                  description:
+                    task.description ||
+                    "",
+                });
+
+                setSelectedAssignee(
+                  getAssigneeId(
+                    task.assignee
+                  )
+                );
+              }}
+            >
+              Edit Task
+            </button>
+          ) : (
             <>
               <button
                 type="button"
@@ -538,40 +1023,25 @@ const TaskDetails = () => {
                 onClick={handleUpdate}
                 disabled={saving}
               >
-                {saving ? "Saving..." : "Save Changes"}
+                {saving
+                  ? "Saving..."
+                  : "Save Changes"}
               </button>
+
 
               <button
                 type="button"
                 className="task-details-cancel-button"
-                onClick={() => {
-                  setEditing(false);
-
-                  setFormData({
-                    title:
-                      task.title ||
-                      task.name ||
-                      "",
-                    description:
-                      task.description || "",
-                  });
-
-                  setError("");
-                }}
+                onClick={
+                  handleCancelEdit
+                }
                 disabled={saving}
               >
                 Cancel
               </button>
             </>
-          ) : (
-            <button
-              type="button"
-              className="task-details-edit-button"
-              onClick={() => setEditing(true)}
-            >
-              Edit Task
-            </button>
           )}
+
 
           <button
             type="button"
@@ -579,7 +1049,9 @@ const TaskDetails = () => {
             onClick={handleDelete}
             disabled={deleting}
           >
-            {deleting ? "Deleting..." : "Delete Task"}
+            {deleting
+              ? "Deleting..."
+              : "Delete Task"}
           </button>
 
         </div>
@@ -589,5 +1061,6 @@ const TaskDetails = () => {
     </div>
   );
 };
+
 
 export default TaskDetails;
