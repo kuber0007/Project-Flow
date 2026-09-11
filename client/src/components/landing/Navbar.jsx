@@ -1,6 +1,13 @@
-import { Menu, Sun } from "lucide-react";
+import { useState } from "react";
+import { Menu, Sun, X } from "lucide-react";
 
 function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
   return (
     <header className="navbar">
       <div className="container navbar-inner">
@@ -9,6 +16,7 @@ function Navbar() {
           href="/"
           className="brand"
           aria-label="ProjectFlow home"
+          onClick={closeMenu}
         >
           <span className="brand-icon">
             ✓
@@ -19,6 +27,7 @@ function Navbar() {
           </span>
         </a>
 
+        {/* Desktop navigation */}
         <nav
           className="desktop-nav"
           aria-label="Main navigation"
@@ -29,6 +38,7 @@ function Navbar() {
           <a href="#contact">Contact</a>
         </nav>
 
+        {/* Desktop actions */}
         <div className="navbar-actions">
 
           <button
@@ -55,13 +65,61 @@ function Navbar() {
 
         </div>
 
+        {/* Mobile burger */}
         <button
           type="button"
           className="mobile-menu-button"
-          aria-label="Open navigation menu"
+          aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={isMenuOpen}
+          onClick={() => setIsMenuOpen((previous) => !previous)}
         >
-          <Menu size={21} />
+          {isMenuOpen ? (
+            <X size={21} />
+          ) : (
+            <Menu size={21} />
+          )}
         </button>
+
+        {/* Mobile navigation */}
+        {isMenuOpen && (
+          <div className="mobile-nav-menu">
+
+            <a href="#features" onClick={closeMenu}>
+              Features
+            </a>
+
+            <a href="#pricing" onClick={closeMenu}>
+              Pricing
+            </a>
+
+            <a href="#about" onClick={closeMenu}>
+              About
+            </a>
+
+            <a href="#contact" onClick={closeMenu}>
+              Contact
+            </a>
+
+            <div className="mobile-nav-divider" />
+
+            <a
+              href="/login"
+              className="mobile-nav-login"
+              onClick={closeMenu}
+            >
+              Login
+            </a>
+
+            <a
+              href="/signup"
+              className="mobile-nav-signup"
+              onClick={closeMenu}
+            >
+              Sign Up
+            </a>
+
+          </div>
+        )}
 
       </div>
     </header>

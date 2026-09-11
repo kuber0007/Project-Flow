@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Navigate,
+  useNavigate ,
   Link,
 } from "react-router-dom";
 
@@ -78,6 +79,7 @@ const getInitialUser = () => {
 ========================================================= */
 
 function Dashboard() {
+  const navigate = useNavigate();
   /* =======================================================
      AUTH
   ======================================================= */
@@ -816,14 +818,20 @@ function Dashboard() {
             <button
               type="button"
               className="dashboard-icon-button"
-              aria-label="Settings"
+              aria-label="Workspace Settings"
+              onClick={() => {
+                if (workspace?._id) {
+                  navigate(
+                    `/workspaces/${workspace._id}/settings`
+                  );
+                }
+              }}
+              disabled={!workspace?._id}
             >
-
               <Settings
                 size={17}
                 strokeWidth={1.8}
               />
-
             </button>
 
           </div>

@@ -69,6 +69,76 @@ const loginUser = async ({ email, password }) => {
   return result;
 };
 
+// CHANGE PASSWORD
+const changePassword = async ({
+  oldPassword,
+  newPassword,
+}) => {
+  const token =
+    localStorage.getItem("accessToken");
+
+  const response = await fetch(
+    `${API_BASE_URL}/auth/change-password`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+
+        ...(token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : {}),
+      },
+      body: JSON.stringify({
+        oldPassword,
+        newPassword,
+      }),
+    }
+  );
+
+  return handleResponse(response);
+};
+
+// FORGOT PASSWORD
+const forgotPassword = async (email) => {
+  const response = await fetch(
+    `${API_BASE_URL}/auth/forgot-password`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    }
+  );
+
+  return handleResponse(response);
+};
+
+
+// RESET PASSWORD
+const resetPassword = async (
+  token,
+  newPassword
+) => {
+  const response = await fetch(
+    `${API_BASE_URL}/auth/reset-password/${token}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        newPassword,
+      }),
+    }
+  );
+
+  return handleResponse(response);
+};
 
 const logoutUser = () => {
   localStorage.removeItem("accessToken");
@@ -80,4 +150,7 @@ export {
   registerUser,
   loginUser,
   logoutUser,
+  resetPassword,
+  forgotPassword,
+  changePassword
 };

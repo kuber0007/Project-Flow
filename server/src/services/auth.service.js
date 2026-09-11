@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import validator from "validator";
 import { generateAccessToken } from "../utils/token.js";
 import { ApiError } from "../utils/ApiError.js";
+import crypto from "crypto";
+import { sendPasswordResetEmail } from "../utils/email.js";
 
 const registerUser = async ({ name, email, password }) => {
 
@@ -123,4 +125,118 @@ const changePassword = async (userId, {oldPassword,newPassword}) =>{
     return true;
 }
 
-export { registerUser, loginUser, getCurrentUser, changePassword };
+const forgotPassword = async (email) => {
+  if (!email?.trim()) {
+    throw new ApiError(
+      400,
+      "Email is required"
+    );
+  }
+
+  const normalizedEmail =
+    email.trim().toLowerCase();
+
+  const user = await User.findOne({
+    email: normalizedEmail,
+  });
+
+  /*
+   * Do not reveal whether an account exists.
+   */
+  if (!user) {
+    return true;
+  }
+
+  const resetToken =
+    crypto.randomBytes(32).toString("hex");
+
+  const hashedToken =
+    crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+  user.resetPasswordToken = hashedToken;
+
+  user.resetPasswordExpires =
+    new Date(Date.now() + 15 * 60 * 1000);
+
+  await user.save();
+
+  const frontendUrl =
+    process.env.CLIENT_URL ||
+    "http://localhost:5173";
+
+  const resetUrl =
+    `${frontendUrl}/reset-password/${resetToken}`;
+
+  await sendPasswordResetEmail(
+    user.email,
+    resetUrl
+  );
+
+  return true;
+};
+
+
+const resetPassword = async (
+  token,
+  newPassword
+) => {
+  if (!token) {
+    throw new ApiError(
+      400,
+      "Reset token is required"
+    );
+  }
+
+  if (!newPassword?.trim()) {
+    throw new ApiError(
+      400,
+      "New password is required"
+    );
+  }
+
+  if (newPassword.length < 6) {
+    throw new ApiError(
+      400,
+      "Password must be at least 6 characters"
+    );
+  }
+
+  const hashedToken =
+    crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+
+    resetPasswordExpires: {
+      $gt: new Date(),
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(
+      400,
+      "Reset token is invalid or expired"
+    );
+  }
+
+  user.password =
+    await bcrypt.hash(newPassword, 12);
+
+  /*
+   * Token can only be used once.
+   */
+  user.resetPasswordToken = null;
+  user.resetPasswordExpires = null;
+
+  await user.save();
+
+  return true;
+};
+
+export { registerUser, loginUser, getCurrentUser, changePassword, forgotPassword, resetPassword};

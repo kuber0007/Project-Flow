@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-    name:{
-      type:String,
-      required:[true,"Please provide your name"],
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Please provide your name"],
       trim: true,
     },
 
@@ -23,10 +24,23 @@ const userSchema = new mongoose.Schema({
     avatar: {
       type: String,
       default: "",
-    }
-    
-},{timestamps:true});
+    },
 
-const User = mongoose.model("User",userSchema);
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+const User = mongoose.model("User", userSchema);
 
 export default User;

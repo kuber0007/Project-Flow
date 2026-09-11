@@ -12,11 +12,16 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import CreateProject from "./pages/CreateProject";
+import ChangePassword from "./pages/ChangePassword";
 import ProjectDetails from "./pages/ProjectDetails";
 import TaskDetails from "./pages/TaskDetails";
+import MyTasks from "./pages/MyTasks";
 import CreateTask from "./pages/CreateTask";
 import Team from "./pages/Team";
 import CreateNewWorkspace from "./pages/CreateNewWorkspace";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import WorkspaceSettings from "./pages/WorkspaceSettings";
 
 
 function App() {
@@ -33,6 +38,21 @@ function App() {
         <Route
           path="/login"
           element={<Login />}
+        />
+
+        <Route
+          path="/change-password"
+          element={<ChangePassword />}
+        />
+        
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
         />
 
         <Route
@@ -66,6 +86,12 @@ function App() {
         />
 
         <Route
+          path="/tasks"
+          element={<MyTasks />}
+        />
+
+
+        <Route
           path="/tasks/:taskId"
           element={<TaskDetails />}
         />
@@ -78,6 +104,11 @@ function App() {
         <Route
           path="/workspaces/new"
           element={<CreateNewWorkspace />}
+        />
+
+        <Route
+          path="/workspaces/:workspaceId/settings"
+          element={<WorkspaceSettings />}
         />
 
         <Route

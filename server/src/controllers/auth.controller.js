@@ -5,6 +5,8 @@ import {
     loginUser as loginUserService,
     getCurrentUser as getCurrentUserService,
     changePassword as changePasswordService,
+    forgotPassword as forgotPasswordService,
+    resetPassword as resetPasswordService,
 } from "../services/auth.service.js";
 
 //1. Register 
@@ -86,4 +88,42 @@ const changePassword = asyncHandler(async (req, res) => {
 
 })
 
-export { registerUser, loginUser, logoutUser, getCurrentUser, changePassword };
+// 6. Forgot password
+const forgotPassword = asyncHandler(
+  async (req, res) => {
+    const { email } = req.body;
+
+    await forgotPasswordService(email);
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        null,
+        "If an account with that email exists, a password reset link has been sent"
+      )
+    );
+  }
+);
+
+// 7. Reset password
+const resetPassword = asyncHandler(
+  async (req, res) => {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    await resetPasswordService(
+      token,
+      newPassword
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        null,
+        "Password reset successfully"
+      )
+    );
+  }
+);
+
+export { registerUser, loginUser, logoutUser, getCurrentUser, changePassword, forgotPassword, resetPassword};

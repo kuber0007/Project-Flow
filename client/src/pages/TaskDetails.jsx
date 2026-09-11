@@ -11,8 +11,8 @@ import {
   setTaskDueDate,
 } from "../services/taskService";
 
-import { getWorkspaceMembers } from "../services/workspaceService";
-import { getProject } from "../services/projectService";
+
+import { getProjectMembers } from "../services/projectService";
 
 
 const TaskDetails = () => {
@@ -119,8 +119,7 @@ const TaskDetails = () => {
     }
   };
 
-
-  /* ================= LOAD WORKSPACE MEMBERS ================= */
+  /* ================= LOAD PROJECT MEMBERS ================= */
 
   const loadMembers = async (taskData) => {
     try {
@@ -132,29 +131,28 @@ const TaskDetails = () => {
 
       setLoadingMembers(true);
 
-      const project = await getProject(projectId);
-
-      const workspaceId = getWorkspaceId(project);
-
-      if (!workspaceId) {
-        return;
-      }
-
       const result =
-        await getWorkspaceMembers(workspaceId);
+        await getProjectMembers(projectId);
 
-      const memberList = Array.isArray(result)
-        ? result
-        : Array.isArray(result?.members)
-          ? result.members
-          : [];
+      const memberList =
+        Array.isArray(result)
+          ? result
+          : Array.isArray(result?.members)
+            ? result.members
+            : Array.isArray(result?.data)
+              ? result.data
+              : [];
 
       setMembers(memberList);
+
     } catch (err) {
       console.error(
-        "Failed to load workspace members:",
+        "Failed to load project members:",
         err
       );
+
+      setMembers([]);
+
     } finally {
       setLoadingMembers(false);
     }
@@ -419,7 +417,7 @@ const TaskDetails = () => {
 
       setError(
         err.message ||
-          "Failed to change priority"
+        "Failed to change priority"
       );
     } finally {
       setSaving(false);
@@ -456,7 +454,7 @@ const TaskDetails = () => {
 
       setError(
         err.message ||
-          "Failed to change due date"
+        "Failed to change due date"
       );
     } finally {
       setSaving(false);
@@ -499,7 +497,7 @@ const TaskDetails = () => {
 
       setError(
         err.message ||
-          "Failed to delete task"
+        "Failed to delete task"
       );
 
       setDeleting(false);
@@ -610,8 +608,8 @@ const TaskDetails = () => {
           onClick={() =>
             projectId
               ? navigate(
-                  `/projects/${projectId}`
-                )
+                `/projects/${projectId}`
+              )
               : navigate("/projects")
           }
         >
@@ -943,7 +941,7 @@ const TaskDetails = () => {
 
                 <option value="">
                   {loadingMembers
-                    ? "Loading workspace members..."
+                    ? "Loading project members..."
                     : "Select a member"}
                 </option>
 
@@ -952,13 +950,13 @@ const TaskDetails = () => {
 
                   const user =
                     typeof member.user ===
-                    "object"
+                      "object"
                       ? member.user
                       : null;
 
                   const userId =
                     typeof member.user ===
-                    "string"
+                      "string"
                       ? member.user
                       : user?._id;
 

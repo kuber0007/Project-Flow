@@ -150,13 +150,12 @@ function Login() {
                   Password
                 </label>
 
-                <button
-                  type="button"
+                <Link
+                  to="/forgot-password"
                   className="forgot-password"
-                  onClick={() => {}}
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
 
               <input
