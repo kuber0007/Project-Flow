@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "../services/notificationService";
+import {
   Navigate,
-  useNavigate ,
+  useNavigate,
   Link,
 } from "react-router-dom";
 
@@ -24,6 +29,8 @@ import {
   // CircleCheck,
   // ClipboardList,
   // Clock3,
+  Bell,
+  Loader
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
@@ -111,6 +118,10 @@ function Dashboard() {
      WORKSPACE
   ======================================================= */
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+
   const [workspaces, setWorkspaces] =
     useState([]);
 
@@ -157,6 +168,34 @@ function Dashboard() {
   }, []);
 
 
+
+  // notification Loader
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        setNotificationsLoading(true);
+
+        const result = await getNotifications();
+
+        const data = Array.isArray(result)
+          ? result
+          : Array.isArray(result?.notifications)
+            ? result.notifications
+            : [];
+
+        setNotifications(data);
+      } catch (err) {
+        console.error(
+          "Failed to load notifications:",
+          err
+        );
+      } finally {
+        setNotificationsLoading(false);
+      }
+    };
+
+    loadNotifications();
+  }, []);
   /* =======================================================
      LOAD WORKSPACES
      
@@ -813,6 +852,161 @@ function Dashboard() {
               />
 
             </button>
+
+            <div className="notification-wrapper">
+              <button
+                type="button"
+                className="dashboard-icon-button notification-button"
+                aria-label="Notifications"
+                onClick={() =>
+                  setShowNotifications(
+                    (previous) => !previous
+                  )
+                }
+              >
+                <Bell
+                  size={17}
+                  strokeWidth={1.8}
+                />
+
+                {notifications.some(
+                  (notification) =>
+                    !notification.read
+                ) && (
+                    <span className="notification-badge">
+                      {
+                        notifications.filter(
+                          (notification) =>
+                            !notification.read
+                        ).length
+                      }
+                    </span>
+                  )}
+              </button>
+
+              {showNotifications && (
+                <div className="notification-dropdown">
+
+                  <div className="notification-header">
+                    <div>
+                      <strong>Notifications</strong>
+                      <span>
+                        {notifications.filter(
+                          (notification) =>
+                            !notification.read
+                        ).length} unread
+                      </span>
+                    </div>
+
+                    {notifications.some(
+                      (notification) =>
+                        !notification.read
+                    ) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await markAllNotificationsAsRead();
+
+                              setNotifications(
+                                (previous) =>
+                                  previous.map(
+                                    (notification) => ({
+                                      ...notification,
+                                      read: true,
+                                    })
+                                  )
+                              );
+                            } catch (err) {
+                              console.error(
+                                "Failed to mark notifications as read:",
+                                err
+                              );
+                            }
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                  </div>
+
+
+                  <div className="notification-list">
+
+                    {notificationsLoading ? (
+                      <div className="notification-empty">
+                        Loading notifications...
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="notification-empty">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map(
+                        (notification) => (
+                          <button
+                            type="button"
+                            className={`notification-item ${notification.read
+                                ? ""
+                                : "unread"
+                              }`}
+                            key={notification._id}
+                            onClick={async () => {
+                              if (!notification.read) {
+                                try {
+                                  await markNotificationAsRead(
+                                    notification._id
+                                  );
+
+                                  setNotifications(
+                                    (previous) =>
+                                      previous.map(
+                                        (item) =>
+                                          item._id ===
+                                            notification._id
+                                            ? {
+                                              ...item,
+                                              read: true,
+                                            }
+                                            : item
+                                      )
+                                  );
+                                } catch (err) {
+                                  console.error(
+                                    "Failed to mark notification as read:",
+                                    err
+                                  );
+                                }
+                              }
+                            }}
+                          >
+                            <span className="notification-dot" />
+
+                            <span className="notification-content">
+                              <strong>
+                                {notification.message}
+                              </strong>
+
+                              <small>
+                                {notification.createdAt
+                                  ? new Date(
+                                    notification.createdAt
+                                  ).toLocaleString(
+                                    "en-IN"
+                                  )
+                                  : ""}
+                              </small>
+                            </span>
+                          </button>
+                        )
+                      )
+                    )}
+
+                  </div>
+
+                </div>
+              )}
+            </div>
 
 
             <button

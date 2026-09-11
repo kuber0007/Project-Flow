@@ -4,6 +4,7 @@ import WorkspaceInvitation from "../models/workspaceInvitation.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import User from "../models/user.model.js"
+import { createNotification } from "./notification.service.js";
 
 //1.api ========== POST /api/workspaces
 const createWorkspace = async ({ name, description, userId }) => {
@@ -207,7 +208,7 @@ const removeWorkspaceMember = async (workspaceId, userId, requestorId) => {
         throw new ApiError(403, "You do not have access to this workspace")
     }
 
-    if (!["OWNER","ADMIN"].includes(requester.role)) {
+    if (!["OWNER", "ADMIN"].includes(requester.role)) {
         throw new ApiError(403, "You cannot change member roles")
     }
 
@@ -314,6 +315,33 @@ const createWorkspaceInvite = async (workspaceId, requestorId, email, role) => {
         invitedBy: requestorId,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     })
+
+    /* NOTIFY EXISTING USER */
+
+    const invitedUser =
+        await User.findOne({
+            email: email.toLowerCase(),
+        });
+
+    if (invitedUser) {
+
+        const workspace =
+            await Workspace.findById(
+                workspaceId
+            );
+
+        if (workspace) {
+
+            await createNotification({
+                recipient: invitedUser._id,
+
+                type: "WORKSPACE_INVITE",
+
+                message:
+                    `You have been invited to join workspace "${workspace.name}".`,
+            });
+        }
+    }
 
     return invitation;
 }
@@ -425,6 +453,39 @@ const acceptWorkspaceInvitation = async (invitationId, userId) => {
         user: userId,
         role: invitation.role,
     });
+
+    /* NOTIFY INVITER */
+
+    if (
+        String(invitation.invitedBy) !==
+        String(userId)
+    ) {
+
+        const workspace =
+            await Workspace.findById(
+                invitation.workspace
+            );
+
+        const acceptedUser =
+            await User.findById(userId)
+                .select("name");
+
+        if (
+            workspace &&
+            acceptedUser
+        ) {
+
+            await createNotification({
+                recipient:
+                    invitation.invitedBy,
+
+                type: "WORKSPACE_INVITE_ACCEPTED",
+
+                message:
+                    `${acceptedUser.name} accepted your invitation to join "${workspace.name}".`,
+            });
+        }
+    }
 
     invitation.status = "ACCEPTED";
     await invitation.save();

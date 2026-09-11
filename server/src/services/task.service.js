@@ -2,6 +2,7 @@ import { ApiError } from "../utils/ApiError.js";
 import Project from "../models/project.model.js";
 import Task from "../models/task.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
+import {createNotification} from "./notification.service.js";
 
 
 // 1. Create Task
@@ -307,7 +308,8 @@ const assignTask = async (
     assigneeId
 ) => {
 
-    const task = await Task.findById(taskId);
+    const task =
+        await Task.findById(taskId);
 
     if (!task) {
         throw new ApiError(
@@ -316,9 +318,11 @@ const assignTask = async (
         );
     }
 
-    const project = await Project.findById(
-        task.project
-    );
+
+    const project =
+        await Project.findById(
+            task.project
+        );
 
     if (!project) {
         throw new ApiError(
@@ -327,10 +331,12 @@ const assignTask = async (
         );
     }
 
-    const member = await WorkspaceMember.findOne({
-        workspace: project.workspace,
-        user: userId,
-    });
+
+    const member =
+        await WorkspaceMember.findOne({
+            workspace: project.workspace,
+            user: userId,
+        });
 
     if (!member) {
         throw new ApiError(
@@ -339,17 +345,24 @@ const assignTask = async (
         );
     }
 
-    if (!["OWNER", "ADMIN"].includes(member.role)) {
+
+    if (
+        !["OWNER", "ADMIN"].includes(
+            member.role
+        )
+    ) {
         throw new ApiError(
             403,
             "Only OWNER or ADMIN can assign tasks"
         );
     }
 
-    const assignee = await WorkspaceMember.findOne({
-        workspace: project.workspace,
-        user: assigneeId,
-    });
+
+    const assignee =
+        await WorkspaceMember.findOne({
+            workspace: project.workspace,
+            user: assigneeId,
+        });
 
     if (!assignee) {
         throw new ApiError(
@@ -358,9 +371,31 @@ const assignTask = async (
         );
     }
 
+
     task.assignee = assigneeId;
 
     await task.save();
+
+
+    /* =====================================================
+       CREATE NOTIFICATION
+    ===================================================== */
+
+    if (
+        String(assigneeId) !==
+        String(userId)
+    ) {
+
+        await createNotification({
+            recipient: assigneeId,
+
+            type: "TASK_ASSIGNED",
+
+            message:
+                `You were assigned the task "${task.title}" in project "${project.name}".`,
+        });
+    }
+
 
     return task.populate(
         "assignee",

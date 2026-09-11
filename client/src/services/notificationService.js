@@ -12,7 +12,35 @@ const getUnreadNotifications = async () => {
   return result?.data ?? result;
 };
 
+
+const markNotificationAsRead = async (
+  notificationId
+) => {
+  const response = await apiRequest(
+    `/notifications/${notificationId}/read`,
+    {
+      method: "PATCH",
+    }
+  );
+
+  return response?.data ?? response;
+};
+
+
+const markAllNotificationsAsRead = async () => {
+  const response = await apiRequest(
+    "/notifications/read-all",
+    {
+      method: "PATCH",
+    }
+  );
+
+  return response?.data ?? response;
+};
+
 export {
   getNotifications,
   getUnreadNotifications,
+  markAllNotificationsAsRead,
+  markNotificationAsRead
 };

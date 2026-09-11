@@ -2,6 +2,7 @@ import Project from "../models/project.model.js";
 import ProjectMember from "../models/projectMember.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createNotification } from "./notification.service.js";
 
 
 // 1. Create a project
@@ -268,13 +269,13 @@ const getProjectMembers = async (
         await ProjectMember.find({
             project: projectId
         })
-        .populate(
-            "user",
-            "name email avatar"
-        )
-        .sort({
-            createdAt: 1
-        });
+            .populate(
+                "user",
+                "name email avatar"
+            )
+            .sort({
+                createdAt: 1
+            });
 
     return projectMembers;
 };
@@ -355,7 +356,7 @@ const updateProjectMembers = async (
                 $in: uniqueMembers
             }
         })
-        .select("user");
+            .select("user");
 
     // 7. Create set of valid workspace users
     const validWorkspaceUserIds =
@@ -391,15 +392,21 @@ const updateProjectMembers = async (
             "One or more selected members do not belong to this workspace"
         );
     }
-
-
-    // ==========================================
     // 9. Replace project's member list
-    //
-    // This automatically removes stale/old
-    // ProjectMember records that are not part
-    // of the submitted valid list.
-    // ==========================================
+
+    const existingProjectMembers =
+        await ProjectMember.find({
+            project: projectId,
+        })
+            .select("user");
+
+    const existingMemberIds =
+        new Set(
+            existingProjectMembers.map(
+                (member) =>
+                    String(member.user)
+            )
+        );
 
     await ProjectMember.deleteMany({
         project: projectId
@@ -417,6 +424,36 @@ const updateProjectMembers = async (
             )
         );
     }
+    /* =========================================================
+   NOTIFY NEW PROJECT MEMBERS
+========================================================= */
+
+    const newlyAddedMembers =
+        uniqueMembers.filter(
+            (memberId) =>
+                !existingMemberIds.has(
+                    String(memberId)
+                )
+        );
+
+    for (const memberId of newlyAddedMembers) {
+
+        if (
+            String(memberId) ===
+            String(userId)
+        ) {
+            continue;
+        }
+
+        await createNotification({
+            recipient: memberId,
+
+            type: "PROJECT_ADDED",
+
+            message:
+                `You were added to project "${project.name}".`,
+        });
+    }
 
 
     // ==========================================
@@ -427,13 +464,13 @@ const updateProjectMembers = async (
         await ProjectMember.find({
             project: projectId
         })
-        .populate(
-            "user",
-            "name email avatar"
-        )
-        .sort({
-            createdAt: 1
-        });
+            .populate(
+                "user",
+                "name email avatar"
+            )
+            .sort({
+                createdAt: 1
+            });
 
 
     return updatedMembers;
@@ -493,13 +530,13 @@ const searchProjects = async (
 
     const projects =
         await Project.find(query)
-        .populate(
-            "createdBy",
-            "name email avatar"
-        )
-        .sort({
-            createdAt: -1
-        });
+            .populate(
+                "createdBy",
+                "name email avatar"
+            )
+            .sort({
+                createdAt: -1
+            });
 
     return projects;
 };
