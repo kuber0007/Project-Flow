@@ -13,26 +13,8 @@ import {
   createProject,
 } from "../services/projectService";
 
-
-/* =========================================================
-   HELPER
-========================================================= */
-
-const getStoredUser = () => {
-  const storedUser =
-    localStorage.getItem("user");
-
-  if (!storedUser) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(storedUser);
-  } catch {
-    localStorage.removeItem("user");
-    return null;
-  }
-};
+import Sidebar from "../components/Sidebar";
+import WorkspaceDropdown from "../components/WorkspaceDropdown";
 
 
 /* =========================================================
@@ -49,9 +31,6 @@ function CreateProject() {
   const token =
     localStorage.getItem("accessToken");
 
-  const [user] =
-    useState(getStoredUser);
-
 
   /* =======================================================
      WORKSPACE
@@ -62,9 +41,6 @@ function CreateProject() {
 
   const [workspace, setWorkspace] =
     useState(null);
-
-  const [showWorkspaceMenu, setShowWorkspaceMenu] =
-    useState(false);
 
 
   /* =======================================================
@@ -111,7 +87,6 @@ function CreateProject() {
 
   useEffect(() => {
     if (!token) {
-      setLoading(false);
       return;
     }
 
@@ -139,14 +114,9 @@ function CreateProject() {
         );
 
         const availableWorkspaces =
-          memberships
-            .map(
-              (membership) =>
-                membership?.workspace
-            )
-            .filter(
-              (item) => item?._id
-            );
+          memberships.filter(
+            (item) => item?._id
+          );
 
         if (
           availableWorkspaces.length === 0
@@ -228,7 +198,6 @@ function CreateProject() {
       selectedWorkspace._id
     );
 
-    setShowWorkspaceMenu(false);
   };
 
 
@@ -369,99 +338,7 @@ function CreateProject() {
           SIDEBAR
       =================================================== */}
 
-      <aside className="projects-sidebar">
-
-        <Link
-          to="/dashboard"
-          className="dashboard-brand"
-        >
-          <span className="dashboard-brand-icon">
-            ✓
-          </span>
-
-          <span>
-            Project<span>Flow</span>
-          </span>
-        </Link>
-
-
-        <nav className="dashboard-nav">
-
-          <Link
-            to="/dashboard"
-            className="dashboard-nav-item"
-          >
-            <span>
-              ▦
-            </span>
-
-            Dashboard
-          </Link>
-
-
-          <Link
-            to="/projects"
-            className="dashboard-nav-item active"
-          >
-            <span>
-              □
-            </span>
-
-            Projects
-          </Link>
-
-
-          <Link
-            to="/team"
-            className="dashboard-nav-item"
-          >
-            <span>
-              ♧
-            </span>
-
-            Team
-          </Link>
-
-
-          <Link
-            to="/tasks"
-            className="dashboard-nav-item"
-          >
-            <span>
-              ☑
-            </span>
-
-            My Tasks
-          </Link>
-
-        </nav>
-
-
-        <div className="projects-sidebar-profile">
-
-          <div className="profile-avatar">
-            {user?.name
-              ?.charAt(0)
-              ?.toUpperCase() ||
-              "U"}
-          </div>
-
-          <div className="profile-info">
-
-            <strong>
-              {user?.name ||
-                "User"}
-            </strong>
-
-            <span>
-              Profile
-            </span>
-
-          </div>
-
-        </div>
-
-      </aside>
+      <Sidebar active="projects" />
 
 
       {/* ===================================================
@@ -496,130 +373,11 @@ function CreateProject() {
 
             {/* WORKSPACE SELECTOR */}
 
-            <div className="workspace-selector">
-
-              <button
-                type="button"
-                className="workspace-selector-button"
-                onClick={() =>
-                  setShowWorkspaceMenu(
-                    (previous) =>
-                      !previous
-                  )
-                }
-              >
-
-                <span className="workspace-selector-icon">
-                  ◈
-                </span>
-
-                <span className="workspace-selector-content">
-
-                  <small>
-                    WORKSPACE
-                  </small>
-
-                  <strong>
-                    {workspace?.name ||
-                      "No workspace"}
-                  </strong>
-
-                </span>
-
-                <span className="workspace-selector-arrow">
-                  ˅
-                </span>
-
-              </button>
-
-
-              {showWorkspaceMenu &&
-                workspaces.length >
-                  0 && (
-                  <div className="workspace-dropdown">
-
-                    <div className="workspace-dropdown-header">
-                      Select workspace
-                    </div>
-
-
-                    {workspaces.map(
-                      (
-                        membership,
-                        index
-                      ) => {
-                        const item =
-                          membership?.workspace;
-
-                        if (
-                          !item?._id
-                        ) {
-                          return null;
-                        }
-
-                        const selected =
-                          workspace?._id ===
-                          item._id;
-
-                        return (
-                          <button
-                            key={
-                              item._id ||
-                              index
-                            }
-                            type="button"
-                            className={`workspace-dropdown-item ${
-                              selected
-                                ? "selected"
-                                : ""
-                            }`}
-                            onClick={() =>
-                              handleWorkspaceChange(
-                                item
-                              )
-                            }
-                          >
-
-                            <span className="workspace-dropdown-icon">
-                              {item?.name
-                                ?.charAt(
-                                  0
-                                )
-                                ?.toUpperCase() ||
-                                "W"}
-                            </span>
-
-
-                            <span className="workspace-dropdown-info">
-
-                              <strong>
-                                {item?.name ||
-                                  "Unnamed workspace"}
-                              </strong>
-
-                              <small>
-                                {membership?.role ||
-                                  "MEMBER"}
-                              </small>
-
-                            </span>
-
-
-                            {selected && (
-                              <span className="workspace-dropdown-check">
-                                ✓
-                              </span>
-                            )}
-
-                          </button>
-                        );
-                      }
-                    )}
-
-                  </div>
-                )}
-
-            </div>
+            <WorkspaceDropdown
+              workspaces={workspaces}
+              workspace={workspace}
+              onChange={handleWorkspaceChange}
+            />
 
           </div>
 

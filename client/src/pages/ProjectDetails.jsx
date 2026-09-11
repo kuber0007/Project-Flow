@@ -10,6 +10,8 @@ import {
 import { getProjectTasks } from "../services/taskService";
 import { getWorkspaceMembers } from "../services/workspaceService";
 
+import Sidebar from "../components/Sidebar";
+
 import "../styles/projectMembers.css";
 
 
@@ -1265,98 +1267,9 @@ const ProjectDetails = () => {
                 SIDEBAR
             ================================================= */}
 
-            <aside className="project-details-sidebar">
+            <Sidebar active="projects" />
 
-                <div className="project-details-logo">
-
-                    <div className="project-details-logo-icon">
-                        P
-                    </div>
-
-                    <span>
-                        ProjectFlow
-                    </span>
-
-                </div>
-
-
-                <nav className="project-details-nav">
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/dashboard"
-                            )
-                        }
-                    >
-                        <span>⌂</span>
-
-                        Dashboard
-                    </button>
-
-
-                    <button
-                        type="button"
-                        className="active"
-                        onClick={() =>
-                            navigate(
-                                "/projects"
-                            )
-                        }
-                    >
-                        <span>▣</span>
-
-                        Projects
-                    </button>
-
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/team"
-                            )
-                        }
-                    >
-                        <span>♙</span>
-
-                        Team
-                    </button>
-
-
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate(
-                                "/tasks"
-                            )
-                        }
-                    >
-                        <span>✓</span>
-
-                        Tasks
-                    </button>
-
-                </nav>
-
-
-                <div className="project-details-sidebar-bottom">
-
-                    <button type="button">
-
-                        <span>⚙</span>
-
-                        Settings
-
-                    </button>
-
-                </div>
-
-            </aside>
-
-
-            {/* =================================================
+                        {/* =================================================
                 MAIN
             ================================================= */}
 

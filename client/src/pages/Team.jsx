@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import {
   getWorkspace,
+  getWorkspaces,
   getWorkspaceMembers,
   updateMemberRole,
   removeWorkspaceMember,
@@ -11,6 +12,9 @@ import {
 
 import "../styles/team.css";
 
+import Sidebar from "../components/Sidebar";
+import WorkspaceDropdown from "../components/WorkspaceDropdown";
+
 
 const Team = () => {
   const navigate = useNavigate();
@@ -18,13 +22,19 @@ const Team = () => {
   const token =
     localStorage.getItem("accessToken");
 
-  const selectedWorkspaceId =
+  const [
+    selectedWorkspaceId,
+    setSelectedWorkspaceId,
+  ] = useState(() =>
     localStorage.getItem(
       "selectedWorkspaceId"
-    );
-
+    )
+  );
   const [workspace, setWorkspace] =
     useState(null);
+
+  const [workspaces, setWorkspaces] =
+    useState([]);
 
   const [members, setMembers] =
     useState([]);
@@ -81,31 +91,69 @@ const Team = () => {
   ========================================================= */
 
   const loadData = async () => {
-    if (!selectedWorkspaceId) {
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
       setError("");
+
+      const result =
+        await getWorkspaces();
+
+      const workspaceList =
+        Array.isArray(result)
+          ? result.filter((item) => item?._id)
+          : [];
+
+      setWorkspaces(workspaceList);
+
+      let workspaceId =
+        selectedWorkspaceId;
+
+      if (
+        !workspaceId ||
+        !workspaceList.some(
+          (item) =>
+            String(item._id) ===
+            String(workspaceId)
+        )
+      ) {
+        workspaceId =
+          workspaceList[0]?._id ||
+          null;
+
+        if (workspaceId) {
+          localStorage.setItem(
+            "selectedWorkspaceId",
+            workspaceId
+          );
+
+          setSelectedWorkspaceId(
+            workspaceId
+          );
+        }
+      }
+
+      if (!workspaceId) {
+        setWorkspace(null);
+        setMembers([]);
+        return;
+      }
 
       const [
         workspaceResult,
         membersResult,
       ] = await Promise.all([
         getWorkspace(
-          selectedWorkspaceId
+          workspaceId
         ),
         getWorkspaceMembers(
-          selectedWorkspaceId
+          workspaceId
         ),
       ]);
 
-
       const workspaceData =
         workspaceResult?.workspace ||
-        workspaceResult;
+        workspaceResult ||
+        {};
 
       const memberList =
         Array.isArray(membersResult)
@@ -116,17 +164,25 @@ const Team = () => {
             ? membersResult.members
             : [];
 
+      const selectedWorkspace =
+        workspaceList.find(
+          (item) =>
+            String(item._id) ===
+            String(workspaceId)
+        );
 
-      setWorkspace(
-        workspaceData
-      );
+      setWorkspace({
+        ...(selectedWorkspace || {}),
+        ...workspaceData,
+        role:
+          workspaceResult?.role ||
+          selectedWorkspace?.role ||
+          workspaceData.role ||
+          "MEMBER",
+      });
 
-      setMembers(
-        memberList
-      );
-
+      setMembers(memberList);
     } catch (err) {
-
       console.error(
         "Failed to load team:",
         err
@@ -136,12 +192,10 @@ const Team = () => {
         err.message ||
         "Failed to load workspace members"
       );
-
     } finally {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     loadData();
@@ -153,28 +207,17 @@ const Team = () => {
   ========================================================= */
 
   const currentMember =
-    useMemo(() => {
+    members.find((member) => {
+      const memberUserId =
+        typeof member.user === "string"
+          ? member.user
+          : member.user?._id;
 
-      return members.find(
-        (member) => {
-
-          const memberUserId =
-            typeof member.user ===
-            "string"
-              ? member.user
-              : member.user?._id;
-
-          return (
-            memberUserId ===
-            currentUserId
-          );
-        }
+      return (
+        String(memberUserId) ===
+        String(currentUserId)
       );
-
-    }, [
-      members,
-      currentUserId,
-    ]);
+    });
 
 
   const currentRole =
@@ -186,57 +229,35 @@ const Team = () => {
      FILTER MEMBERS
   ========================================================= */
 
+  const value =
+    search
+      .trim()
+      .toLowerCase();
+
   const filteredMembers =
-    useMemo(() => {
-
-      const value =
-        search
-          .trim()
-          .toLowerCase();
-
-      if (!value) {
-        return members;
-      }
-
-      return members.filter(
-        (member) => {
-
+    !value
+      ? members
+      : members.filter((member) => {
           const user =
-            typeof member.user ===
-            "object"
+            typeof member.user === "object"
               ? member.user
               : null;
 
           const name =
-            user?.name ||
-            "";
+            user?.name || "";
 
           const email =
-            user?.email ||
-            "";
+            user?.email || "";
 
           const role =
-            member?.role ||
-            "";
+            member?.role || "";
 
           return (
-            name
-              .toLowerCase()
-              .includes(value) ||
-            email
-              .toLowerCase()
-              .includes(value) ||
-            role
-              .toLowerCase()
-              .includes(value)
+            name.toLowerCase().includes(value) ||
+            email.toLowerCase().includes(value) ||
+            role.toLowerCase().includes(value)
           );
-        }
-      );
-
-    }, [
-      members,
-      search,
-    ]);
+        });
 
 
   /* =========================================================
@@ -261,6 +282,28 @@ const Team = () => {
      CHANGE ROLE
   ========================================================= */
 
+  const handleWorkspaceChange = (
+    selectedWorkspace
+  ) => {
+    if (!selectedWorkspace?._id) {
+      return;
+    }
+
+    localStorage.setItem(
+      "selectedWorkspaceId",
+      selectedWorkspace._id
+    );
+
+    setSelectedWorkspaceId(
+      selectedWorkspace._id
+    );
+  };
+
+
+  /* =========================================================
+     CHANGE ROLE
+  ========================================================= */
+
   const handleRoleChange = async (
     member,
     newRole
@@ -268,7 +311,7 @@ const Team = () => {
 
     const memberUserId =
       typeof member.user ===
-      "string"
+        "string"
         ? member.user
         : member.user?._id;
 
@@ -297,7 +340,7 @@ const Team = () => {
 
               const itemUserId =
                 typeof item.user ===
-                "string"
+                  "string"
                   ? item.user
                   : item.user?._id;
 
@@ -349,7 +392,7 @@ const Team = () => {
 
     const memberUserId =
       typeof member.user ===
-      "string"
+        "string"
         ? member.user
         : member.user?._id;
 
@@ -391,7 +434,7 @@ const Team = () => {
 
               const itemUserId =
                 typeof item.user ===
-                "string"
+                  "string"
                   ? item.user
                   : item.user?._id;
 
@@ -661,110 +704,10 @@ const Team = () => {
     <div className="team-page">
 
 
-      {/* =====================================================
-          SIDEBAR (matches Projects page)
-      ===================================================== */}
-
-      <aside className="projects-sidebar">
-
-        {/* BRAND */}
-
-        <Link
-          to="/dashboard"
-          className="dashboard-brand"
-        >
-          <span className="dashboard-brand-icon">
-            ✓
-          </span>
-
-          <span>
-            Project<span>Flow</span>
-          </span>
-        </Link>
-
-
-        {/* NAVIGATION */}
-
-        <nav className="dashboard-nav">
-
-          <Link
-            to="/dashboard"
-            className="dashboard-nav-item"
-          >
-            <span>
-              ▦
-            </span>
-
-            Dashboard
-          </Link>
-
-
-          <Link
-            to="/projects"
-            className="dashboard-nav-item"
-          >
-            <span>
-              □
-            </span>
-
-            Projects
-          </Link>
-
-
-          <Link
-            to="/team"
-            className="dashboard-nav-item active"
-          >
-            <span>
-              ♧
-            </span>
-
-            Team
-          </Link>
-
-
-          <Link
-            to="/tasks"
-            className="dashboard-nav-item"
-          >
-            <span>
-              ☑
-            </span>
-
-            My Tasks
-          </Link>
-
-        </nav>
-
-
-        {/* PROFILE */}
-
-        <div className="projects-sidebar-profile">
-
-          <div className="profile-avatar">
-            {currentUser?.name
-              ?.charAt(0)
-              ?.toUpperCase() ||
-              "U"}
-          </div>
-
-          <div className="profile-info">
-
-            <strong>
-              {currentUser?.name ||
-                "User"}
-            </strong>
-
-            <span>
-              Profile
-            </span>
-
-          </div>
-
-        </div>
-
-      </aside>
-
+      <Sidebar
+        active="team"
+        showProjects={false}
+      />
 
       {/* =====================================================
           MAIN
@@ -789,24 +732,11 @@ const Team = () => {
             ← Dashboard
           </button>
 
-
-          <div className="team-user">
-
-            <div className="team-user-avatar">
-              {(
-                currentUser?.name ||
-                "U"
-              )
-                .charAt(0)
-                .toUpperCase()}
-            </div>
-
-            <span>
-              {currentUser?.name ||
-                "User"}
-            </span>
-
-          </div>
+          <WorkspaceDropdown
+            workspaces={workspaces}
+            workspace={workspace}
+            onChange={handleWorkspaceChange}
+          />
 
         </header>
 
@@ -970,7 +900,7 @@ const Team = () => {
 
 
             {filteredMembers.length ===
-            0 ? (
+              0 ? (
 
               <div className="team-empty">
 
@@ -997,13 +927,13 @@ const Team = () => {
 
                     const user =
                       typeof member.user ===
-                      "object"
+                        "object"
                         ? member.user
                         : null;
 
                     const memberUserId =
                       typeof member.user ===
-                      "string"
+                        "string"
                         ? member.user
                         : user?._id;
 
@@ -1145,25 +1075,25 @@ const Team = () => {
                             member
                           ) && (
 
-                            <button
-                              type="button"
-                              className="team-remove-button"
-                              onClick={() =>
-                                handleRemoveMember(
-                                  member
-                                )
-                              }
-                              disabled={
-                                removing ||
-                                roleChanging
-                              }
-                            >
-                              {removing
-                                ? "Removing..."
-                                : "Remove"}
-                            </button>
+                              <button
+                                type="button"
+                                className="team-remove-button"
+                                onClick={() =>
+                                  handleRemoveMember(
+                                    member
+                                  )
+                                }
+                                disabled={
+                                  removing ||
+                                  roleChanging
+                                }
+                              >
+                                {removing
+                                  ? "Removing..."
+                                  : "Remove"}
+                              </button>
 
-                          )}
+                            )}
 
                         </div>
 
@@ -1219,7 +1149,7 @@ const Team = () => {
               {currentRole === "OWNER"
                 ? "Transfer ownership first"
                 : actionLoading ===
-                    "leave"
+                  "leave"
                   ? "Leaving..."
                   : "Leave Workspace"}
             </button>

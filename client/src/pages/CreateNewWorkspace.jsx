@@ -22,41 +22,9 @@ import {
   createWorkspace,
 } from "../services/workspaceService";
 
+import Sidebar from "../components/Sidebar";
+
 import "../styles/createWorkspace.css";
-
-
-/* =========================================================
-   GET STORED USER
-========================================================= */
-
-const getStoredUser = () => {
-
-  const storedUser =
-    localStorage.getItem(
-      "user"
-    );
-
-
-  if (!storedUser) {
-    return null;
-  }
-
-
-  try {
-
-    return JSON.parse(
-      storedUser
-    );
-
-  } catch {
-
-    localStorage.removeItem(
-      "user"
-    );
-
-    return null;
-  }
-};
 
 
 /* =========================================================
@@ -77,10 +45,6 @@ const CreateNewWorkspace = () => {
     localStorage.getItem(
       "accessToken"
     );
-
-
-  const user =
-    getStoredUser();
 
 
   /* =======================================================
@@ -287,112 +251,9 @@ const CreateNewWorkspace = () => {
           SIDEBAR
       ================================================= */}
 
-      <aside className="create-workspace-sidebar">
+      <Sidebar active="dashboard" />
 
-        <Link
-          to="/dashboard"
-          className="create-workspace-brand"
-        >
-
-          <span className="create-workspace-brand-icon">
-            P
-          </span>
-
-          <span>
-            Project<span>Flow</span>
-          </span>
-
-        </Link>
-
-
-        <div className="create-workspace-sidebar-label">
-          WORKSPACE
-        </div>
-
-
-        <nav className="create-workspace-nav">
-
-          <Link
-            to="/dashboard"
-            className="create-workspace-nav-item"
-          >
-            <LayoutDashboard
-              size={18}
-              strokeWidth={1.9}
-            />
-
-            <span>
-              Dashboard
-            </span>
-          </Link>
-
-
-          <Link
-            to="/projects"
-            className="create-workspace-nav-item"
-          >
-            <FolderKanban
-              size={18}
-              strokeWidth={1.9}
-            />
-
-            <span>
-              Projects
-            </span>
-          </Link>
-
-
-          <Link
-            to="/team"
-            className="create-workspace-nav-item"
-          >
-            <UsersRound
-              size={18}
-              strokeWidth={1.9}
-            />
-
-            <span>
-              Team
-            </span>
-          </Link>
-
-        </nav>
-
-
-        {/* SIDEBAR USER */}
-
-        <div className="create-workspace-sidebar-user">
-
-          <div className="create-workspace-user-avatar">
-
-            {user?.name
-              ?.charAt(0)
-              ?.toUpperCase() ||
-              "U"}
-
-          </div>
-
-
-          <div className="create-workspace-user-info">
-
-            <strong>
-              {user?.name ||
-                "User"}
-            </strong>
-
-            <span>
-              {user?.email ||
-                "ProjectFlow user"}
-            </span>
-
-          </div>
-
-        </div>
-
-      </aside>
-
-
-      {/* =================================================
+            {/* =================================================
           MAIN
       ================================================= */}
 

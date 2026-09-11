@@ -2,31 +2,31 @@ import { useEffect, useState } from "react";
 import {
   Navigate,
   Link,
-  useNavigate,
 } from "react-router-dom";
 
 import {
-  LayoutDashboard,
+  // LayoutDashboard,
   FolderKanban,
-  Users,
+  // Users,
   CheckSquare,
   Search,
   Plus,
   BriefcaseBusiness,
-  ChevronDown,
+  // ChevronDown,
   Sun,
   Settings,
   ChevronRight,
-  LogOut,
-  User,
+  // LogOut,
+  // User,
   Check,
   AlertCircle,
-  CircleCheck,
-  ClipboardList,
-  Clock3,
+  // CircleCheck,
+  // ClipboardList,
+  // Clock3,
 } from "lucide-react";
 
-import { logoutUser } from "../services/authService";
+import Sidebar from "../components/Sidebar";
+import WorkspaceDropdown from "../components/WorkspaceDropdown";
 
 import {
   getWorkspaces,
@@ -40,6 +40,8 @@ import {
 import {
   getProjectTasks,
 } from "../services/taskService";
+
+
 
 
 /* =========================================================
@@ -76,8 +78,6 @@ const getInitialUser = () => {
 ========================================================= */
 
 function Dashboard() {
-  const navigate = useNavigate();
-
   /* =======================================================
      AUTH
   ======================================================= */
@@ -115,10 +115,10 @@ function Dashboard() {
   const [workspace, setWorkspace] =
     useState(null);
 
-  const [
-    showWorkspaceMenu,
-    setShowWorkspaceMenu,
-  ] = useState(false);
+  // const [
+  //   showWorkspaceMenu,
+  //   setShowWorkspaceMenu,
+  // ] = useState(false);
 
 
   /* =======================================================
@@ -139,10 +139,10 @@ function Dashboard() {
      PROFILE
   ======================================================= */
 
-  const [
-    showProfileMenu,
-    setShowProfileMenu,
-  ] = useState(false);
+  // const [
+  //   showProfileMenu,
+  //   setShowProfileMenu,
+  // ] = useState(false);
 
 
   /* =======================================================
@@ -502,51 +502,45 @@ function Dashboard() {
      WORKSPACE SWITCH
   ======================================================= */
 
-  const handleWorkspaceChange =
-    (selectedWorkspace) => {
-      if (
-        !selectedWorkspace?._id
-      ) {
-        return;
-      }
+  const handleWorkspaceChange = (
+    selectedWorkspace
+  ) => {
+    if (!selectedWorkspace?._id) {
+      return;
+    }
 
-      setWorkspace(
-        selectedWorkspace
-      );
+    setWorkspace(
+      selectedWorkspace
+    );
 
-      localStorage.setItem(
-        WORKSPACE_STORAGE_KEY,
-        selectedWorkspace._id
-      );
-
-      setShowWorkspaceMenu(
-        false
-      );
-    };
+    localStorage.setItem(
+      WORKSPACE_STORAGE_KEY,
+      selectedWorkspace._id
+    );
+  };
 
 
   /* =======================================================
      LOGOUT
   ======================================================= */
 
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error(
-        "Logout failed:",
-        err
-      );
-    } finally {
-      localStorage.removeItem(
-        WORKSPACE_STORAGE_KEY
-      );
+  // const handleLogout = async () => {
+  //   try {
+  //     await logoutUser();
+  //   } catch (err) {
+  //     console.error(
+  //       "Logout failed:",
+  //       err
+  //     );
+  //   } finally {
+  //     localStorage.removeItem(
+  //       WORKSPACE_STORAGE_KEY
+  //     );
 
-      navigate("/login", {
-        replace: true,
-      });
-    }
-  };
+  //     navigate("/login", {
+  //     });
+  //   }
+  // };
 
 
   /* =======================================================
@@ -761,233 +755,12 @@ function Dashboard() {
           SIDEBAR
       =================================================== */}
 
-      <aside className="dashboard-sidebar">
-
-        <Link
-          to="/dashboard"
-          className="dashboard-brand"
-        >
-          <span className="dashboard-brand-icon">
-            P
-          </span>
-
-          <span>
-            Project<span>Flow</span>
-          </span>
-        </Link>
-
-
-        {/* NAVIGATION */}
-
-        <nav className="dashboard-nav">
-
-          <Link
-            to="/dashboard"
-            className="dashboard-nav-item active"
-          >
-            <LayoutDashboard size={18} strokeWidth={1.8} />
-            <span>Dashboard</span>
-          </Link>
-
-
-          <Link
-            to="/projects"
-            className="dashboard-nav-item"
-          >
-            <FolderKanban size={18} strokeWidth={1.8} />
-            <span>Projects</span>
-          </Link>
-
-          <Link
-            to="/team"
-            className="dashboard-nav-item"
-          >
-            <Users size={18} strokeWidth={1.8} />
-            <span>Team</span>
-          </Link>
-
-
-          <div className="dashboard-task-link">
-
-            <Link
-              to="/tasks"
-              className="dashboard-nav-item"
-            >
-              <CheckSquare
-                size={18}
-                strokeWidth={1.8}
-              />
-
-              <span>
-                My Tasks
-              </span>
-
-              <small>
-                {todoTasks.length}
-              </small>
-            </Link>
-
-            <span className="dashboard-arrow">
-              <ChevronRight
-                size={15}
-                strokeWidth={1.8}
-              />
-            </span>
-
-          </div>
-
-        </nav>
-
-
-        {/* PROJECT LIST */}
-
-        <div className="sidebar-projects">
-
-          <div className="sidebar-section-title">
-
-            <span>
-              PROJECTS
-            </span>
-
-            <Link
-              to="/projects"
-              aria-label="View all projects"
-            >
-              <ChevronRight
-                size={14}
-                strokeWidth={1.8}
-              />
-            </Link>
-
-          </div>
-
-
-          {projects.length ===
-            0 ? (
-            <div className="sidebar-empty-projects">
-              No projects yet
-            </div>
-          ) : (
-            projects
-              .slice(0, 5)
-              .map(
-                (
-                  project,
-                  index
-                ) => (
-                  <Link
-                    key={
-                      project?._id ||
-                      index
-                    }
-                    to={`/projects/${project?._id}`}
-                    className="sidebar-project"
-                  >
-
-                    <span
-                      className={`project-dot ${index % 2 === 0
-                        ? "blue"
-                        : "purple"
-                        }`}
-                    />
-
-                    <span className="sidebar-project-name">
-                      {project?.name ||
-                        "Untitled Project"}
-                    </span>
-
-                  </Link>
-                )
-              )
-          )}
-
-        </div>
-
-
-        {/* PROFILE */}
-
-        <div className="sidebar-profile-wrapper">
-
-          <button
-            type="button"
-            className="sidebar-profile"
-            onClick={() =>
-              setShowProfileMenu(
-                (previous) =>
-                  !previous
-              )
-            }
-          >
-
-            <div className="profile-avatar">
-              {userName
-                .charAt(0)
-                .toUpperCase()}
-            </div>
-
-            <div className="profile-info">
-
-              <strong>
-                {userName}
-              </strong>
-
-              <span>
-                Profile
-              </span>
-
-            </div>
-
-            <span className="profile-arrow">
-              <ChevronDown
-                size={15}
-                strokeWidth={1.8}
-              />
-            </span>
-
-          </button>
-
-
-          {showProfileMenu && (
-            <div className="profile-dropdown">
-
-              <div className="profile-dropdown-user">
-
-                <strong>
-                  {userName}
-                </strong>
-
-                <span>
-                  {user?.email || ""}
-                </span>
-
-              </div>
-
-
-              <button
-                type="button"
-                className="profile-logout-button"
-                onClick={
-                  handleLogout
-                }
-              >
-
-                <span>
-                  <Settings
-                    size={15}
-                    strokeWidth={1.8}
-                  />
-                </span>
-
-                Logout
-
-              </button>
-
-            </div>
-          )}
-
-        </div>
-
-      </aside>
+      <Sidebar
+        active="dashboard"
+        projects={projects}
+        showProjects
+        todoCount={todoTasks.length}
+      />
 
 
       {/* ===================================================
@@ -1019,203 +792,11 @@ function Dashboard() {
 
             {/* WORKSPACE SELECTOR */}
 
-            <div className="workspace-selector">
-
-              <button
-                type="button"
-                className="workspace-selector-button"
-                onClick={() =>
-                  setShowWorkspaceMenu(
-                    (previous) =>
-                      !previous
-                  )
-                }
-                disabled={
-                  workspaces.length ===
-                  0
-                }
-              >
-
-                <span className="workspace-selector-icon">
-
-                  <BriefcaseBusiness
-                    size={16}
-                    strokeWidth={1.8}
-                  />
-
-                </span>
-
-
-                <span className="workspace-selector-content">
-
-                  <small>
-                    WORKSPACE
-                  </small>
-
-                  <strong>
-                    {workspace?.name ||
-                      "No workspace"}
-                  </strong>
-
-                </span>
-
-
-                <span className="workspace-selector-arrow">
-
-                  <ChevronDown
-                    size={15}
-                    strokeWidth={1.8}
-                  />
-
-                </span>
-
-              </button>
-
-
-              {showWorkspaceMenu &&
-                workspaces.length >
-                0 && (
-                  <div className="workspace-dropdown">
-
-                    <div className="workspace-dropdown-header">
-                      Select workspace
-                    </div>
-
-
-                    {workspaces.map(
-                      (
-                        item,
-                        index
-                      ) => {
-
-                        if (
-                          !item?._id
-                        ) {
-                          return null;
-                        }
-
-                        const selected =
-                          String(
-                            workspace?._id
-                          ) ===
-                          String(
-                            item._id
-                          );
-
-                        return (
-                          <button
-                            key={
-                              item._id ||
-                              index
-                            }
-                            type="button"
-                            className={`workspace-dropdown-item ${selected
-                              ? "selected"
-                              : ""
-                              }`}
-                            onClick={() =>
-                              handleWorkspaceChange(
-                                item
-                              )
-                            }
-                          >
-
-                            <span className="workspace-dropdown-icon">
-
-                              {item?.name
-                                ?.charAt(
-                                  0
-                                )
-                                ?.toUpperCase() ||
-                                "W"}
-
-                            </span>
-
-
-                            <span className="workspace-dropdown-info">
-
-                              <strong>
-                                {item?.name ||
-                                  "Unnamed workspace"}
-                              </strong>
-
-                              <small>
-                                {item?.role ||
-                                  "MEMBER"}
-                              </small>
-
-                            </span>
-
-
-                            {selected && (
-                              <span className="workspace-dropdown-check">
-
-                                <Check
-                                  size={16}
-                                  strokeWidth={2}
-                                />
-
-                              </span>
-                            )}
-
-                          </button>
-                        );
-                      }
-                    )}
-
-
-                    {/* CREATE NEW WORKSPACE */}
-
-                    <div
-                      style={{
-                        height:
-                          "1px",
-                        margin:
-                          "6px 4px",
-                        background:
-                          "#eef2f7",
-                      }}
-                    />
-
-
-                    <button
-                      type="button"
-                      className="workspace-dropdown-item"
-                      onClick={() =>
-                        navigate(
-                          "/workspaces/new"
-                        )
-                      }
-                    >
-
-                      <span className="workspace-dropdown-icon">
-
-                        <Plus
-                          size={16}
-                          strokeWidth={1.9}
-                        />
-
-                      </span>
-
-
-                      <span className="workspace-dropdown-info">
-
-                        <strong>
-                          Create new workspace
-                        </strong>
-
-                        <small>
-                          Start a new workspace
-                        </small>
-
-                      </span>
-
-                    </button>
-
-                  </div>
-                )}
-
-            </div>
+            <WorkspaceDropdown
+              workspaces={workspaces}
+              workspace={workspace}
+              onChange={handleWorkspaceChange}
+            />
 
 
             <button
