@@ -19,7 +19,8 @@ import {
     rejectWorkspaceInvitation as rejectWorkspaceInvitationService,
     getWorkspaceSettings as getWorkspaceSettingsService,
     updateWorkspaceSettings as updateWorkspaceSettingsService,
-    transferOwnership as transferOwnershipService
+    transferOwnership as transferOwnershipService,
+    getMyWorkspaceInvitations as getMyWorkspaceInvitationsService,
 } from "../services/workspace.service.js";
 import Workspace from "../models/workspace.model.js";
 
@@ -251,6 +252,8 @@ const getWorkspaceInvitations = asyncHandler(async (req, res) => {
         );
 })
 
+
+
 // 13. cancel invitation
 const cancelWorkspaceInvitation = asyncHandler(async (req, res) => {
     const { workspaceId, invitationId } = req.params;
@@ -373,6 +376,23 @@ const transferOwnership = asyncHandler(async(req,res)=>{
     )
 })
 
+// 19. Get invitations for currently logged-in user
+const getMyWorkspaceInvitations = asyncHandler(async (req, res) => {
+    const invitations = await getMyWorkspaceInvitationsService(
+        req.user._id
+    );
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                invitations,
+                "Your workspace invitations fetched successfully"
+            )
+        );
+});
+
 export {
     createWorkspace,
     getWorkspaces,
@@ -391,6 +411,7 @@ export {
     rejectWorkspaceInvitation,
     getWorkspaceSettings,
     updateWorkspaceSettings,
-    transferOwnership
+    transferOwnership,
+    getMyWorkspaceInvitations
 };
 

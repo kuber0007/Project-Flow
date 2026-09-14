@@ -4,7 +4,12 @@ import { ApiError } from "../utils/ApiError.js";
 
 /* CREATE NOTIFICATION */
 
-const createNotification = async ({recipient, type, message}) => {
+const createNotification = async ({
+    recipient,
+    type,
+    message,
+    relatedId = null,
+}) => {
 
     if (!recipient) {
         return null;
@@ -16,7 +21,8 @@ const createNotification = async ({recipient, type, message}) => {
         await Notification.create({
             recipient,
             type,
-            message: message.trim(),
+            message,
+            relatedId,
         });
 
     return notification;
@@ -31,9 +37,9 @@ const getNotifications = async (userId) => {
         await Notification.find({
             recipient: userId,
         })
-        .sort({
-            createdAt: -1,
-        });
+            .sort({
+                createdAt: -1,
+            });
 
     return notifications;
 };
@@ -48,9 +54,9 @@ const getUnreadNotifications = async (userId) => {
             recipient: userId,
             read: false,
         })
-        .sort({
-            createdAt: -1,
-        });
+            .sort({
+                createdAt: -1,
+            });
 
     return notifications;
 };

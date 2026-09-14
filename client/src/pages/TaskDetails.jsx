@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
+  MessageCircle,
+  Send,
+  Trash2,
+} from "lucide-react";
+
+import {
   getTask,
   updateTask,
   deleteTask,
@@ -11,106 +17,211 @@ import {
   setTaskDueDate,
 } from "../services/taskService";
 
-
 import { getProjectMembers } from "../services/projectService";
 
+import {
+  addComment,
+  getTaskComments,
+  deleteComment,
+} from "../services/commentService";
+
+
+/* =========================================================
+   GET CURRENT USER
+========================================================= */
+
+const getInitialUser = () => {
+  const storedUser =
+    localStorage.getItem("user");
+
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    localStorage.removeItem("user");
+    return null;
+  }
+};
+
+
+/* =========================================================
+   TASK DETAILS
+========================================================= */
 
 const TaskDetails = () => {
   const { taskId } = useParams();
   const navigate = useNavigate();
 
+  /* =======================================================
+     TASK
+  ======================================================= */
+
   const [task, setTask] = useState(null);
   const [members, setMembers] = useState([]);
 
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
   const [loading, setLoading] = useState(true);
-  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [loadingMembers, setLoadingMembers] =
+    useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] =
+    useState(false);
+
+  /* =======================================================
+     ERROR / SUCCESS
+  ======================================================= */
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const [editing, setEditing] = useState(false);
+  /* =======================================================
+     EDITING
+  ======================================================= */
+
+  const [editing, setEditing] =
+    useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
     description: "",
   });
 
-  const [selectedAssignee, setSelectedAssignee] = useState("");
+  const [selectedAssignee, setSelectedAssignee] =
+    useState("");
 
+  /* =======================================================
+     COMMENTS
+  ======================================================= */
 
-  /* ================= GET PROJECT ID ================= */
+  const [comments, setComments] =
+    useState([]);
+
+  const [commentContent, setCommentContent] =
+    useState("");
+
+  const [commentsLoading, setCommentsLoading] =
+    useState(false);
+
+  const [commentSubmitting, setCommentSubmitting] =
+    useState(false);
+
+  const [deletingCommentId, setDeletingCommentId] =
+    useState("");
+
+  const [commentError, setCommentError] =
+    useState("");
+
+  /* =======================================================
+     GET PROJECT ID
+  ======================================================= */
 
   const getProjectId = (taskData) => {
     if (!taskData?.project) {
       return null;
     }
 
-    if (typeof taskData.project === "string") {
+    if (
+      typeof taskData.project ===
+      "string"
+    ) {
       return taskData.project;
     }
 
-    return taskData.project?._id || null;
+    return (
+      taskData.project?._id ||
+      null
+    );
   };
 
-
-  /* ================= GET WORKSPACE ID ================= */
+  /* =======================================================
+     GET WORKSPACE ID
+  ======================================================= */
 
   const getWorkspaceId = (project) => {
     if (!project?.workspace) {
       return null;
     }
 
-    if (typeof project.workspace === "string") {
+    if (
+      typeof project.workspace ===
+      "string"
+    ) {
       return project.workspace;
     }
 
-    return project.workspace?._id || null;
+    return (
+      project.workspace?._id ||
+      null
+    );
   };
 
+  /* =======================================================
+     GET ASSIGNEE ID
+  ======================================================= */
 
-  /* ================= CURRENT ASSIGNEE ID ================= */
-
-  const getAssigneeId = (assignee) => {
+  const getAssigneeId = (
+    assignee
+  ) => {
     if (!assignee) {
       return "";
     }
 
-    if (typeof assignee === "string") {
+    if (
+      typeof assignee ===
+      "string"
+    ) {
       return assignee;
     }
 
-    return assignee?._id || "";
+    return (
+      assignee?._id ||
+      ""
+    );
   };
 
-
-  /* ================= LOAD TASK ================= */
+  /* =======================================================
+     LOAD TASK
+  ======================================================= */
 
   const loadTask = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const data = await getTask(taskId);
+      const data =
+        await getTask(taskId);
 
       setTask(data);
 
       setFormData({
-        title: data?.title || "",
-        description: data?.description || "",
+        title:
+          data?.title || "",
+        description:
+          data?.description || "",
       });
 
       setSelectedAssignee(
-        getAssigneeId(data?.assignee)
+        getAssigneeId(
+          data?.assignee
+        )
       );
 
       return data;
     } catch (err) {
-      console.error("Failed to load task:", err);
+      console.error(
+        "Failed to load task:",
+        err
+      );
 
       setError(
-        err.message || "Failed to load task"
+        err?.message ||
+          "Failed to load task"
       );
 
       return null;
@@ -119,11 +230,18 @@ const TaskDetails = () => {
     }
   };
 
-  /* ================= LOAD PROJECT MEMBERS ================= */
+  /* =======================================================
+     LOAD PROJECT MEMBERS
+  ======================================================= */
 
-  const loadMembers = async (taskData) => {
+  const loadMembers = async (
+    taskData
+  ) => {
     try {
-      const projectId = getProjectId(taskData);
+      const projectId =
+        getProjectId(
+          taskData
+        );
 
       if (!projectId) {
         return;
@@ -132,19 +250,26 @@ const TaskDetails = () => {
       setLoadingMembers(true);
 
       const result =
-        await getProjectMembers(projectId);
+        await getProjectMembers(
+          projectId
+        );
 
       const memberList =
         Array.isArray(result)
           ? result
-          : Array.isArray(result?.members)
+          : Array.isArray(
+              result?.members
+            )
             ? result.members
-            : Array.isArray(result?.data)
+            : Array.isArray(
+                result?.data
+              )
               ? result.data
               : [];
 
-      setMembers(memberList);
-
+      setMembers(
+        memberList
+      );
     } catch (err) {
       console.error(
         "Failed to load project members:",
@@ -152,58 +277,243 @@ const TaskDetails = () => {
       );
 
       setMembers([]);
-
     } finally {
       setLoadingMembers(false);
     }
   };
 
+  /* =======================================================
+     LOAD COMMENTS
+  ======================================================= */
 
-  /* ================= INITIAL LOAD ================= */
+  const loadComments = async () => {
+    try {
+      setCommentsLoading(true);
+      setCommentError("");
+
+      const result =
+        await getTaskComments(
+          taskId
+        );
+
+      const commentList =
+        Array.isArray(result)
+          ? result
+          : Array.isArray(
+              result?.comments
+            )
+            ? result.comments
+            : Array.isArray(
+                result?.data
+              )
+              ? result.data
+              : [];
+
+      setComments(
+        commentList
+      );
+    } catch (err) {
+      console.error(
+        "Failed to load comments:",
+        err
+      );
+
+      setComments([]);
+
+      setCommentError(
+        err?.message ||
+          "Failed to load comments"
+      );
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  /* =======================================================
+     ADD COMMENT
+  ======================================================= */
+
+  const handleAddComment = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    if (
+      !commentContent.trim()
+    ) {
+      setCommentError(
+        "Please write a comment first."
+      );
+
+      return;
+    }
+
+    try {
+      setCommentSubmitting(true);
+      setCommentError("");
+
+      const newComment =
+        await addComment(
+          taskId,
+          commentContent
+        );
+
+      if (newComment) {
+        setComments(
+          (previous) => [
+            ...previous,
+            newComment,
+          ]
+        );
+      }
+
+      setCommentContent("");
+
+      showSuccess(
+        "Comment added successfully"
+      );
+    } catch (err) {
+      console.error(
+        "Failed to add comment:",
+        err
+      );
+
+      setCommentError(
+        err?.message ||
+          "Failed to add comment"
+      );
+    } finally {
+      setCommentSubmitting(
+        false
+      );
+    }
+  };
+
+  /* =======================================================
+     DELETE COMMENT
+  ======================================================= */
+
+  const handleDeleteComment = async (
+    commentId
+  ) => {
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this comment?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingCommentId(
+        commentId
+      );
+
+      setCommentError("");
+
+      await deleteComment(
+        commentId
+      );
+
+      setComments(
+        (previous) =>
+          previous.filter(
+            (comment) =>
+              comment._id !==
+              commentId
+          )
+      );
+
+      showSuccess(
+        "Comment deleted successfully"
+      );
+    } catch (err) {
+      console.error(
+        "Failed to delete comment:",
+        err
+      );
+
+      setCommentError(
+        err?.message ||
+          "Failed to delete comment"
+      );
+    } finally {
+      setDeletingCommentId("");
+    }
+  };
+
+  /* =======================================================
+     INITIAL LOAD
+  ======================================================= */
 
   useEffect(() => {
     if (!taskId) {
       return;
     }
 
-    const loadPage = async () => {
-      const taskData = await loadTask();
+    const loadPage =
+      async () => {
+        const taskData =
+          await loadTask();
 
-      if (taskData) {
-        await loadMembers(taskData);
-      }
-    };
+        if (taskData) {
+          await loadMembers(
+            taskData
+          );
+
+          await loadComments();
+        }
+      };
 
     loadPage();
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
+  /* =======================================================
+     FORMAT VALUE
+  ======================================================= */
 
-  /* ================= FORMAT VALUE ================= */
-
-  const formatValue = (value) => {
+  const formatValue = (
+    value
+  ) => {
     if (!value) {
       return "Not available";
     }
 
     return value
-      .replaceAll("_", " ")
+      .replaceAll(
+        "_",
+        " "
+      )
       .toLowerCase()
-      .replace(/\b\w/g, (char) =>
-        char.toUpperCase()
+      .replace(
+        /\b\w/g,
+        (char) =>
+          char.toUpperCase()
       );
   };
 
+  /* =======================================================
+     FORMAT DATE
+  ======================================================= */
 
-  /* ================= FORMAT DATE ================= */
-
-  const formatDate = (date) => {
+  const formatDate = (
+    date
+  ) => {
     if (!date) {
       return "Not available";
     }
 
-    const parsedDate = new Date(date);
+    const parsedDate =
+      new Date(date);
 
-    if (Number.isNaN(parsedDate.getTime())) {
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
       return "Not available";
     }
 
@@ -217,27 +527,40 @@ const TaskDetails = () => {
     );
   };
 
+  /* =======================================================
+     DATE INPUT
+  ======================================================= */
 
-  /* ================= DATE INPUT ================= */
-
-  const getDateInputValue = (date) => {
+  const getDateInputValue = (
+    date
+  ) => {
     if (!date) {
       return "";
     }
 
-    const parsedDate = new Date(date);
+    const parsedDate =
+      new Date(date);
 
-    if (Number.isNaN(parsedDate.getTime())) {
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
       return "";
     }
 
-    return parsedDate.toISOString().split("T")[0];
+    return parsedDate
+      .toISOString()
+      .split("T")[0];
   };
 
+  /* =======================================================
+     SUCCESS MESSAGE
+  ======================================================= */
 
-  /* ================= SUCCESS MESSAGE ================= */
-
-  const showSuccess = (message) => {
+  const showSuccess = (
+    message
+  ) => {
     setSuccess(message);
 
     setTimeout(() => {
@@ -245,26 +568,42 @@ const TaskDetails = () => {
     }, 2500);
   };
 
+  /* =======================================================
+     FORM CHANGE
+  ======================================================= */
 
-  /* ================= FORM CHANGE ================= */
+  const handleFormChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
 
-  const handleFormChange = (event) => {
-    const { name, value } = event.target;
-
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    setFormData(
+      (previous) => ({
+        ...previous,
+        [name]: value,
+      })
+    );
   };
 
+  /* =======================================================
+     SAVE CHANGES
+  ======================================================= */
 
-  /* ================= SAVE CHANGES ================= */
-
-  const handleUpdate = async (event) => {
+  const handleUpdate = async (
+    event
+  ) => {
     event.preventDefault();
 
-    if (!formData.title.trim()) {
-      setError("Task title is required");
+    if (
+      !formData.title.trim()
+    ) {
+      setError(
+        "Task title is required"
+      );
+
       return;
     }
 
@@ -274,30 +613,40 @@ const TaskDetails = () => {
 
       /* ---------- UPDATE BASIC TASK DATA ---------- */
 
-      const updatedTask = await updateTask(
-        taskId,
-        {
-          title: formData.title.trim(),
-          description: formData.description.trim(),
-        }
-      );
+      const updatedTask =
+        await updateTask(
+          taskId,
+          {
+            title:
+              formData.title.trim(),
+
+            description:
+              formData.description.trim(),
+          }
+        );
 
       let nextTask = {
         ...task,
         ...(updatedTask || {}),
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-      };
 
+        title:
+          formData.title.trim(),
+
+        description:
+          formData.description.trim(),
+      };
 
       /* ---------- UPDATE ASSIGNEE ---------- */
 
       const currentAssigneeId =
-        getAssigneeId(task?.assignee);
+        getAssigneeId(
+          task?.assignee
+        );
 
       if (
         selectedAssignee &&
-        selectedAssignee !== currentAssigneeId
+        selectedAssignee !==
+          currentAssigneeId
       ) {
         const assignmentResult =
           await assignTask(
@@ -306,28 +655,35 @@ const TaskDetails = () => {
           );
 
         const selectedMember =
-          members.find((member) => {
-            const memberUserId =
-              typeof member.user === "string"
-                ? member.user
-                : member.user?._id;
+          members.find(
+            (member) => {
+              const memberUserId =
+                typeof member.user ===
+                "string"
+                  ? member.user
+                  : member.user?._id;
 
-            return (
-              memberUserId === selectedAssignee
-            );
-          });
+              return (
+                memberUserId ===
+                selectedAssignee
+              );
+            }
+          );
 
         const selectedUser =
-          selectedMember?.user || null;
+          selectedMember?.user ||
+          null;
 
         nextTask = {
           ...nextTask,
+
           assignee:
             assignmentResult?.assignee ||
-            assignmentResult?.data?.assignee ||
-            selectedUser ||
-            {
-              _id: selectedAssignee,
+            assignmentResult?.data
+              ?.assignee ||
+            selectedUser || {
+              _id:
+                selectedAssignee,
             },
         };
       }
@@ -346,261 +702,319 @@ const TaskDetails = () => {
       );
 
       setError(
-        err.message || "Failed to save task"
+        err?.message ||
+          "Failed to save task"
       );
     } finally {
       setSaving(false);
     }
   };
 
+  /* =======================================================
+     STATUS CHANGE
+  ======================================================= */
 
-  /* ================= STATUS CHANGE ================= */
+  const handleStatusChange =
+    async (event) => {
+      const status =
+        event.target.value;
 
-  const handleStatusChange = async (event) => {
-    const status = event.target.value;
+      try {
+        setSaving(true);
+        setError("");
 
-    try {
-      setSaving(true);
-      setError("");
-
-      await changeTaskStatus(
-        taskId,
-        status
-      );
-
-      setTask((previous) => ({
-        ...previous,
-        status,
-      }));
-
-      showSuccess("Status updated");
-    } catch (err) {
-      console.error(
-        "Failed to change status:",
-        err
-      );
-
-      setError(
-        err.message || "Failed to change status"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
-  /* ================= PRIORITY CHANGE ================= */
-
-  const handlePriorityChange = async (event) => {
-    const priority = event.target.value;
-
-    try {
-      setSaving(true);
-      setError("");
-
-      await changeTaskPriority(
-        taskId,
-        priority
-      );
-
-      setTask((previous) => ({
-        ...previous,
-        priority,
-      }));
-
-      showSuccess("Priority updated");
-    } catch (err) {
-      console.error(
-        "Failed to change priority:",
-        err
-      );
-
-      setError(
-        err.message ||
-        "Failed to change priority"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
-  /* ================= DUE DATE CHANGE ================= */
-
-  const handleDueDateChange = async (event) => {
-    const dueDate =
-      event.target.value || null;
-
-    try {
-      setSaving(true);
-      setError("");
-
-      await setTaskDueDate(
-        taskId,
-        dueDate
-      );
-
-      setTask((previous) => ({
-        ...previous,
-        dueDate,
-      }));
-
-      showSuccess("Due date updated");
-    } catch (err) {
-      console.error(
-        "Failed to change due date:",
-        err
-      );
-
-      setError(
-        err.message ||
-        "Failed to change due date"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
-  /* ================= DELETE TASK ================= */
-
-  const handleDelete = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this task?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setDeleting(true);
-      setError("");
-
-      await deleteTask(taskId);
-
-      const projectId =
-        getProjectId(task);
-
-      if (projectId) {
-        navigate(
-          `/projects/${projectId}`
+        await changeTaskStatus(
+          taskId,
+          status
         );
-      } else {
-        navigate("/projects");
+
+        setTask(
+          (previous) => ({
+            ...previous,
+            status,
+          })
+        );
+
+        showSuccess(
+          "Status updated"
+        );
+      } catch (err) {
+        console.error(
+          "Failed to change status:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Failed to change status"
+        );
+      } finally {
+        setSaving(false);
       }
-    } catch (err) {
-      console.error(
-        "Failed to delete task:",
-        err
+    };
+
+  /* =======================================================
+     PRIORITY CHANGE
+  ======================================================= */
+
+  const handlePriorityChange =
+    async (event) => {
+      const priority =
+        event.target.value;
+
+      try {
+        setSaving(true);
+        setError("");
+
+        await changeTaskPriority(
+          taskId,
+          priority
+        );
+
+        setTask(
+          (previous) => ({
+            ...previous,
+            priority,
+          })
+        );
+
+        showSuccess(
+          "Priority updated"
+        );
+      } catch (err) {
+        console.error(
+          "Failed to change priority:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Failed to change priority"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
+
+  /* =======================================================
+     DUE DATE CHANGE
+  ======================================================= */
+
+  const handleDueDateChange =
+    async (event) => {
+      const dueDate =
+        event.target.value ||
+        null;
+
+      try {
+        setSaving(true);
+        setError("");
+
+        await setTaskDueDate(
+          taskId,
+          dueDate
+        );
+
+        setTask(
+          (previous) => ({
+            ...previous,
+            dueDate,
+          })
+        );
+
+        showSuccess(
+          "Due date updated"
+        );
+      } catch (err) {
+        console.error(
+          "Failed to change due date:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Failed to change due date"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
+
+  /* =======================================================
+     DELETE TASK
+  ======================================================= */
+
+  const handleDelete =
+    async () => {
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to delete this task?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setDeleting(true);
+        setError("");
+
+        await deleteTask(
+          taskId
+        );
+
+        const projectId =
+          getProjectId(task);
+
+        if (projectId) {
+          navigate(
+            `/projects/${projectId}`
+          );
+        } else {
+          navigate(
+            "/projects"
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Failed to delete task:",
+          err
+        );
+
+        setError(
+          err?.message ||
+            "Failed to delete task"
+        );
+
+        setDeleting(false);
+      }
+    };
+
+  /* =======================================================
+     CANCEL EDIT
+  ======================================================= */
+
+  const handleCancelEdit =
+    () => {
+      setEditing(false);
+
+      setFormData({
+        title:
+          task?.title || "",
+
+        description:
+          task?.description ||
+          "",
+      });
+
+      setSelectedAssignee(
+        getAssigneeId(
+          task?.assignee
+        )
       );
 
-      setError(
-        err.message ||
-        "Failed to delete task"
-      );
+      setError("");
+    };
 
-      setDeleting(false);
-    }
-  };
-
-
-  /* ================= CANCEL EDIT ================= */
-
-  const handleCancelEdit = () => {
-    setEditing(false);
-
-    setFormData({
-      title: task?.title || "",
-      description:
-        task?.description || "",
-    });
-
-    setSelectedAssignee(
-      getAssigneeId(task?.assignee)
-    );
-
-    setError("");
-  };
-
-
-  /* ================= LOADING ================= */
+  /* =======================================================
+     LOADING
+  ======================================================= */
 
   if (loading) {
     return (
       <div className="task-details-loading">
-        <div className="task-details-loader"></div>
 
-        <p>Loading task...</p>
+        <div className="task-details-loader" />
+
+        <p>
+          Loading task...
+        </p>
+
       </div>
     );
   }
 
-
-  /* ================= ERROR ================= */
+  /* =======================================================
+     ERROR
+  ======================================================= */
 
   if (error && !task) {
     return (
       <div className="task-details-error-page">
+
         <div className="task-details-error-card">
 
           <h2>
             Unable to load task
           </h2>
 
-          <p>{error}</p>
+          <p>
+            {error}
+          </p>
 
           <button
             type="button"
             onClick={() =>
-              navigate("/projects")
+              navigate(
+                "/projects"
+              )
             }
           >
             ← Back to Projects
           </button>
 
         </div>
+
       </div>
     );
   }
 
-
-  /* ================= NO TASK ================= */
+  /* =======================================================
+     NO TASK
+  ======================================================= */
 
   if (!task) {
     return (
       <div className="task-details-error-page">
+
         <div className="task-details-error-card">
 
-          <h2>Task not found</h2>
+          <h2>
+            Task not found
+          </h2>
 
           <button
             type="button"
             onClick={() =>
-              navigate("/projects")
+              navigate(
+                "/projects"
+              )
             }
           >
             ← Back to Projects
           </button>
 
         </div>
+
       </div>
     );
   }
 
-
   const projectId =
     getProjectId(task);
 
-
-  /* ================= UI ================= */
+  /* =======================================================
+     UI
+  ======================================================= */
 
   return (
     <div className="task-details-page">
 
       <main className="task-details-main">
 
-        {/* ---------- BACK ---------- */}
+        {/* =================================================
+            BACK
+        ================================================= */}
 
         <button
           type="button"
@@ -608,16 +1022,20 @@ const TaskDetails = () => {
           onClick={() =>
             projectId
               ? navigate(
-                `/projects/${projectId}`
-              )
-              : navigate("/projects")
+                  `/projects/${projectId}`
+                )
+              : navigate(
+                  "/projects"
+                )
           }
         >
           ← Back to Project
         </button>
 
 
-        {/* ---------- SUCCESS ---------- */}
+        {/* =================================================
+            SUCCESS
+        ================================================= */}
 
         {success && (
           <div className="task-details-success">
@@ -626,7 +1044,9 @@ const TaskDetails = () => {
         )}
 
 
-        {/* ---------- ERROR ---------- */}
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
         {error && (
           <div className="task-details-inline-error">
@@ -635,7 +1055,9 @@ const TaskDetails = () => {
         )}
 
 
-        {/* ---------- HEADER ---------- */}
+        {/* =================================================
+            HEADER
+        ================================================= */}
 
         <div className="task-details-header">
 
@@ -649,8 +1071,12 @@ const TaskDetails = () => {
               <input
                 className="task-details-title-input"
                 name="title"
-                value={formData.title}
-                onChange={handleFormChange}
+                value={
+                  formData.title
+                }
+                onChange={
+                  handleFormChange
+                }
                 disabled={saving}
               />
             ) : (
@@ -660,13 +1086,16 @@ const TaskDetails = () => {
               </h1>
             )}
 
-
             {editing ? (
               <textarea
                 className="task-details-description-input"
                 name="description"
-                value={formData.description}
-                onChange={handleFormChange}
+                value={
+                  formData.description
+                }
+                onChange={
+                  handleFormChange
+                }
                 rows="4"
                 disabled={saving}
               />
@@ -682,17 +1111,22 @@ const TaskDetails = () => {
         </div>
 
 
-        {/* ---------- STATUS / PRIORITY / DATE ---------- */}
+        {/* =================================================
+            STATUS / PRIORITY / DATE
+        ================================================= */}
 
         <div className="task-details-grid">
 
           <div className="task-details-card">
 
-            <span>Status</span>
+            <span>
+              Status
+            </span>
 
             <select
               value={
-                task.status || "TODO"
+                task.status ||
+                "TODO"
               }
               onChange={
                 handleStatusChange
@@ -721,7 +1155,9 @@ const TaskDetails = () => {
 
           <div className="task-details-card">
 
-            <span>Priority</span>
+            <span>
+              Priority
+            </span>
 
             <select
               value={
@@ -755,13 +1191,17 @@ const TaskDetails = () => {
 
           <div className="task-details-card">
 
-            <span>Due Date</span>
+            <span>
+              Due Date
+            </span>
 
             <input
               type="date"
-              value={getDateInputValue(
-                task.dueDate
-              )}
+              value={
+                getDateInputValue(
+                  task.dueDate
+                )
+              }
               onChange={
                 handleDueDateChange
               }
@@ -773,7 +1213,9 @@ const TaskDetails = () => {
         </div>
 
 
-        {/* ---------- TASK INFORMATION ---------- */}
+        {/* =================================================
+            TASK INFORMATION
+        ================================================= */}
 
         <section className="task-details-section">
 
@@ -789,7 +1231,9 @@ const TaskDetails = () => {
           <div className="task-details-information">
 
             <div>
-              <span>Task ID</span>
+              <span>
+                Task ID
+              </span>
 
               <strong>
                 {task._id}
@@ -798,7 +1242,9 @@ const TaskDetails = () => {
 
 
             <div>
-              <span>Status</span>
+              <span>
+                Status
+              </span>
 
               <strong>
                 {formatValue(
@@ -809,7 +1255,9 @@ const TaskDetails = () => {
 
 
             <div>
-              <span>Priority</span>
+              <span>
+                Priority
+              </span>
 
               <strong>
                 {formatValue(
@@ -820,7 +1268,9 @@ const TaskDetails = () => {
 
 
             <div>
-              <span>Due Date</span>
+              <span>
+                Due Date
+              </span>
 
               <strong>
                 {formatDate(
@@ -831,7 +1281,9 @@ const TaskDetails = () => {
 
 
             <div>
-              <span>Created</span>
+              <span>
+                Created
+              </span>
 
               <strong>
                 {formatDate(
@@ -842,7 +1294,9 @@ const TaskDetails = () => {
 
 
             <div>
-              <span>Updated</span>
+              <span>
+                Updated
+              </span>
 
               <strong>
                 {formatDate(
@@ -856,7 +1310,9 @@ const TaskDetails = () => {
         </section>
 
 
-        {/* ---------- ASSIGNEE ---------- */}
+        {/* =================================================
+            ASSIGNEE
+        ================================================= */}
 
         <section className="task-details-section">
 
@@ -899,7 +1355,9 @@ const TaskDetails = () => {
 
                     {task.assignee.email && (
                       <p>
-                        {task.assignee.email}
+                        {
+                          task.assignee.email
+                        }
                       </p>
                     )}
 
@@ -927,7 +1385,9 @@ const TaskDetails = () => {
 
               <select
                 id="assignee"
-                value={selectedAssignee}
+                value={
+                  selectedAssignee
+                }
                 onChange={(event) =>
                   setSelectedAssignee(
                     event.target.value
@@ -946,35 +1406,40 @@ const TaskDetails = () => {
                 </option>
 
 
-                {members.map((member) => {
-
-                  const user =
-                    typeof member.user ===
+                {members.map(
+                  (member) => {
+                    const user =
+                      typeof member.user ===
                       "object"
-                      ? member.user
-                      : null;
+                        ? member.user
+                        : null;
 
-                  const userId =
-                    typeof member.user ===
+                    const userId =
+                      typeof member.user ===
                       "string"
-                      ? member.user
-                      : user?._id;
+                        ? member.user
+                        : user?._id;
 
-                  if (!userId) {
-                    return null;
+                    if (!userId) {
+                      return null;
+                    }
+
+                    return (
+                      <option
+                        key={
+                          userId
+                        }
+                        value={
+                          userId
+                        }
+                      >
+                        {user?.name ||
+                          user?.email ||
+                          "Workspace Member"}
+                      </option>
+                    );
                   }
-
-                  return (
-                    <option
-                      key={userId}
-                      value={userId}
-                    >
-                      {user?.name ||
-                        user?.email ||
-                        "Workspace Member"}
-                    </option>
-                  );
-                })}
+                )}
 
               </select>
 
@@ -984,7 +1449,9 @@ const TaskDetails = () => {
         </section>
 
 
-        {/* ---------- ACTIONS ---------- */}
+        {/* =================================================
+            ACTIONS
+        ================================================= */}
 
         <div className="task-details-actions">
 
@@ -998,7 +1465,9 @@ const TaskDetails = () => {
 
                 setFormData({
                   title:
-                    task.title || "",
+                    task.title ||
+                    "",
+
                   description:
                     task.description ||
                     "",
@@ -1018,7 +1487,9 @@ const TaskDetails = () => {
               <button
                 type="button"
                 className="task-details-edit-button"
-                onClick={handleUpdate}
+                onClick={
+                  handleUpdate
+                }
                 disabled={saving}
               >
                 {saving
@@ -1044,7 +1515,9 @@ const TaskDetails = () => {
           <button
             type="button"
             className="task-details-delete-button"
-            onClick={handleDelete}
+            onClick={
+              handleDelete
+            }
             disabled={deleting}
           >
             {deleting
@@ -1054,11 +1527,327 @@ const TaskDetails = () => {
 
         </div>
 
+
+        {/* =================================================
+            COMMENTS
+        ================================================= */}
+
+        <section className="task-comments-section">
+
+          {/* COMMENTS HEADER */}
+
+          <div className="task-comments-header">
+
+            <div className="task-comments-title">
+
+              <span className="task-comments-icon">
+
+                <MessageCircle
+                  size={18}
+                  strokeWidth={1.8}
+                />
+
+              </span>
+
+              <div>
+
+                <h2>
+                  Comments
+                </h2>
+
+                <p>
+                  {comments.length}{" "}
+                  {comments.length ===
+                  1
+                    ? "comment"
+                    : "comments"}
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* =================================================
+              ADD COMMENT
+          ================================================= */}
+
+          <form
+            className="task-comment-form"
+            onSubmit={
+              handleAddComment
+            }
+          >
+
+            <textarea
+              value={
+                commentContent
+              }
+              onChange={(
+                event
+              ) =>
+                setCommentContent(
+                  event.target
+                    .value
+                )
+              }
+              placeholder="Write a comment..."
+              rows="4"
+              disabled={
+                commentSubmitting
+              }
+              maxLength={1000}
+            />
+
+
+            <div className="task-comment-form-footer">
+
+              <span>
+                {
+                  commentContent.length
+                }
+                /1000
+              </span>
+
+
+              <button
+                type="submit"
+                disabled={
+                  commentSubmitting ||
+                  !commentContent.trim()
+                }
+              >
+
+                <Send
+                  size={15}
+                  strokeWidth={2}
+                />
+
+                {commentSubmitting
+                  ? "Posting..."
+                  : "Post Comment"}
+
+              </button>
+
+            </div>
+
+          </form>
+
+
+          {/* =================================================
+              COMMENT ERROR
+          ================================================= */}
+
+          {commentError && (
+            <div className="task-comments-error">
+              {commentError}
+            </div>
+          )}
+
+
+          {/* =================================================
+              COMMENTS LIST
+          ================================================= */}
+
+          <div className="task-comments-list">
+
+            {commentsLoading ? (
+
+              <div className="task-comments-empty">
+
+                <div className="task-comments-spinner" />
+
+                <p>
+                  Loading comments...
+                </p>
+
+              </div>
+
+            ) : comments.length ===
+              0 ? (
+
+              <div className="task-comments-empty">
+
+                <div className="task-comments-empty-icon">
+
+                  <MessageCircle
+                    size={24}
+                    strokeWidth={1.7}
+                  />
+
+                </div>
+
+                <h3>
+                  No comments yet
+                </h3>
+
+                <p>
+                  Start the conversation
+                  by adding the first
+                  comment.
+                </p>
+
+              </div>
+
+            ) : (
+
+              comments.map(
+                (comment) => {
+
+                  const commentUser =
+                    typeof comment.user ===
+                    "object"
+                      ? comment.user
+                      : null;
+
+                  const commentUserName =
+                    commentUser?.name ||
+                    commentUser?.email ||
+                    "User";
+
+                  const currentUser =
+                    getInitialUser();
+
+                  const currentUserId =
+                    currentUser?._id ||
+                    currentUser?.id;
+
+                  const commentUserId =
+                    commentUser?._id ||
+                    comment.user;
+
+                  const isOwnComment =
+                    String(
+                      currentUserId
+                    ) ===
+                    String(
+                      commentUserId
+                    );
+
+                  return (
+                    <article
+                      className="task-comment"
+                      key={
+                        comment._id
+                      }
+                    >
+
+                      {/* AVATAR */}
+
+                      <div className="task-comment-avatar">
+
+                        {commentUserName
+                          .charAt(0)
+                          .toUpperCase()}
+
+                      </div>
+
+
+                      {/* BODY */}
+
+                      <div className="task-comment-body">
+
+                        <div className="task-comment-top">
+
+                          <div>
+
+                            <strong>
+                              {
+                                commentUserName
+                              }
+                            </strong>
+
+                            {commentUser?.email && (
+                              <span>
+                                {
+                                  commentUser.email
+                                }
+                              </span>
+                            )}
+
+                          </div>
+
+
+                          <time>
+                            {
+                              comment.createdAt
+                                ? new Date(
+                                    comment.createdAt
+                                  ).toLocaleString(
+                                    "en-IN",
+                                    {
+                                      dateStyle:
+                                        "medium",
+
+                                      timeStyle:
+                                        "short",
+                                    }
+                                  )
+                                : ""
+                            }
+                          </time>
+
+                        </div>
+
+
+                        {/* COMMENT TEXT */}
+
+                        <p className="task-comment-content">
+                          {
+                            comment.content
+                          }
+                        </p>
+
+
+                        {/* DELETE */}
+
+                        {isOwnComment && (
+                          <button
+                            type="button"
+                            className="task-comment-delete"
+                            onClick={() =>
+                              handleDeleteComment(
+                                comment._id
+                              )
+                            }
+                            disabled={
+                              deletingCommentId ===
+                              comment._id
+                            }
+                          >
+
+                            <Trash2
+                              size={13}
+                              strokeWidth={1.8}
+                            />
+
+                            {deletingCommentId ===
+                            comment._id
+                              ? "Deleting..."
+                              : "Delete"}
+
+                          </button>
+                        )}
+
+                      </div>
+
+                    </article>
+                  );
+                }
+              )
+
+            )}
+
+          </div>
+
+        </section>
+
       </main>
 
     </div>
   );
 };
-
 
 export default TaskDetails;

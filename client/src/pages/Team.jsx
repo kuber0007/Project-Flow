@@ -8,13 +8,18 @@ import {
   updateMemberRole,
   removeWorkspaceMember,
   leaveWorkspace,
+  getWorkspaceInvitations,
+  createWorkspaceInvitation,
+  cancelWorkspaceInvitation,
+  getMyWorkspaceInvitations,
+  acceptWorkspaceInvitation,
+  rejectWorkspaceInvitation,
 } from "../services/workspaceService";
 
 import "../styles/team.css";
 
 import Sidebar from "../components/Sidebar";
 import WorkspaceDropdown from "../components/WorkspaceDropdown";
-
 
 const Team = () => {
   const navigate = useNavigate();
@@ -30,6 +35,7 @@ const Team = () => {
       "selectedWorkspaceId"
     )
   );
+
   const [workspace, setWorkspace] =
     useState(null);
 
@@ -54,6 +60,27 @@ const Team = () => {
   const [search, setSearch] =
     useState("");
 
+  /* =========================================================
+     INVITATION STATE
+  ========================================================= */
+
+  const [invitations, setInvitations] =
+    useState([]);
+
+  const [myInvitations, setMyInvitations] =
+    useState([]);
+
+  const [inviteEmail, setInviteEmail] =
+    useState("");
+
+  const [inviteRole, setInviteRole] =
+    useState("MEMBER");
+
+  const [inviteLoading, setInviteLoading] =
+    useState(false);
+
+  const [invitationAction, setInvitationAction] =
+    useState("");
 
   /* =========================================================
      CURRENT USER
@@ -79,12 +106,10 @@ const Team = () => {
   const currentUser =
     getCurrentUser();
 
-
   const currentUserId =
     currentUser?._id ||
     currentUser?.id ||
     "";
-
 
   /* =========================================================
      LOAD DATA
@@ -100,10 +125,14 @@ const Team = () => {
 
       const workspaceList =
         Array.isArray(result)
-          ? result.filter((item) => item?._id)
+          ? result.filter(
+              (item) => item?._id
+            )
           : [];
 
-      setWorkspaces(workspaceList);
+      setWorkspaces(
+        workspaceList
+      );
 
       let workspaceId =
         selectedWorkspaceId;
@@ -132,22 +161,81 @@ const Team = () => {
         }
       }
 
+      /* =====================================================
+         LOAD RECEIVED INVITATIONS
+         This is independent of the currently selected workspace.
+      ===================================================== */
+
+      let receivedInvitations = [];
+
+      try {
+        const myInvitationsResult =
+          await getMyWorkspaceInvitations();
+
+        receivedInvitations =
+          Array.isArray(myInvitationsResult)
+            ? myInvitationsResult
+            : Array.isArray(
+                myInvitationsResult?.invitations
+              )
+              ? myInvitationsResult.invitations
+              : [];
+      } catch (invitationError) {
+        console.error(
+          "Failed to load received invitations:",
+          invitationError
+        );
+      }
+
+      setMyInvitations(
+        receivedInvitations
+      );
+
       if (!workspaceId) {
         setWorkspace(null);
         setMembers([]);
+        setInvitations([]);
         return;
       }
+
+      /* =====================================================
+         SELECTED WORKSPACE
+      ===================================================== */
+
+      const selectedWorkspace =
+        workspaceList.find(
+          (item) =>
+            String(item._id) ===
+            String(workspaceId)
+        );
+
+      const canManageWorkspace =
+        ["OWNER", "ADMIN"].includes(
+          selectedWorkspace?.role
+        );
+
+      /* =====================================================
+         LOAD WORKSPACE DATA + SENT INVITATIONS
+      ===================================================== */
 
       const [
         workspaceResult,
         membersResult,
+        invitationsResult,
       ] = await Promise.all([
         getWorkspace(
           workspaceId
         ),
+
         getWorkspaceMembers(
           workspaceId
         ),
+
+        canManageWorkspace
+          ? getWorkspaceInvitations(
+              workspaceId
+            )
+          : Promise.resolve([]),
       ]);
 
       const workspaceData =
@@ -164,12 +252,16 @@ const Team = () => {
             ? membersResult.members
             : [];
 
-      const selectedWorkspace =
-        workspaceList.find(
-          (item) =>
-            String(item._id) ===
-            String(workspaceId)
-        );
+      const workspaceInvitations =
+        Array.isArray(
+          invitationsResult
+        )
+          ? invitationsResult
+          : Array.isArray(
+              invitationsResult?.invitations
+            )
+            ? invitationsResult.invitations
+            : [];
 
       setWorkspace({
         ...(selectedWorkspace || {}),
@@ -181,7 +273,18 @@ const Team = () => {
           "MEMBER",
       });
 
-      setMembers(memberList);
+      setMembers(
+        memberList
+      );
+
+      setInvitations(
+        workspaceInvitations
+      );
+
+      setMyInvitations(
+        receivedInvitations
+      );
+
     } catch (err) {
       console.error(
         "Failed to load team:",
@@ -201,7 +304,6 @@ const Team = () => {
     loadData();
   }, [selectedWorkspaceId]);
 
-
   /* =========================================================
      CURRENT MEMBER
   ========================================================= */
@@ -219,11 +321,10 @@ const Team = () => {
       );
     });
 
-
   const currentRole =
     currentMember?.role ||
+    workspace?.role ||
     "MEMBER";
-
 
   /* =========================================================
      FILTER MEMBERS
@@ -239,7 +340,8 @@ const Team = () => {
       ? members
       : members.filter((member) => {
           const user =
-            typeof member.user === "object"
+            typeof member.user ===
+            "object"
               ? member.user
               : null;
 
@@ -253,12 +355,17 @@ const Team = () => {
             member?.role || "";
 
           return (
-            name.toLowerCase().includes(value) ||
-            email.toLowerCase().includes(value) ||
-            role.toLowerCase().includes(value)
+            name
+              .toLowerCase()
+              .includes(value) ||
+            email
+              .toLowerCase()
+              .includes(value) ||
+            role
+              .toLowerCase()
+              .includes(value)
           );
         });
-
 
   /* =========================================================
      SUCCESS MESSAGE
@@ -267,19 +374,15 @@ const Team = () => {
   const showSuccess = (
     message
   ) => {
-
-    setSuccess(
-      message
-    );
+    setSuccess(message);
 
     setTimeout(() => {
       setSuccess("");
     }, 2500);
   };
 
-
   /* =========================================================
-     CHANGE ROLE
+     CHANGE WORKSPACE
   ========================================================= */
 
   const handleWorkspaceChange = (
@@ -299,6 +402,216 @@ const Team = () => {
     );
   };
 
+  /* =========================================================
+     SEND INVITATION
+  ========================================================= */
+
+  const handleSendInvitation =
+    async () => {
+      const email =
+        inviteEmail.trim();
+
+      if (!email) {
+        setError(
+          "Please enter an email address."
+        );
+        return;
+      }
+
+      try {
+        setInviteLoading(true);
+        setError("");
+
+        await createWorkspaceInvitation(
+          selectedWorkspaceId,
+          email,
+          inviteRole
+        );
+
+        setInviteEmail("");
+        setInviteRole("MEMBER");
+
+        showSuccess(
+          "Workspace invitation sent successfully."
+        );
+
+        const updatedInvitations =
+          await getWorkspaceInvitations(
+            selectedWorkspaceId
+          );
+
+        const invitationList =
+          Array.isArray(
+            updatedInvitations
+          )
+            ? updatedInvitations
+            : Array.isArray(
+                updatedInvitations?.invitations
+              )
+              ? updatedInvitations.invitations
+              : [];
+
+        setInvitations(
+          invitationList
+        );
+
+      } catch (err) {
+        console.error(
+          "Failed to send invitation:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Failed to send workspace invitation."
+        );
+      } finally {
+        setInviteLoading(false);
+      }
+    };
+
+  /* =========================================================
+     CANCEL INVITATION
+  ========================================================= */
+
+  const handleCancelInvitation =
+    async (invitationId) => {
+      try {
+        setInvitationAction(
+          `cancel-${invitationId}`
+        );
+
+        setError("");
+
+        await cancelWorkspaceInvitation(
+          selectedWorkspaceId,
+          invitationId
+        );
+
+        setInvitations(
+          (previous) =>
+            previous.filter(
+              (invitation) =>
+                invitation._id !==
+                invitationId
+            )
+        );
+
+        showSuccess(
+          "Invitation cancelled successfully."
+        );
+
+      } catch (err) {
+        console.error(
+          "Failed to cancel invitation:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Failed to cancel invitation."
+        );
+      } finally {
+        setInvitationAction("");
+      }
+    };
+
+  /* =========================================================
+     ACCEPT INVITATION
+  ========================================================= */
+
+  const handleAcceptInvitation =
+    async (invitationId) => {
+      try {
+        setInvitationAction(
+          `accept-${invitationId}`
+        );
+
+        setError("");
+
+        await acceptWorkspaceInvitation(
+          invitationId
+        );
+
+        setMyInvitations(
+          (previous) =>
+            previous.filter(
+              (invitation) =>
+                invitation._id !==
+                invitationId
+            )
+        );
+
+        showSuccess(
+          "Workspace invitation accepted."
+        );
+
+        /*
+         * Reload the page so the newly
+         * joined workspace/member data
+         * is refreshed everywhere.
+         */
+        window.location.reload();
+
+      } catch (err) {
+        console.error(
+          "Failed to accept invitation:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Failed to accept invitation."
+        );
+      } finally {
+        setInvitationAction("");
+      }
+    };
+
+  /* =========================================================
+     REJECT INVITATION
+  ========================================================= */
+
+  const handleRejectInvitation =
+    async (invitationId) => {
+      try {
+        setInvitationAction(
+          `reject-${invitationId}`
+        );
+
+        setError("");
+
+        await rejectWorkspaceInvitation(
+          invitationId
+        );
+
+        setMyInvitations(
+          (previous) =>
+            previous.filter(
+              (invitation) =>
+                invitation._id !==
+                invitationId
+            )
+        );
+
+        showSuccess(
+          "Workspace invitation rejected."
+        );
+
+      } catch (err) {
+        console.error(
+          "Failed to reject invitation:",
+          err
+        );
+
+        setError(
+          err.message ||
+          "Failed to reject invitation."
+        );
+      } finally {
+        setInvitationAction("");
+      }
+    };
 
   /* =========================================================
      CHANGE ROLE
@@ -308,10 +621,9 @@ const Team = () => {
     member,
     newRole
   ) => {
-
     const memberUserId =
       typeof member.user ===
-        "string"
+      "string"
         ? member.user
         : member.user?._id;
 
@@ -320,7 +632,6 @@ const Team = () => {
     }
 
     try {
-
       setActionLoading(
         `role-${memberUserId}`
       );
@@ -337,10 +648,9 @@ const Team = () => {
         (previous) =>
           previous.map(
             (item) => {
-
               const itemUserId =
                 typeof item.user ===
-                  "string"
+                "string"
                   ? item.user
                   : item.user?._id;
 
@@ -364,7 +674,6 @@ const Team = () => {
       );
 
     } catch (err) {
-
       console.error(
         "Failed to update member role:",
         err
@@ -376,11 +685,9 @@ const Team = () => {
       );
 
     } finally {
-
       setActionLoading("");
     }
   };
-
 
   /* =========================================================
      REMOVE MEMBER
@@ -389,10 +696,9 @@ const Team = () => {
   const handleRemoveMember = async (
     member
   ) => {
-
     const memberUserId =
       typeof member.user ===
-        "string"
+      "string"
         ? member.user
         : member.user?._id;
 
@@ -415,7 +721,6 @@ const Team = () => {
     }
 
     try {
-
       setActionLoading(
         `remove-${memberUserId}`
       );
@@ -431,10 +736,9 @@ const Team = () => {
         (previous) =>
           previous.filter(
             (item) => {
-
               const itemUserId =
                 typeof item.user ===
-                  "string"
+                "string"
                   ? item.user
                   : item.user?._id;
 
@@ -451,7 +755,6 @@ const Team = () => {
       );
 
     } catch (err) {
-
       console.error(
         "Failed to remove member:",
         err
@@ -463,11 +766,9 @@ const Team = () => {
       );
 
     } finally {
-
       setActionLoading("");
     }
   };
-
 
   /* =========================================================
      LEAVE WORKSPACE
@@ -475,7 +776,6 @@ const Team = () => {
 
   const handleLeaveWorkspace =
     async () => {
-
       const confirmed =
         window.confirm(
           `Are you sure you want to leave "${workspace?.name || "this workspace"}"?`
@@ -486,7 +786,6 @@ const Team = () => {
       }
 
       try {
-
         setActionLoading(
           "leave"
         );
@@ -509,7 +808,6 @@ const Team = () => {
         );
 
       } catch (err) {
-
         console.error(
           "Failed to leave workspace:",
           err
@@ -524,7 +822,6 @@ const Team = () => {
       }
     };
 
-
   /* =========================================================
      ROLE HELPERS
   ========================================================= */
@@ -532,9 +829,7 @@ const Team = () => {
   const getRoleClass = (
     role
   ) => {
-
     switch (role) {
-
       case "OWNER":
         return "team-role-owner";
 
@@ -549,17 +844,14 @@ const Team = () => {
     }
   };
 
-
   const canManageMembers =
     ["OWNER", "ADMIN"].includes(
       currentRole
     );
 
-
   const canChangeRole = (
     member
   ) => {
-
     if (!canManageMembers) {
       return false;
     }
@@ -567,12 +859,6 @@ const Team = () => {
     if (member.role === "OWNER") {
       return false;
     }
-
-    /*
-     * Keep the frontend aligned with
-     * the backend's current permission
-     * model.
-     */
 
     if (
       currentRole === "ADMIN" &&
@@ -583,12 +869,10 @@ const Team = () => {
 
     return true;
   };
-
 
   const canRemoveMember = (
     member
   ) => {
-
     if (!canManageMembers) {
       return false;
     }
@@ -606,7 +890,6 @@ const Team = () => {
 
     return true;
   };
-
 
   /* =========================================================
      NO TOKEN
@@ -621,7 +904,6 @@ const Team = () => {
     );
   }
 
-
   /* =========================================================
      NO WORKSPACE
   ========================================================= */
@@ -630,14 +912,10 @@ const Team = () => {
     !loading &&
     !selectedWorkspaceId
   ) {
-
     return (
       <div className="team-page">
-
         <main className="team-main">
-
           <div className="team-empty-page">
-
             <h2>
               No workspace selected
             </h2>
@@ -657,27 +935,20 @@ const Team = () => {
             >
               ← Back to Dashboard
             </button>
-
           </div>
-
         </main>
-
       </div>
     );
   }
-
 
   /* =========================================================
      LOADING
   ========================================================= */
 
   if (loading) {
-
     return (
       <div className="team-loading">
-
         <div className="team-loading-card">
-
           <div className="team-spinner"></div>
 
           <h2>
@@ -688,13 +959,10 @@ const Team = () => {
             Getting your workspace
             members ready.
           </p>
-
         </div>
-
       </div>
     );
   }
-
 
   /* =========================================================
      PAGE
@@ -702,7 +970,6 @@ const Team = () => {
 
   return (
     <div className="team-page">
-
 
       <Sidebar
         active="team"
@@ -714,7 +981,6 @@ const Team = () => {
       ===================================================== */}
 
       <main className="team-main">
-
 
         {/* TOPBAR */}
 
@@ -735,16 +1001,16 @@ const Team = () => {
           <WorkspaceDropdown
             workspaces={workspaces}
             workspace={workspace}
-            onChange={handleWorkspaceChange}
+            onChange={
+              handleWorkspaceChange
+            }
           />
 
         </header>
 
-
         {/* CONTENT */}
 
         <section className="team-content">
-
 
           {/* HEADER */}
 
@@ -768,7 +1034,6 @@ const Team = () => {
 
             </div>
 
-
             <button
               type="button"
               className="team-dashboard-button"
@@ -783,28 +1048,21 @@ const Team = () => {
 
           </div>
 
-
           {/* ERROR */}
 
           {error && (
-
             <div className="team-error">
               {error}
             </div>
-
           )}
-
 
           {/* SUCCESS */}
 
           {success && (
-
             <div className="team-success">
               {success}
             </div>
-
           )}
-
 
           {/* STATS */}
 
@@ -822,7 +1080,6 @@ const Team = () => {
 
             </div>
 
-
             <div className="team-stat-card">
 
               <span>
@@ -834,7 +1091,6 @@ const Team = () => {
               </strong>
 
             </div>
-
 
             <div className="team-stat-card">
 
@@ -856,8 +1112,266 @@ const Team = () => {
 
           </div>
 
+          {/* =================================================
+              SEND INVITATIONS
+          ================================================= */}
 
-          {/* MEMBER SECTION */}
+          {canManageMembers && (
+            <section className="team-section">
+
+              <div className="team-section-header">
+
+                <div>
+                  <h2>
+                    Invite Members
+                  </h2>
+
+                  <p>
+                    Invite someone to join
+                    this workspace.
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="team-invite-form">
+
+                <input
+                  type="email"
+                  placeholder="Enter email address"
+                  value={inviteEmail}
+                  onChange={(event) =>
+                    setInviteEmail(
+                      event.target.value
+                    )
+                  }
+                />
+
+                <select
+                  value={inviteRole}
+                  onChange={(event) =>
+                    setInviteRole(
+                      event.target.value
+                    )
+                  }
+                >
+
+                  <option value="MEMBER">
+                    Member
+                  </option>
+
+                  <option value="ADMIN">
+                    Admin
+                  </option>
+
+                  <option value="VIEWER">
+                    Viewer
+                  </option>
+
+                </select>
+
+                <button
+                  type="button"
+                  className="team-invite-button"
+                  onClick={
+                    handleSendInvitation
+                  }
+                  disabled={
+                    inviteLoading
+                  }
+                >
+                  {inviteLoading
+                    ? "Sending..."
+                    : "Send Invitation"}
+                </button>
+
+              </div>
+
+              {/* PENDING SENT INVITATIONS */}
+
+              {invitations.length > 0 && (
+                <div className="team-pending-invitations">
+
+                  <h3>
+                    Pending Invitations
+                  </h3>
+
+                  {invitations.map(
+                    (invitation) => (
+                      <div
+                        key={
+                          invitation._id
+                        }
+                        className="team-invitation-row"
+                      >
+
+                        <div>
+
+                          <strong>
+                            {
+                              invitation.email
+                            }
+                          </strong>
+
+                          <p>
+                            Role:{" "}
+                            {
+                              invitation.role
+                            }
+                          </p>
+
+                        </div>
+
+                        <button
+                          type="button"
+                          className="team-remove-button"
+                          onClick={() =>
+                            handleCancelInvitation(
+                              invitation._id
+                            )
+                          }
+                          disabled={
+                            invitationAction ===
+                            `cancel-${invitation._id}`
+                          }
+                        >
+                          {invitationAction ===
+                          `cancel-${invitation._id}`
+                            ? "Cancelling..."
+                            : "Cancel"}
+                        </button>
+
+                      </div>
+                    )
+                  )}
+
+                </div>
+              )}
+
+            </section>
+          )}
+
+          {/* =================================================
+              RECEIVED WORKSPACE INVITATIONS
+          ================================================= */}
+
+          {myInvitations.length > 0 && (
+            <section className="team-section">
+
+              <div className="team-section-header">
+
+                <div>
+                  <h2>
+                    Workspace Invitations
+                  </h2>
+
+                  <p>
+                    Workspaces that have
+                    invited you.
+                  </p>
+                </div>
+
+              </div>
+
+              <div className="team-pending-invitations">
+
+                {myInvitations.map(
+                  (invitation) => (
+                    <div
+                      key={
+                        invitation._id
+                      }
+                      className="team-invitation-row"
+                    >
+
+                      <div>
+
+                        <strong>
+                          {
+                            invitation.workspace
+                              ?.name ||
+                            "Workspace"
+                          }
+                        </strong>
+
+                        <p>
+                          Invited by{" "}
+                          {
+                            invitation.invitedBy
+                              ?.name ||
+                            invitation.invitedBy
+                              ?.email ||
+                            "Workspace admin"
+                          }
+                        </p>
+
+                        <p>
+                          Role:{" "}
+                          {
+                            invitation.role
+                          }
+                        </p>
+
+                      </div>
+
+                      <div className="team-invitation-actions">
+
+                        <button
+                          type="button"
+                          className="team-invite-button"
+                          onClick={() =>
+                            handleAcceptInvitation(
+                              invitation._id
+                            )
+                          }
+                          disabled={
+                            invitationAction ===
+                              `accept-${invitation._id}` ||
+                            invitationAction ===
+                              `reject-${invitation._id}`
+                          }
+                        >
+                          {invitationAction ===
+                          `accept-${invitation._id}`
+                            ? "Accepting..."
+                            : "Accept"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="team-remove-button"
+                          onClick={() =>
+                            handleRejectInvitation(
+                              invitation._id
+                            )
+                          }
+                          disabled={
+                            invitationAction ===
+                              `accept-${invitation._id}` ||
+                            invitationAction ===
+                              `reject-${invitation._id}`
+                          }
+                        >
+                          {invitationAction ===
+                          `reject-${invitation._id}`
+                            ? "Rejecting..."
+                            : "Reject"}
+                        </button>
+
+                      </div>
+
+                    </div>
+                  )
+                )}
+
+              </div>
+
+            </section>
+          )}
+
+          {/* =================================================
+              MEMBER SECTION
+          ================================================= */}
 
           <section className="team-section">
 
@@ -875,7 +1389,6 @@ const Team = () => {
                 </p>
 
               </div>
-
 
               <div className="team-search">
 
@@ -898,9 +1411,8 @@ const Team = () => {
 
             </div>
 
-
             {filteredMembers.length ===
-              0 ? (
+            0 ? (
 
               <div className="team-empty">
 
@@ -927,13 +1439,13 @@ const Team = () => {
 
                     const user =
                       typeof member.user ===
-                        "object"
+                      "object"
                         ? member.user
                         : null;
 
                     const memberUserId =
                       typeof member.user ===
-                        "string"
+                      "string"
                         ? member.user
                         : user?._id;
 
@@ -969,17 +1481,13 @@ const Team = () => {
                         className="team-member-row"
                       >
 
-
                         {/* USER */}
 
                         <div className="team-member-user">
 
                           <div className="team-member-avatar">
-
                             {initials}
-
                           </div>
-
 
                           <div className="team-member-info">
 
@@ -997,19 +1505,15 @@ const Team = () => {
 
                             </div>
 
-
                             {user?.email && (
-
                               <p>
                                 {user.email}
                               </p>
-
                             )}
 
                           </div>
 
                         </div>
-
 
                         {/* ROLE */}
 
@@ -1029,7 +1533,8 @@ const Team = () => {
                               ) =>
                                 handleRoleChange(
                                   member,
-                                  event.target.value
+                                  event.target
+                                    .value
                                 )
                               }
                               disabled={
@@ -1066,7 +1571,6 @@ const Team = () => {
 
                         </div>
 
-
                         {/* ACTION */}
 
                         <div className="team-member-action">
@@ -1075,25 +1579,25 @@ const Team = () => {
                             member
                           ) && (
 
-                              <button
-                                type="button"
-                                className="team-remove-button"
-                                onClick={() =>
-                                  handleRemoveMember(
-                                    member
-                                  )
-                                }
-                                disabled={
-                                  removing ||
-                                  roleChanging
-                                }
-                              >
-                                {removing
-                                  ? "Removing..."
-                                  : "Remove"}
-                              </button>
+                            <button
+                              type="button"
+                              className="team-remove-button"
+                              onClick={() =>
+                                handleRemoveMember(
+                                  member
+                                )
+                              }
+                              disabled={
+                                removing ||
+                                roleChanging
+                              }
+                            >
+                              {removing
+                                ? "Removing..."
+                                : "Remove"}
+                            </button>
 
-                            )}
+                          )}
 
                         </div>
 
@@ -1109,8 +1613,9 @@ const Team = () => {
 
           </section>
 
-
-          {/* LEAVE */}
+          {/* =================================================
+              LEAVE
+          ================================================= */}
 
           <section className="team-danger-section">
 
@@ -1132,7 +1637,6 @@ const Team = () => {
 
             </div>
 
-
             <button
               type="button"
               className="team-leave-button"
@@ -1141,15 +1645,15 @@ const Team = () => {
               }
               disabled={
                 currentRole ===
-                "OWNER" ||
+                  "OWNER" ||
                 actionLoading ===
-                "leave"
+                  "leave"
               }
             >
               {currentRole === "OWNER"
                 ? "Transfer ownership first"
                 : actionLoading ===
-                  "leave"
+                    "leave"
                   ? "Leaving..."
                   : "Leave Workspace"}
             </button>
@@ -1163,6 +1667,5 @@ const Team = () => {
     </div>
   );
 };
-
 
 export default Team;

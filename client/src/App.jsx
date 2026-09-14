@@ -18,6 +18,7 @@ import TaskDetails from "./pages/TaskDetails";
 import MyTasks from "./pages/MyTasks";
 import CreateTask from "./pages/CreateTask";
 import Team from "./pages/Team";
+import Invitations from "./pages/Invitations";
 import CreateNewWorkspace from "./pages/CreateNewWorkspace";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -44,7 +45,7 @@ function App() {
           path="/change-password"
           element={<ChangePassword />}
         />
-        
+
         <Route
           path="/forgot-password"
           element={<ForgotPassword />}
@@ -109,6 +110,11 @@ function App() {
         <Route
           path="/workspaces/:workspaceId/settings"
           element={<WorkspaceSettings />}
+        />
+
+        <Route
+          path="/invitations"
+          element={<Invitations />}
         />
 
         <Route

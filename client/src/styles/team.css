@@ -903,3 +903,433 @@
   }
 
 }
+
+/* =========================================================
+   WORKSPACE INVITATIONS
+========================================================= */
+
+.team-invite-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 145px auto;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0;
+  padding: 20px 22px 22px;
+
+  background: #ffffff;
+}
+
+.team-invite-form input,
+.team-invite-form select {
+  width: 100%;
+  height: 44px;
+
+  box-sizing: border-box;
+
+  padding: 0 13px;
+
+  border: 1px solid #dfe5ef;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.team-invite-form input::placeholder {
+  color: #a0aabd;
+}
+
+.team-invite-form input:hover,
+.team-invite-form select:hover {
+  border-color: #cbd5e1;
+}
+
+.team-invite-form input:focus,
+.team-invite-form select:focus {
+  border-color: #7188ef;
+
+  box-shadow:
+    0 0 0 3px rgba(83, 111, 240, 0.09);
+}
+
+.team-invite-button {
+  height: 44px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 18px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: #536ff0;
+
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 2px 5px rgba(83, 111, 240, 0.16);
+
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.team-invite-button:hover {
+  background: #4865e4;
+
+  box-shadow:
+    0 4px 10px rgba(83, 111, 240, 0.2);
+
+  transform: translateY(-1px);
+}
+
+.team-invite-button:active {
+  transform: translateY(0);
+}
+
+.team-invite-button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   PENDING INVITATIONS
+========================================================= */
+
+.team-pending-invitations {
+  margin: 0;
+
+  padding: 0 22px 20px;
+
+  background: #ffffff;
+}
+
+
+/* Section heading */
+
+.team-pending-invitations h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0;
+
+  padding: 17px 0 13px;
+
+  border-top: 1px solid #eef1f6;
+
+  color: #475569;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.team-pending-invitations h3::before {
+  content: "";
+
+  width: 6px;
+  height: 6px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #f2b84b;
+
+  box-shadow:
+    0 0 0 4px #fff7e6;
+}
+
+
+/* =========================================================
+   INVITATION ROW
+========================================================= */
+
+.team-invitation-row {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  min-height: 66px;
+
+  margin-top: 7px;
+  padding: 13px 14px 13px 15px;
+
+  border: 1px solid #e8ecf3;
+  border-radius: 11px;
+
+  background: #fbfcfe;
+
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.team-invitation-row:hover {
+  border-color: #dce3ef;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 14px rgba(30, 41, 59, 0.045);
+}
+
+
+/* =========================================================
+   INVITATION DETAILS
+========================================================= */
+
+.team-invitation-row > div:first-child {
+  min-width: 0;
+  padding-left: 37px;
+
+  position: relative;
+}
+
+.team-invitation-row > div:first-child::before {
+  content: "✉";
+
+  position: absolute;
+  left: 0;
+  top: 50%;
+
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transform: translateY(-50%);
+
+  border: 1px solid #e5e9f5;
+  border-radius: 8px;
+
+  background: #f1f4ff;
+
+  color: #6177df;
+
+  font-size: 12px;
+}
+
+
+.team-invitation-row strong {
+  display: block;
+
+  overflow: hidden;
+
+  margin: 0;
+
+  color: #334155;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  line-height: 1.4;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.team-invitation-row p {
+  margin: 4px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 10px;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   ROLE + STATUS VISUAL
+========================================================= */
+
+.team-invitation-row p:first-of-type {
+  display: inline-flex;
+  align-items: center;
+
+  margin-top: 5px;
+
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: #f1f5f9;
+
+  color: #64748b;
+
+  font-size: 9px;
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   CANCEL BUTTON
+========================================================= */
+
+.team-invitation-row .team-remove-button {
+  flex-shrink: 0;
+
+  min-width: 62px;
+  height: 32px;
+
+  padding: 0 11px;
+
+  border: 1px solid #efd8d8;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #c75a5a;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.team-invitation-row .team-remove-button:hover {
+  border-color: #e8bcbc;
+
+  background: #fff7f7;
+
+  color: #c44747;
+}
+
+
+/* =========================================================
+   RECEIVED INVITATION ACTIONS
+========================================================= */
+
+.team-invitation-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  flex-shrink: 0;
+}
+
+.team-invitation-actions .team-invite-button {
+  min-width: 68px;
+  height: 32px;
+
+  padding: 0 11px;
+
+  font-size: 10px;
+
+  box-shadow: none;
+}
+
+.team-invitation-actions .team-remove-button {
+  min-width: 62px;
+}
+
+
+/* =========================================================
+   INVITATION SECTION - CLEAN SEPARATOR
+========================================================= */
+
+.team-section > .team-pending-invitations {
+  border-top: 0;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .team-invite-form {
+    grid-template-columns: 1fr;
+    gap: 9px;
+
+    padding: 16px;
+  }
+
+  .team-invite-form input,
+  .team-invite-form select,
+  .team-invite-button {
+    width: 100%;
+  }
+
+  .team-pending-invitations {
+    padding: 0 16px 16px;
+  }
+
+  .team-pending-invitations h3 {
+    padding-top: 15px;
+  }
+
+  .team-invitation-row {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 13px;
+
+    padding: 14px;
+  }
+
+  .team-invitation-row > div:first-child {
+    width: 100%;
+  }
+
+  .team-invitation-row .team-remove-button,
+  .team-invitation-actions {
+    width: 100%;
+  }
+
+  .team-invitation-row .team-remove-button {
+    min-width: 0;
+  }
+
+  .team-invitation-actions {
+    justify-content: stretch;
+  }
+
+  .team-invitation-actions button {
+    flex: 1;
+  }
+}

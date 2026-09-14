@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+
 import {
   getNotifications,
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "../services/notificationService";
+
 import {
   Navigate,
   useNavigate,
@@ -11,26 +17,17 @@ import {
 } from "react-router-dom";
 
 import {
-  // LayoutDashboard,
   FolderKanban,
-  // Users,
   CheckSquare,
   Search,
   Plus,
   BriefcaseBusiness,
-  // ChevronDown,
   Sun,
   Settings,
   ChevronRight,
-  // LogOut,
-  // User,
   Check,
   AlertCircle,
-  // CircleCheck,
-  // ClipboardList,
-  // Clock3,
   Bell,
-  Loader
 } from "lucide-react";
 
 import Sidebar from "../components/Sidebar";
@@ -49,16 +46,12 @@ import {
   getProjectTasks,
 } from "../services/taskService";
 
-
-
-
 /* =========================================================
    CONSTANTS
 ========================================================= */
 
 const WORKSPACE_STORAGE_KEY =
   "selectedWorkspaceId";
-
 
 /* =========================================================
    HELPER
@@ -80,13 +73,13 @@ const getInitialUser = () => {
   }
 };
 
-
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
 function Dashboard() {
   const navigate = useNavigate();
+
   /* =======================================================
      AUTH
   ======================================================= */
@@ -96,7 +89,6 @@ function Dashboard() {
 
   const [user] =
     useState(getInitialUser);
-
 
   /* =======================================================
      LOADING / ERROR
@@ -113,26 +105,36 @@ function Dashboard() {
   const [error, setError] =
     useState("");
 
-
   /* =======================================================
      WORKSPACE
   ======================================================= */
 
-  const [notifications, setNotifications] = useState([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  /* =======================================================
+   GLOBAL SEARCH
+======================================================= */
+
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
+  const [showSearchResults, setShowSearchResults] =
+    useState(false);
+
+  const searchRef = useRef(null);
+
+  const [notifications, setNotifications] =
+    useState([]);
+
+  const [showNotifications, setShowNotifications] =
+    useState(false);
+
+  const [notificationsLoading, setNotificationsLoading] =
+    useState(false);
 
   const [workspaces, setWorkspaces] =
     useState([]);
 
   const [workspace, setWorkspace] =
     useState(null);
-
-  // const [
-  //   showWorkspaceMenu,
-  //   setShowWorkspaceMenu,
-  // ] = useState(false);
-
 
   /* =======================================================
      WORKSPACE DATA
@@ -147,17 +149,6 @@ function Dashboard() {
   const [tasks, setTasks] =
     useState([]);
 
-
-  /* =======================================================
-     PROFILE
-  ======================================================= */
-
-  // const [
-  //   showProfileMenu,
-  //   setShowProfileMenu,
-  // ] = useState(false);
-
-
   /* =======================================================
      PAGE TITLE
   ======================================================= */
@@ -167,21 +158,26 @@ function Dashboard() {
       "Dashboard | ProjectFlow";
   }, []);
 
+  /* =======================================================
+     LOAD NOTIFICATIONS
+  ======================================================= */
 
-
-  // notification Loader
   useEffect(() => {
     const loadNotifications = async () => {
       try {
         setNotificationsLoading(true);
 
-        const result = await getNotifications();
+        const result =
+          await getNotifications();
 
-        const data = Array.isArray(result)
-          ? result
-          : Array.isArray(result?.notifications)
-            ? result.notifications
-            : [];
+        const data =
+          Array.isArray(result)
+            ? result
+            : Array.isArray(
+              result?.notifications
+            )
+              ? result.notifications
+              : [];
 
         setNotifications(data);
       } catch (err) {
@@ -196,24 +192,38 @@ function Dashboard() {
 
     loadNotifications();
   }, []);
+
+  /* =======================================================
+   CLOSE SEARCH WHEN CLICKING OUTSIDE
+======================================================= */
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(
+          event.target
+        )
+      ) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
+    };
+  }, []);
+
   /* =======================================================
      LOAD WORKSPACES
-     
-     IMPORTANT:
-     getWorkspaces() already normalizes the backend
-     membership response.
-     
-     Therefore:
-     
-     workspaces = [
-       {
-         _id,
-         name,
-         description,
-         role,
-         membershipId
-       }
-     ]
   ======================================================= */
 
   useEffect(() => {
@@ -223,126 +233,108 @@ function Dashboard() {
 
     let cancelled = false;
 
-    const loadWorkspaces =
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+    const loadWorkspaces = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-          const result =
-            await getWorkspaces();
+        const result =
+          await getWorkspaces();
 
-          if (cancelled) {
-            return;
-          }
-
-          /*
-           * NEW WORKSPACE DATA SCHEME
-           *
-           * The service has already converted:
-           *
-           * membership.workspace
-           *
-           * into:
-           *
-           * workspace
-           */
-
-          const workspaceList =
-            Array.isArray(result)
-              ? result
-              : Array.isArray(
-                result?.workspaces
-              )
-                ? result.workspaces
-                : [];
-
-          setWorkspaces(
-            workspaceList
-          );
-
-          /* =============================================
-             NO WORKSPACES
-          ============================================= */
-
-          if (
-            workspaceList.length === 0
-          ) {
-            setWorkspace(null);
-
-            localStorage.removeItem(
-              WORKSPACE_STORAGE_KEY
-            );
-
-            return;
-          }
-
-          /* =============================================
-             RESTORE SAVED WORKSPACE
-          ============================================= */
-
-          const savedWorkspaceId =
-            localStorage.getItem(
-              WORKSPACE_STORAGE_KEY
-            );
-
-          const savedWorkspace =
-            workspaceList.find(
-              (item) =>
-                String(
-                  item?._id ||
-                  item?.id
-                ) ===
-                String(
-                  savedWorkspaceId
-                )
-            );
-
-          /*
-           * Use saved workspace if it still exists.
-           * Otherwise use first available workspace.
-           */
-
-          const selectedWorkspace =
-            savedWorkspace ||
-            workspaceList[0];
-
-          setWorkspace(
-            selectedWorkspace
-          );
-
-          const selectedWorkspaceId =
-            selectedWorkspace?._id ||
-            selectedWorkspace?.id;
-
-          if (
-            selectedWorkspaceId
-          ) {
-            localStorage.setItem(
-              WORKSPACE_STORAGE_KEY,
-              selectedWorkspaceId
-            );
-          }
-        } catch (err) {
-          if (cancelled) {
-            return;
-          }
-
-          console.error(
-            "Failed to load workspaces:",
-            err
-          );
-
-          setError(
-            err?.message ||
-            "Failed to load workspaces"
-          );
-        } finally {
-          if (!cancelled) {
-            setLoading(false);
-          }
+        if (cancelled) {
+          return;
         }
-      };
+
+        const workspaceList =
+          Array.isArray(result)
+            ? result
+            : Array.isArray(
+              result?.workspaces
+            )
+              ? result.workspaces
+              : [];
+
+        setWorkspaces(
+          workspaceList
+        );
+
+        /* =============================================
+           NO WORKSPACES
+        ============================================= */
+
+        if (
+          workspaceList.length === 0
+        ) {
+          setWorkspace(null);
+
+          localStorage.removeItem(
+            WORKSPACE_STORAGE_KEY
+          );
+
+          return;
+        }
+
+        /* =============================================
+           RESTORE SAVED WORKSPACE
+        ============================================= */
+
+        const savedWorkspaceId =
+          localStorage.getItem(
+            WORKSPACE_STORAGE_KEY
+          );
+
+        const savedWorkspace =
+          workspaceList.find(
+            (item) =>
+              String(
+                item?._id ||
+                item?.id
+              ) ===
+              String(
+                savedWorkspaceId
+              )
+          );
+
+        const selectedWorkspace =
+          savedWorkspace ||
+          workspaceList[0];
+
+        setWorkspace(
+          selectedWorkspace
+        );
+
+        const selectedWorkspaceId =
+          selectedWorkspace?._id ||
+          selectedWorkspace?.id;
+
+        if (
+          selectedWorkspaceId
+        ) {
+          localStorage.setItem(
+            WORKSPACE_STORAGE_KEY,
+            selectedWorkspaceId
+          );
+        }
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(
+          "Failed to load workspaces:",
+          err
+        );
+
+        setError(
+          err?.message ||
+          "Failed to load workspaces"
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
     loadWorkspaces();
 
@@ -350,7 +342,6 @@ function Dashboard() {
       cancelled = true;
     };
   }, [token]);
-
 
   /* =======================================================
      LOAD SELECTED WORKSPACE DATA
@@ -414,7 +405,6 @@ function Dashboard() {
           setProjects(
             workspaceProjects
           );
-
 
           /* =============================================
              LOAD TASKS
@@ -516,7 +506,6 @@ function Dashboard() {
     };
   }, [workspace]);
 
-
   /* =======================================================
      AUTH REDIRECT
   ======================================================= */
@@ -530,14 +519,12 @@ function Dashboard() {
     );
   }
 
-
   /* =======================================================
      USER
   ======================================================= */
 
   const userName =
     user?.name || "User";
-
 
   /* =======================================================
      WORKSPACE SWITCH
@@ -559,30 +546,6 @@ function Dashboard() {
       selectedWorkspace._id
     );
   };
-
-
-  /* =======================================================
-     LOGOUT
-  ======================================================= */
-
-  // const handleLogout = async () => {
-  //   try {
-  //     await logoutUser();
-  //   } catch (err) {
-  //     console.error(
-  //       "Logout failed:",
-  //       err
-  //     );
-  //   } finally {
-  //     localStorage.removeItem(
-  //       WORKSPACE_STORAGE_KEY
-  //     );
-
-  //     navigate("/login", {
-  //     });
-  //   }
-  // };
-
 
   /* =======================================================
      STATS
@@ -664,6 +627,183 @@ function Dashboard() {
       );
     });
 
+  /* =======================================================
+   GLOBAL SEARCH
+======================================================= */
+
+  const normalizedSearch =
+    searchQuery.trim().toLowerCase();
+
+  const searchResults =
+    normalizedSearch.length === 0
+      ? {
+        projects: [],
+        tasks: [],
+        members: [],
+        workspaces: [],
+      }
+      : {
+        projects: projects
+          .filter((project) => {
+            const name =
+              project?.name || "";
+
+            const description =
+              project?.description || "";
+
+            return (
+              name
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                ) ||
+              description
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+            );
+          })
+          .slice(0, 5),
+
+        tasks: tasks
+          .filter((task) => {
+            const title =
+              task?.title || "";
+
+            const description =
+              task?.description || "";
+
+            const projectName =
+              task?.projectName || "";
+
+            return (
+              title
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                ) ||
+              description
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                ) ||
+              projectName
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+            );
+          })
+          .slice(0, 5),
+
+        members: members
+          .filter((member) => {
+            const memberUser =
+              typeof member.user ===
+                "object"
+                ? member.user
+                : null;
+
+            const name =
+              memberUser?.name || "";
+
+            const email =
+              memberUser?.email || "";
+
+            return (
+              name
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                ) ||
+              email
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+            );
+          })
+          .slice(0, 5),
+
+        workspaces: workspaces
+          .filter((item) => {
+            const name =
+              item?.name || "";
+
+            const description =
+              item?.description || "";
+
+            return (
+              name
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                ) ||
+              description
+                .toLowerCase()
+                .includes(
+                  normalizedSearch
+                )
+            );
+          })
+          .slice(0, 5),
+      };
+
+  const totalSearchResults =
+    searchResults.projects.length +
+    searchResults.tasks.length +
+    searchResults.members.length +
+    searchResults.workspaces.length;
+
+
+  /* =======================================================
+     SEARCH RESULT CLICK
+  ======================================================= */
+
+  const handleSearchResultClick = (
+    type,
+    item
+  ) => {
+    setSearchQuery("");
+    setShowSearchResults(false);
+
+    if (type === "project") {
+      if (item?._id) {
+        navigate(
+          `/projects/${item._id}`
+        );
+      }
+
+      return;
+    }
+
+    if (type === "task") {
+      if (item?._id) {
+        navigate(
+          `/tasks/${item._id}`
+        );
+      }
+
+      return;
+    }
+
+    if (type === "member") {
+      navigate("/team");
+      return;
+    }
+
+    if (type === "workspace") {
+      if (item?._id) {
+        setWorkspace(item);
+
+        localStorage.setItem(
+          WORKSPACE_STORAGE_KEY,
+          item._id
+        );
+      }
+    }
+  };
 
   /* =======================================================
      HELPERS
@@ -697,7 +837,6 @@ function Dashboard() {
     );
   };
 
-
   const getProjectStatusClass =
     (status) => {
       const normalized =
@@ -722,7 +861,6 @@ function Dashboard() {
       return "not-started";
     };
 
-
   const getProjectStatusLabel =
     (status) => {
       if (!status) {
@@ -739,7 +877,6 @@ function Dashboard() {
         .toUpperCase();
     };
 
-
   const getPriorityLabel =
     (priority) => {
       if (!priority) {
@@ -755,7 +892,6 @@ function Dashboard() {
         )
         .toUpperCase()} priority`;
     };
-
 
   /* =======================================================
      LOADING
@@ -784,7 +920,6 @@ function Dashboard() {
     );
   }
 
-
   /* =======================================================
      UI
   ======================================================= */
@@ -803,31 +938,365 @@ function Dashboard() {
         todoCount={todoTasks.length}
       />
 
-
       {/* ===================================================
           MAIN
       =================================================== */}
 
       <main className="dashboard-main">
 
-        {/* TOPBAR */}
+        {/* =================================================
+            TOPBAR
+        ================================================= */}
 
         <header className="dashboard-topbar">
 
-          <div className="dashboard-search">
+          {/* =================================================
+    GLOBAL SEARCH
+================================================= */}
 
-            <Search
-              size={17}
-              strokeWidth={1.8}
-            />
+          <div
+            className="dashboard-search-wrapper"
+            ref={searchRef}
+          >
 
-            <input
-              type="search"
-              placeholder="Search projects..."
-            />
+            <div className="dashboard-search">
+
+              <Search
+                size={17}
+                strokeWidth={1.8}
+              />
+
+              <input
+                type="search"
+                value={searchQuery}
+                placeholder="Search projects, tasks, members..."
+                onChange={(event) => {
+                  setSearchQuery(
+                    event.target.value
+                  );
+
+                  setShowSearchResults(
+                    event.target.value.trim().length > 0
+                  );
+                }}
+                onFocus={() => {
+                  if (searchQuery.trim()) {
+                    setShowSearchResults(true);
+                  }
+                }}
+              />
+
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="dashboard-search-clear"
+                  aria-label="Clear search"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setShowSearchResults(false);
+                  }}
+                >
+                  ×
+                </button>
+              )}
+
+            </div>
+
+
+            {/* =================================================
+      SEARCH RESULTS
+  ================================================= */}
+
+            {showSearchResults && (
+              <div className="dashboard-search-results">
+
+                {totalSearchResults === 0 ? (
+
+                  <div className="dashboard-search-empty">
+
+                    <Search
+                      size={20}
+                      strokeWidth={1.6}
+                    />
+
+                    <strong>
+                      No results found
+                    </strong>
+
+                    <span>
+                      Try a different project,
+                      task, or member name.
+                    </span>
+
+                  </div>
+
+                ) : (
+
+                  <>
+
+                    {/* =========================================
+              PROJECTS
+          ========================================= */}
+
+                    {searchResults.projects.length > 0 && (
+                      <div className="dashboard-search-group">
+
+                        <div className="dashboard-search-group-title">
+                          Projects
+                        </div>
+
+                        {searchResults.projects.map(
+                          (project) => (
+                            <button
+                              type="button"
+                              className="dashboard-search-result"
+                              key={
+                                project._id
+                              }
+                              onClick={() =>
+                                handleSearchResultClick(
+                                  "project",
+                                  project
+                                )
+                              }
+                            >
+
+                              <span className="dashboard-search-result-icon project">
+                                <FolderKanban
+                                  size={15}
+                                  strokeWidth={1.8}
+                                />
+                              </span>
+
+                              <span className="dashboard-search-result-content">
+
+                                <strong>
+                                  {project.name ||
+                                    "Untitled Project"}
+                                </strong>
+
+                                <small>
+                                  Project
+                                </small>
+
+                              </span>
+
+                              <ChevronRight
+                                size={15}
+                                strokeWidth={1.7}
+                              />
+
+                            </button>
+                          )
+                        )}
+
+                      </div>
+                    )}
+
+
+                    {/* =========================================
+              TASKS
+          ========================================= */}
+
+                    {searchResults.tasks.length > 0 && (
+                      <div className="dashboard-search-group">
+
+                        <div className="dashboard-search-group-title">
+                          Tasks
+                        </div>
+
+                        {searchResults.tasks.map(
+                          (task) => (
+                            <button
+                              type="button"
+                              className="dashboard-search-result"
+                              key={
+                                task._id
+                              }
+                              onClick={() =>
+                                handleSearchResultClick(
+                                  "task",
+                                  task
+                                )
+                              }
+                            >
+
+                              <span className="dashboard-search-result-icon task">
+                                <CheckSquare
+                                  size={15}
+                                  strokeWidth={1.8}
+                                />
+                              </span>
+
+                              <span className="dashboard-search-result-content">
+
+                                <strong>
+                                  {task.title ||
+                                    "Untitled Task"}
+                                </strong>
+
+                                <small>
+                                  {task.projectName
+                                    ? `Task · ${task.projectName}`
+                                    : "Task"}
+                                </small>
+
+                              </span>
+
+                              <ChevronRight
+                                size={15}
+                                strokeWidth={1.7}
+                              />
+
+                            </button>
+                          )
+                        )}
+
+                      </div>
+                    )}
+
+
+                    {/* =========================================
+              TEAM MEMBERS
+          ========================================= */}
+
+                    {searchResults.members.length > 0 && (
+                      <div className="dashboard-search-group">
+
+                        <div className="dashboard-search-group-title">
+                          Team Members
+                        </div>
+
+                        {searchResults.members.map(
+                          (member) => {
+
+                            const memberUser =
+                              typeof member.user ===
+                                "object"
+                                ? member.user
+                                : null;
+
+                            const memberName =
+                              memberUser?.name ||
+                              memberUser?.email ||
+                              "Workspace Member";
+
+                            return (
+                              <button
+                                type="button"
+                                className="dashboard-search-result"
+                                key={
+                                  member._id ||
+                                  memberUser?._id
+                                }
+                                onClick={() =>
+                                  handleSearchResultClick(
+                                    "member",
+                                    member
+                                  )
+                                }
+                              >
+
+                                <span className="dashboard-search-avatar">
+                                  {memberName
+                                    .charAt(0)
+                                    .toUpperCase()}
+                                </span>
+
+                                <span className="dashboard-search-result-content">
+
+                                  <strong>
+                                    {memberName}
+                                  </strong>
+
+                                  <small>
+                                    {memberUser?.email ||
+                                      "Team member"}
+                                  </small>
+
+                                </span>
+
+                                <ChevronRight
+                                  size={15}
+                                  strokeWidth={1.7}
+                                />
+
+                              </button>
+                            );
+                          }
+                        )}
+
+                      </div>
+                    )}
+
+
+                    {/* =========================================
+              WORKSPACES
+          ========================================= */}
+
+                    {searchResults.workspaces.length > 0 && (
+                      <div className="dashboard-search-group">
+
+                        <div className="dashboard-search-group-title">
+                          Workspaces
+                        </div>
+
+                        {searchResults.workspaces.map(
+                          (item) => (
+                            <button
+                              type="button"
+                              className="dashboard-search-result"
+                              key={
+                                item._id
+                              }
+                              onClick={() =>
+                                handleSearchResultClick(
+                                  "workspace",
+                                  item
+                                )
+                              }
+                            >
+
+                              <span className="dashboard-search-result-icon workspace">
+                                <BriefcaseBusiness
+                                  size={15}
+                                  strokeWidth={1.8}
+                                />
+                              </span>
+
+                              <span className="dashboard-search-result-content">
+
+                                <strong>
+                                  {item.name ||
+                                    "Workspace"}
+                                </strong>
+
+                                <small>
+                                  Workspace
+                                </small>
+
+                              </span>
+
+                              <ChevronRight
+                                size={15}
+                                strokeWidth={1.7}
+                              />
+
+                            </button>
+                          )
+                        )}
+
+                      </div>
+                    )}
+
+                  </>
+
+                )}
+
+              </div>
+            )}
 
           </div>
-
 
           <div className="dashboard-top-actions">
 
@@ -836,31 +1305,38 @@ function Dashboard() {
             <WorkspaceDropdown
               workspaces={workspaces}
               workspace={workspace}
-              onChange={handleWorkspaceChange}
+              onChange={
+                handleWorkspaceChange
+              }
             />
 
+            {/* THEME */}
 
             <button
               type="button"
               className="dashboard-icon-button"
               aria-label="Toggle theme"
             >
-
               <Sun
                 size={17}
                 strokeWidth={1.8}
               />
-
             </button>
 
+            {/* =================================================
+                NOTIFICATIONS
+            ================================================= */}
+
             <div className="notification-wrapper">
+
               <button
                 type="button"
                 className="dashboard-icon-button notification-button"
                 aria-label="Notifications"
                 onClick={() =>
                   setShowNotifications(
-                    (previous) => !previous
+                    (previous) =>
+                      !previous
                   )
                 }
               >
@@ -887,16 +1363,33 @@ function Dashboard() {
               {showNotifications && (
                 <div className="notification-dropdown">
 
+                  {/* =========================================
+                      NOTIFICATION HEADER
+                  ========================================= */}
+
                   <div className="notification-header">
+
                     <div>
-                      <strong>Notifications</strong>
+
+                      <strong>
+                        Notifications
+                      </strong>
+
                       <span>
-                        {notifications.filter(
-                          (notification) =>
-                            !notification.read
-                        ).length} unread
+                        {
+                          notifications.filter(
+                            (notification) =>
+                              !notification.read
+                          ).length
+                        }{" "}
+                        unread
                       </span>
+
                     </div>
+
+                    {/* =======================================
+                        MARK ALL READ
+                    ======================================= */}
 
                     {notifications.some(
                       (notification) =>
@@ -911,15 +1404,15 @@ function Dashboard() {
                               setNotifications(
                                 (previous) =>
                                   previous.map(
-                                    (notification) => ({
-                                      ...notification,
+                                    (item) => ({
+                                      ...item,
                                       read: true,
                                     })
                                   )
                               );
                             } catch (err) {
                               console.error(
-                                "Failed to mark notifications as read:",
+                                "Failed to mark all notifications as read:",
                                 err
                               );
                             }
@@ -928,8 +1421,12 @@ function Dashboard() {
                           Mark all read
                         </button>
                       )}
+
                   </div>
 
+                  {/* =========================================
+                      NOTIFICATION LIST
+                  ========================================= */}
 
                   <div className="notification-list">
 
@@ -937,7 +1434,8 @@ function Dashboard() {
                       <div className="notification-empty">
                         Loading notifications...
                       </div>
-                    ) : notifications.length === 0 ? (
+                    ) : notifications.length ===
+                      0 ? (
                       <div className="notification-empty">
                         No notifications yet.
                       </div>
@@ -947,13 +1445,21 @@ function Dashboard() {
                           <button
                             type="button"
                             className={`notification-item ${notification.read
-                                ? ""
-                                : "unread"
+                              ? ""
+                              : "unread"
                               }`}
-                            key={notification._id}
+                            key={
+                              notification._id
+                            }
                             onClick={async () => {
-                              if (!notification.read) {
-                                try {
+                              try {
+                                /* =================================
+                                   MARK THIS NOTIFICATION AS READ
+                                ================================= */
+
+                                if (
+                                  !notification.read
+                                ) {
                                   await markNotificationAsRead(
                                     notification._id
                                   );
@@ -971,32 +1477,57 @@ function Dashboard() {
                                             : item
                                       )
                                   );
-                                } catch (err) {
-                                  console.error(
-                                    "Failed to mark notification as read:",
-                                    err
+                                }
+
+                                /* =================================
+                                   WORKSPACE INVITATION
+                                ================================= */
+
+                                if (
+                                  notification.type ===
+                                  "WORKSPACE_INVITE"
+                                ) {
+                                  setShowNotifications(
+                                    false
+                                  );
+
+                                  navigate(
+                                    "/invitations"
                                   );
                                 }
+                              } catch (err) {
+                                console.error(
+                                  "Failed to handle notification:",
+                                  err
+                                );
                               }
                             }}
                           >
+
                             <span className="notification-dot" />
 
                             <span className="notification-content">
+
                               <strong>
-                                {notification.message}
+                                {
+                                  notification.message
+                                }
                               </strong>
 
                               <small>
-                                {notification.createdAt
-                                  ? new Date(
-                                    notification.createdAt
-                                  ).toLocaleString(
-                                    "en-IN"
-                                  )
-                                  : ""}
+                                {
+                                  notification.createdAt
+                                    ? new Date(
+                                      notification.createdAt
+                                    ).toLocaleString(
+                                      "en-IN"
+                                    )
+                                    : ""
+                                }
                               </small>
+
                             </span>
+
                           </button>
                         )
                       )
@@ -1006,8 +1537,12 @@ function Dashboard() {
 
                 </div>
               )}
+
             </div>
 
+            {/* =================================================
+                WORKSPACE SETTINGS
+            ================================================= */}
 
             <button
               type="button"
@@ -1031,7 +1566,6 @@ function Dashboard() {
           </div>
 
         </header>
-
 
         {/* =================================================
             CONTENT
@@ -1069,8 +1603,9 @@ function Dashboard() {
             </div>
           )}
 
-
-          {/* NO WORKSPACE */}
+          {/* =================================================
+              NO WORKSPACE
+          ================================================= */}
 
           {!workspace ? (
             <section className="dashboard-empty-state">
@@ -1122,7 +1657,6 @@ function Dashboard() {
 
                 </div>
 
-
                 <Link
                   to="/projects/new"
                   className="new-project-button"
@@ -1138,7 +1672,6 @@ function Dashboard() {
                 </Link>
 
               </section>
-
 
               {/* =================================================
                   DATA LOADING
@@ -1162,6 +1695,8 @@ function Dashboard() {
                   ================================================= */}
 
                   <section className="dashboard-stats-grid">
+
+                    {/* TOTAL PROJECTS */}
 
                     <article className="dashboard-stat-card">
 
@@ -1192,6 +1727,7 @@ function Dashboard() {
 
                     </article>
 
+                    {/* COMPLETED PROJECTS */}
 
                     <article className="dashboard-stat-card">
 
@@ -1222,6 +1758,7 @@ function Dashboard() {
 
                     </article>
 
+                    {/* TOTAL TASKS */}
 
                     <article className="dashboard-stat-card">
 
@@ -1252,6 +1789,7 @@ function Dashboard() {
 
                     </article>
 
+                    {/* OVERDUE TASKS */}
 
                     <article className="dashboard-stat-card">
 
@@ -1284,7 +1822,6 @@ function Dashboard() {
 
                   </section>
 
-
                   {/* =================================================
                       MAIN GRID
                   ================================================= */}
@@ -1316,7 +1853,6 @@ function Dashboard() {
                         </Link>
 
                       </div>
-
 
                       {projects.length ===
                         0 ? (
@@ -1381,7 +1917,6 @@ function Dashboard() {
 
                                   </div>
 
-
                                   <div className="overview-project-info">
 
                                     <div className="project-title-row">
@@ -1400,7 +1935,6 @@ function Dashboard() {
 
                                       </div>
 
-
                                       <span
                                         className={`status-badge ${getProjectStatusClass(
                                           project?.status
@@ -1412,7 +1946,6 @@ function Dashboard() {
                                       </span>
 
                                     </div>
-
 
                                     <div className="project-meta">
 
@@ -1436,8 +1969,9 @@ function Dashboard() {
 
                     </div>
 
-
-                    {/* RIGHT COLUMN */}
+                    {/* =================================================
+                        RIGHT COLUMN
+                    ================================================= */}
 
                     <div className="dashboard-side-panels">
 
@@ -1464,13 +1998,11 @@ function Dashboard() {
 
                           </div>
 
-
                           <span className="task-count green-count">
                             {todoTasks.length}
                           </span>
 
                         </div>
-
 
                         {todoTasks.length ===
                           0 ? (
@@ -1529,8 +2061,9 @@ function Dashboard() {
 
                       </div>
 
-
-                      {/* OVERDUE */}
+                      {/* =================================================
+                          OVERDUE
+                      ================================================= */}
 
                       <div className="dashboard-panel task-panel">
 
@@ -1553,13 +2086,11 @@ function Dashboard() {
 
                           </div>
 
-
                           <span className="task-count red-count">
                             {overdueTasks.length}
                           </span>
 
                         </div>
-
 
                         {overdueTasks.length ===
                           0 ? (
@@ -1620,7 +2151,6 @@ function Dashboard() {
 
                   </section>
 
-
                   {/* =================================================
                       WORKSPACE OVERVIEW
                   ================================================= */}
@@ -1643,6 +2173,7 @@ function Dashboard() {
 
                     </div>
 
+                    {/* WORKSPACE */}
 
                     <div className="activity-item">
 
@@ -1654,7 +2185,6 @@ function Dashboard() {
                         />
 
                       </div>
-
 
                       <div>
 
@@ -1674,7 +2204,6 @@ function Dashboard() {
 
                       </div>
 
-
                       <time>
                         {projects.length}{" "}
                         {projects.length ===
@@ -1685,6 +2214,7 @@ function Dashboard() {
 
                     </div>
 
+                    {/* TASK PROGRESS */}
 
                     <div className="activity-item">
 
@@ -1696,7 +2226,6 @@ function Dashboard() {
                         />
 
                       </div>
-
 
                       <div>
 
@@ -1711,7 +2240,6 @@ function Dashboard() {
                         </p>
 
                       </div>
-
 
                       <time>
                         {totalTasks} total
@@ -1734,6 +2262,5 @@ function Dashboard() {
     </div>
   );
 }
-
 
 export default Dashboard;

@@ -339,6 +339,8 @@ const createWorkspaceInvite = async (workspaceId, requestorId, email, role) => {
 
                 message:
                     `You have been invited to join workspace "${workspace.name}".`,
+
+                relatedId: invitation._id,
             });
         }
     }
@@ -647,6 +649,26 @@ const transferOwnership = async (workspaceId, currentOwnerId, newOwnerId) => {
     return workspace;
 };
 
+// 19. GET MY PENDING WORKSPACE INVITATIONS
+const getMyWorkspaceInvitations = async (userId) => {
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    const invitations = await WorkspaceInvitation.find({
+        email: user.email.toLowerCase(),
+        status: "PENDING",
+        expiresAt: { $gt: new Date() },
+    })
+        .populate("workspace", "name description logo")
+        .populate("invitedBy", "name email")
+        .sort({ createdAt: -1 });
+
+    return invitations;
+};
+
 export {
     createWorkspace,
     getUserWorkspaces,
@@ -668,5 +690,6 @@ export {
     //15
     getWorkspaceSettings,
     updateWorkspaceSettings,
-    transferOwnership
+    transferOwnership,
+    getMyWorkspaceInvitations
 }

@@ -16,7 +16,8 @@ import { createWorkspace,
     rejectWorkspaceInvitation,
     getWorkspaceSettings,
     updateWorkspaceSettings,
-    transferOwnership
+    transferOwnership,
+    getMyWorkspaceInvitations
 } from "../controllers/workspace.controller.js"
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
@@ -26,6 +27,7 @@ router.use(verifyJWT);
 
 router.post("/",createWorkspace)//tested
 router.get("/",getWorkspaces) //tested
+router.get("/workspace-invitations",getMyWorkspaceInvitations);
 router.get("/:workspaceId",getWorkspace) //tested
 router.patch("/:workspaceId",updateWorkspace) //tested
 router.delete("/:workspaceId",deleteWorkspace) //tested

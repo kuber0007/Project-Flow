@@ -639,6 +639,15 @@ const transferOwnership = async (
 };
 
 
+const getMyWorkspaceInvitations = async () => {
+  const result = await apiRequest(
+    "/workspaces/workspace-invitations"
+  );
+
+  return result?.data ?? result;
+};
+
+
 export {
   getWorkspaces,
   createWorkspace,
@@ -656,4 +665,5 @@ export {
   getWorkspaceSettings,
   updateWorkspaceSettings,
   transferOwnership,
+  getMyWorkspaceInvitations,
 };

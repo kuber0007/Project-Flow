@@ -1,0 +1,658 @@
+/* =========================================================
+   INVITATIONS PAGE
+========================================================= */
+
+.invitations-page {
+  min-height: 100vh;
+
+  display: flex;
+
+  background: #f7f9fc;
+}
+
+.invitations-main {
+  flex: 1;
+
+  min-width: 0;
+
+  margin-left: 240px;
+}
+
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+.invitations-header {
+  height: 66px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 32px;
+
+  border-bottom: 1px solid #e8edf5;
+
+  background: #ffffff;
+}
+
+.invitations-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 8px 11px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.invitations-back-button:hover {
+  background: #f1f4fb;
+
+  color: #334155;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.invitations-content {
+  max-width: 1040px;
+
+  margin: 0 auto;
+
+  padding: 42px 38px 70px;
+}
+
+
+/* =========================================================
+   TITLE
+========================================================= */
+
+.invitations-title {
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  margin-bottom: 32px;
+}
+
+.invitations-title-icon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 14px;
+
+  background: #eef2ff;
+
+  color: #536ff0;
+}
+
+.invitations-title span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #71809a;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.12em;
+}
+
+.invitations-title h1 {
+  margin: 0;
+
+  color: #1e293b;
+
+  font-size: 27px;
+  font-weight: 700;
+}
+
+.invitations-title p {
+  margin: 6px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   MESSAGES
+========================================================= */
+
+.invitations-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 20px;
+
+  padding: 12px 14px;
+
+  border-radius: 9px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.invitations-success {
+  border: 1px solid #cdebd9;
+
+  background: #f2fbf5;
+
+  color: #25804a;
+}
+
+.invitations-error {
+  border: 1px solid #f0d2d2;
+
+  background: #fff7f7;
+
+  color: #bd5050;
+}
+
+
+/* =========================================================
+   LIST
+========================================================= */
+
+.invitations-list {
+  overflow: hidden;
+
+  border: 1px solid #e3e8f1;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 18px rgba(30, 41, 59, 0.035);
+}
+
+.invitations-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 20px 22px;
+
+  border-bottom: 1px solid #edf0f5;
+}
+
+.invitations-list-header h2 {
+  margin: 0;
+
+  color: #334155;
+
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.invitations-list-header p {
+  margin: 5px 0 0;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+}
+
+.invitations-count {
+  min-width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #eef2ff;
+
+  color: #536ff0;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   INVITATION CARD
+========================================================= */
+
+.invitation-card {
+  display: flex;
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 20px 22px;
+
+  border-bottom: 1px solid #edf0f5;
+
+  transition:
+    background 0.18s ease;
+}
+
+.invitation-card:last-child {
+  border-bottom: 0;
+}
+
+.invitation-card:hover {
+  background: #fbfcff;
+}
+
+
+/* ICON */
+
+.invitation-card-icon {
+  width: 43px;
+  height: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border: 1px solid #e2e7f4;
+  border-radius: 11px;
+
+  background: #f3f5ff;
+
+  color: #5c73e5;
+}
+
+
+/* CONTENT */
+
+.invitation-card-content {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.invitation-card-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.invitation-card-heading h3 {
+  overflow: hidden;
+
+  margin: 0;
+
+  color: #26364d;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invitation-pending-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  background: #fff7e7;
+
+  color: #c58b26;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+}
+
+.invitation-description {
+  margin: 6px 0 9px;
+
+  overflow: hidden;
+
+  color: #8b98ab;
+
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.invitation-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 7px;
+
+  color: #9aa6b7;
+
+  font-size: 10px;
+}
+
+.invitation-meta strong {
+  color: #64748b;
+
+  font-weight: 600;
+}
+
+.invitation-meta span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.invitation-meta-divider {
+  color: #cbd5e1;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.invitation-card-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+.invitation-card-actions button {
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 5px;
+
+  padding: 0 13px;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.invitation-card-actions button:active {
+  transform: translateY(1px);
+}
+
+.invitation-card-actions button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+.invitation-reject-button {
+  border: 1px solid #e5e9f0;
+
+  background: #ffffff;
+
+  color: #718096;
+}
+
+.invitation-reject-button:hover {
+  border-color: #e8caca;
+
+  background: #fff8f8;
+
+  color: #bd5555;
+}
+
+.invitation-accept-button {
+  border: 1px solid #536ff0;
+
+  background: #536ff0;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 2px 6px rgba(83, 111, 240, 0.16);
+}
+
+.invitation-accept-button:hover {
+  background: #4865e3;
+
+  border-color: #4865e3;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.invitations-loading {
+  min-height: 280px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  gap: 12px;
+
+  border: 1px solid #e3e8f1;
+  border-radius: 14px;
+
+  background: #ffffff;
+}
+
+.invitations-loading p {
+  margin: 0;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+.invitations-spinner {
+  width: 26px;
+  height: 26px;
+
+  border: 3px solid #e5e9f2;
+  border-top-color: #536ff0;
+
+  border-radius: 50%;
+
+  animation:
+    invitations-spin 0.75s linear infinite;
+}
+
+@keyframes invitations-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.invitations-empty {
+  min-height: 320px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  padding: 35px;
+
+  border: 1px solid #e3e8f1;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  text-align: center;
+}
+
+.invitations-empty-icon {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 15px;
+
+  border-radius: 16px;
+
+  background: #f1f4ff;
+
+  color: #7185df;
+}
+
+.invitations-empty h2 {
+  margin: 0;
+
+  color: #334155;
+
+  font-size: 16px;
+}
+
+.invitations-empty p {
+  max-width: 340px;
+
+  margin: 7px 0 20px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+.invitations-empty button {
+  height: 35px;
+
+  padding: 0 14px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: #536ff0;
+
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .invitations-main {
+    margin-left: 0;
+  }
+
+  .invitations-header {
+    padding: 0 18px;
+  }
+
+  .invitations-content {
+    padding: 30px 18px 50px;
+  }
+
+  .invitation-card {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .invitation-card-content {
+    width: calc(100% - 59px);
+    flex: none;
+  }
+
+  .invitation-card-actions {
+    width: 100%;
+
+    padding-left: 59px;
+  }
+
+  .invitation-card-actions button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 500px) {
+
+  .invitations-title h1 {
+    font-size: 23px;
+  }
+
+  .invitations-title p {
+    line-height: 1.5;
+  }
+
+  .invitation-card {
+    padding: 17px;
+  }
+
+  .invitation-card-content {
+    width: calc(100% - 57px);
+  }
+
+  .invitation-description {
+    white-space: normal;
+  }
+
+  .invitation-meta {
+    line-height: 1.5;
+  }
+
+  .invitation-card-actions {
+    padding-left: 0;
+  }
+}
