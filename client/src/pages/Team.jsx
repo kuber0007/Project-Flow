@@ -16,6 +16,8 @@ import {
   rejectWorkspaceInvitation,
 } from "../services/workspaceService";
 
+import ActionModal from "../components/ActionModal";
+
 import "../styles/team.css";
 
 import Sidebar from "../components/Sidebar";
@@ -58,6 +60,25 @@ const Team = () => {
     useState("");
 
   const [search, setSearch] =
+    useState("");
+
+  /* =========================================================
+     ACTION MODAL STATE
+  ========================================================= */
+
+  const [showLeaveModal, setShowLeaveModal] =
+    useState(false);
+
+  const [showRemoveModal, setShowRemoveModal] =
+    useState(false);
+
+  const [memberToRemove, setMemberToRemove] =
+    useState(null);
+
+  const [showErrorModal, setShowErrorModal] =
+    useState(false);
+
+  const [modalError, setModalError] =
     useState("");
 
   /* =========================================================
@@ -163,7 +184,6 @@ const Team = () => {
 
       /* =====================================================
          LOAD RECEIVED INVITATIONS
-         This is independent of the currently selected workspace.
       ===================================================== */
 
       let receivedInvitations = [];
@@ -292,7 +312,7 @@ const Team = () => {
       );
 
       setError(
-        err.message ||
+        err?.message ||
         "Failed to load workspace members"
       );
     } finally {
@@ -341,7 +361,7 @@ const Team = () => {
       : members.filter((member) => {
           const user =
             typeof member.user ===
-            "object"
+              "object"
               ? member.user
               : null;
 
@@ -462,7 +482,7 @@ const Team = () => {
         );
 
         setError(
-          err.message ||
+          err?.message ||
           "Failed to send workspace invitation."
         );
       } finally {
@@ -508,7 +528,7 @@ const Team = () => {
         );
 
         setError(
-          err.message ||
+          err?.message ||
           "Failed to cancel invitation."
         );
       } finally {
@@ -546,11 +566,6 @@ const Team = () => {
           "Workspace invitation accepted."
         );
 
-        /*
-         * Reload the page so the newly
-         * joined workspace/member data
-         * is refreshed everywhere.
-         */
         window.location.reload();
 
       } catch (err) {
@@ -560,7 +575,7 @@ const Team = () => {
         );
 
         setError(
-          err.message ||
+          err?.message ||
           "Failed to accept invitation."
         );
       } finally {
@@ -605,7 +620,7 @@ const Team = () => {
         );
 
         setError(
-          err.message ||
+          err?.message ||
           "Failed to reject invitation."
         );
       } finally {
@@ -623,7 +638,7 @@ const Team = () => {
   ) => {
     const memberUserId =
       typeof member.user ===
-      "string"
+        "string"
         ? member.user
         : member.user?._id;
 
@@ -650,13 +665,13 @@ const Team = () => {
             (item) => {
               const itemUserId =
                 typeof item.user ===
-                "string"
+                  "string"
                   ? item.user
                   : item.user?._id;
 
               if (
-                itemUserId !==
-                memberUserId
+                String(itemUserId) !==
+                String(memberUserId)
               ) {
                 return item;
               }
@@ -680,7 +695,7 @@ const Team = () => {
       );
 
       setError(
-        err.message ||
+        err?.message ||
         "Failed to update member role"
       );
 
@@ -690,33 +705,44 @@ const Team = () => {
   };
 
   /* =========================================================
-     REMOVE MEMBER
+     OPEN REMOVE MEMBER MODAL
   ========================================================= */
 
-  const handleRemoveMember = async (
+  const handleRemoveMember = (
     member
   ) => {
     const memberUserId =
       typeof member.user ===
-      "string"
+        "string"
         ? member.user
         : member.user?._id;
-
-    const userName =
-      member.user?.name ||
-      member.user?.email ||
-      "this member";
 
     if (!memberUserId) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Remove ${userName} from this workspace?`
-      );
+    setMemberToRemove(member);
+    setShowRemoveModal(true);
+  };
 
-    if (!confirmed) {
+  /* =========================================================
+     CONFIRM REMOVE MEMBER
+  ========================================================= */
+
+  const confirmRemoveMember = async () => {
+    if (!memberToRemove) {
+      return;
+    }
+
+    const memberUserId =
+      typeof memberToRemove.user ===
+        "string"
+        ? memberToRemove.user
+        : memberToRemove.user?._id;
+
+    if (!memberUserId) {
+      setShowRemoveModal(false);
+      setMemberToRemove(null);
       return;
     }
 
@@ -738,17 +764,20 @@ const Team = () => {
             (item) => {
               const itemUserId =
                 typeof item.user ===
-                "string"
+                  "string"
                   ? item.user
                   : item.user?._id;
 
               return (
-                itemUserId !==
-                memberUserId
+                String(itemUserId) !==
+                String(memberUserId)
               );
             }
           )
       );
+
+      setShowRemoveModal(false);
+      setMemberToRemove(null);
 
       showSuccess(
         "Member removed successfully."
@@ -760,10 +789,14 @@ const Team = () => {
         err
       );
 
-      setError(
-        err.message ||
-        "Failed to remove member"
+      setShowRemoveModal(false);
+
+      setModalError(
+        err?.message ||
+        "We couldn't remove this member. Please try again."
       );
+
+      setShowErrorModal(true);
 
     } finally {
       setActionLoading("");
@@ -776,15 +809,6 @@ const Team = () => {
 
   const handleLeaveWorkspace =
     async () => {
-      const confirmed =
-        window.confirm(
-          `Are you sure you want to leave "${workspace?.name || "this workspace"}"?`
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
       try {
         setActionLoading(
           "leave"
@@ -794,6 +818,10 @@ const Team = () => {
 
         await leaveWorkspace(
           selectedWorkspaceId
+        );
+
+        setShowLeaveModal(
+          false
         );
 
         localStorage.removeItem(
@@ -813,11 +841,20 @@ const Team = () => {
           err
         );
 
-        setError(
-          err.message ||
-          "Failed to leave workspace"
+        setShowLeaveModal(
+          false
         );
 
+        setModalError(
+          err?.message ||
+          "We couldn't leave this workspace. Please try again."
+        );
+
+        setShowErrorModal(
+          true
+        );
+
+      } finally {
         setActionLoading("");
       }
     };
@@ -1236,7 +1273,7 @@ const Team = () => {
                           }
                         >
                           {invitationAction ===
-                          `cancel-${invitation._id}`
+                            `cancel-${invitation._id}`
                             ? "Cancelling..."
                             : "Cancel"}
                         </button>
@@ -1326,13 +1363,13 @@ const Team = () => {
                           }
                           disabled={
                             invitationAction ===
-                              `accept-${invitation._id}` ||
+                            `accept-${invitation._id}` ||
                             invitationAction ===
-                              `reject-${invitation._id}`
+                            `reject-${invitation._id}`
                           }
                         >
                           {invitationAction ===
-                          `accept-${invitation._id}`
+                            `accept-${invitation._id}`
                             ? "Accepting..."
                             : "Accept"}
                         </button>
@@ -1347,13 +1384,13 @@ const Team = () => {
                           }
                           disabled={
                             invitationAction ===
-                              `accept-${invitation._id}` ||
+                            `accept-${invitation._id}` ||
                             invitationAction ===
-                              `reject-${invitation._id}`
+                            `reject-${invitation._id}`
                           }
                         >
                           {invitationAction ===
-                          `reject-${invitation._id}`
+                            `reject-${invitation._id}`
                             ? "Rejecting..."
                             : "Reject"}
                         </button>
@@ -1412,7 +1449,7 @@ const Team = () => {
             </div>
 
             {filteredMembers.length ===
-            0 ? (
+              0 ? (
 
               <div className="team-empty">
 
@@ -1439,19 +1476,19 @@ const Team = () => {
 
                     const user =
                       typeof member.user ===
-                      "object"
+                        "object"
                         ? member.user
                         : null;
 
                     const memberUserId =
                       typeof member.user ===
-                      "string"
+                        "string"
                         ? member.user
                         : user?._id;
 
                     const isCurrentUser =
-                      memberUserId ===
-                      currentUserId;
+                      String(memberUserId) ===
+                      String(currentUserId);
 
                     const displayName =
                       user?.name ||
@@ -1640,20 +1677,20 @@ const Team = () => {
             <button
               type="button"
               className="team-leave-button"
-              onClick={
-                handleLeaveWorkspace
+              onClick={() =>
+                setShowLeaveModal(true)
               }
               disabled={
                 currentRole ===
-                  "OWNER" ||
+                "OWNER" ||
                 actionLoading ===
-                  "leave"
+                "leave"
               }
             >
               {currentRole === "OWNER"
                 ? "Transfer ownership first"
                 : actionLoading ===
-                    "leave"
+                  "leave"
                   ? "Leaving..."
                   : "Leave Workspace"}
             </button>
@@ -1661,6 +1698,78 @@ const Team = () => {
           </section>
 
         </section>
+
+        {/* =================================================
+            REMOVE MEMBER CONFIRMATION
+        ================================================= */}
+
+        <ActionModal
+          isOpen={showRemoveModal}
+          type="confirm"
+          title="Remove Member?"
+          message={`Are you sure you want to remove "${
+            memberToRemove?.user?.name ||
+            memberToRemove?.user?.email ||
+            "this member"
+          }" from this workspace? They will lose access to this workspace and its projects.`}
+          confirmText="Remove Member"
+          cancelText="Keep Member"
+          onConfirm={
+            confirmRemoveMember
+          }
+          onClose={() => {
+            if (
+              actionLoading !==
+              `remove-${memberToRemove?.user?._id}`
+            ) {
+              setShowRemoveModal(false);
+              setMemberToRemove(null);
+            }
+          }}
+          loading={
+            actionLoading ===
+            `remove-${memberToRemove?.user?._id}`
+          }
+        />
+
+        {/* =================================================
+            LEAVE WORKSPACE CONFIRMATION
+        ================================================= */}
+
+        <ActionModal
+          isOpen={showLeaveModal}
+          type="confirm"
+          title="Leave Workspace?"
+          message={`Are you sure you want to leave "${
+            workspace?.name ||
+            "this workspace"
+          }"? You will lose access to this workspace and its projects.`}
+          confirmText="Leave Workspace"
+          cancelText="Stay"
+          onConfirm={
+            handleLeaveWorkspace
+          }
+          onClose={() =>
+            setShowLeaveModal(false)
+          }
+          loading={
+            actionLoading === "leave"
+          }
+        />
+
+        {/* =================================================
+            ERROR MODAL
+        ================================================= */}
+
+        <ActionModal
+          isOpen={showErrorModal}
+          type="error"
+          title="Something went wrong"
+          message={modalError}
+          onClose={() =>
+            setShowErrorModal(false)
+          }
+        />
 
       </main>
 

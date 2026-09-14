@@ -1,0 +1,378 @@
+/* =========================================================
+   ACTION MODAL OVERLAY
+========================================================= */
+
+.action-modal-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(
+    15,
+    23,
+    42,
+    0.42
+  );
+
+  backdrop-filter: blur(3px);
+
+  animation:
+    actionModalOverlayIn
+    0.18s ease-out;
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.action-modal {
+  position: relative;
+
+  width: min(
+    430px,
+    100%
+  );
+
+  padding: 28px;
+
+  border: 1px solid #e6eaf0;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 24px 70px rgba(
+      15,
+      23,
+      42,
+      0.18
+    );
+
+  text-align: center;
+
+  animation:
+    actionModalIn
+    0.2s ease-out;
+}
+
+
+/* =========================================================
+   CLOSE
+========================================================= */
+
+.action-modal-close {
+  position: absolute;
+
+  top: 13px;
+  right: 13px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #94a3b8;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.action-modal-close:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.action-modal-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   ICON
+========================================================= */
+
+.action-modal-icon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 2px auto 17px;
+
+  border-radius: 14px;
+}
+
+
+/* CONFIRM */
+
+.action-modal-confirm
+.action-modal-icon {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+
+/* ERROR */
+
+.action-modal-error
+.action-modal-icon {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+
+/* SUCCESS */
+
+.action-modal-success
+.action-modal-icon {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.action-modal-content {
+  padding: 0 8px;
+}
+
+.action-modal-content h2 {
+  margin: 0 0 8px;
+
+  color: #172033;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.action-modal-content p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.action-modal-actions {
+  display: flex;
+  justify-content: center;
+
+  gap: 9px;
+
+  margin-top: 24px;
+}
+
+
+/* =========================================================
+   CANCEL
+========================================================= */
+
+.action-modal-cancel {
+  min-width: 92px;
+  min-height: 39px;
+
+  padding: 0 15px;
+
+  border: 1px solid #dce3eb;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.action-modal-cancel:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.action-modal-cancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   CONFIRM BUTTON
+========================================================= */
+
+.action-modal-confirm-button {
+  min-width: 108px;
+  min-height: 39px;
+
+  padding: 0 16px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #dc2626;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease;
+}
+
+.action-modal-confirm-button:hover:not(:disabled) {
+  background: #b91c1c;
+
+  transform: translateY(-1px);
+}
+
+.action-modal-confirm-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   ERROR BUTTON
+========================================================= */
+
+.action-modal-error-button {
+  min-width: 90px;
+  min-height: 39px;
+
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #dc2626;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.action-modal-error-button:hover {
+  background: #b91c1c;
+}
+
+
+/* =========================================================
+   SUCCESS BUTTON
+========================================================= */
+
+.action-modal-success-button {
+  min-width: 90px;
+  min-height: 39px;
+
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #16a34a;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.action-modal-success-button:hover {
+  background: #15803d;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes actionModalOverlayIn {
+
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+
+}
+
+
+@keyframes actionModalIn {
+
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 500px) {
+
+  .action-modal {
+    padding: 24px 20px;
+  }
+
+  .action-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .action-modal-actions button {
+    width: 100%;
+  }
+
+}

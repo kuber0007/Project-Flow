@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
+import ActionModal from "../components/ActionModal";
 import {
     getProject,
     getProjectMembers,
     updateProjectMembers,
+    deleteProject,
 } from "../services/projectService";
 
 import { getProjectTasks } from "../services/taskService";
@@ -59,6 +60,18 @@ const ProjectDetails = () => {
     const [savingMembers, setSavingMembers] =
         useState(false);
 
+    const [deletingProject, setDeletingProject] =
+        useState(false);
+
+    const [showDeleteModal, setShowDeleteModal] =
+        useState(false);
+
+    const [showErrorModal, setShowErrorModal] =
+        useState(false);
+
+    const [modalError, setModalError] =
+        useState("");
+
 
     /* =========================================================
        ERROR STATE
@@ -83,6 +96,8 @@ const ProjectDetails = () => {
 
     const [memberSuccess, setMemberSuccess] =
         useState("");
+
+
 
 
     /* =========================================================
@@ -789,7 +804,7 @@ const ProjectDetails = () => {
                             return (
                                 userId &&
                                 String(userId) ===
-                                    normalizedId
+                                normalizedId
                             );
                         }
                     );
@@ -965,6 +980,50 @@ const ProjectDetails = () => {
             setSavingMembers(
                 false
             );
+        }
+    };
+
+    /* =========================================================
+    DELETE PROJECT
+    ========================================================= */
+
+    const handleDeleteProject = async () => {
+        try {
+            setDeletingProject(true);
+            setError("");
+
+            await deleteProject(
+                projectId
+            );
+
+            setShowDeleteModal(false);
+
+            navigate(
+                "/projects",
+                {
+                    replace: true,
+                }
+            );
+
+        } catch (err) {
+
+            console.error(
+                "Failed to delete project:",
+                err
+            );
+
+            setShowDeleteModal(false);
+
+            setModalError(
+                err?.message ||
+                "We couldn't delete this project. Please try again."
+            );
+
+            setShowErrorModal(true);
+
+        } finally {
+
+            setDeletingProject(false);
         }
     };
 
@@ -1269,7 +1328,7 @@ const ProjectDetails = () => {
 
             <Sidebar active="projects" />
 
-                        {/* =================================================
+            {/* =================================================
                 MAIN
             ================================================= */}
 
@@ -1341,17 +1400,32 @@ const ProjectDetails = () => {
                         </div>
 
 
-                        <button
-                            type="button"
-                            onClick={() =>
-                                navigate(
-                                    "/projects"
-                                )
-                            }
-                            className="project-details-header-button"
-                        >
-                            ← Back
-                        </button>
+                        <div className="project-details-header-actions">
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate(
+                                        "/projects"
+                                    )
+                                }
+                                className="project-details-header-button"
+                                disabled={deletingProject}
+                            >
+                                ← Back
+                            </button>
+
+                            <button
+                                type="button"
+                                className="project-details-delete-button"
+                                onClick={() =>
+                                    setShowDeleteModal(true)
+                                }
+                                disabled={deletingProject}
+                            >
+                                Delete Project
+                            </button>
+                        </div>
 
                     </div>
 
@@ -2020,11 +2094,10 @@ const ProjectDetails = () => {
                                                     key={
                                                         normalizedUserId
                                                     }
-                                                    className={`project-member-option ${
-                                                        isSelected
-                                                            ? "selected"
-                                                            : ""
-                                                    }`}
+                                                    className={`project-member-option ${isSelected
+                                                        ? "selected"
+                                                        : ""
+                                                        }`}
                                                 >
 
                                                     <input
@@ -2110,7 +2183,7 @@ const ProjectDetails = () => {
                                 <span>
                                     {
                                         selectedMemberIds.length ===
-                                        1
+                                            1
                                             ? "member selected"
                                             : "members selected"
                                     }
@@ -2175,6 +2248,35 @@ const ProjectDetails = () => {
 
                 </div>
             )}
+
+            <ActionModal
+                isOpen={showDeleteModal}
+                type="confirm"
+                title="Delete Project?"
+                message={`You're about to permanently delete "${project?.name || "this project"}". All tasks, comments, and project members associated with it will also be removed. This action cannot be undone.`}
+                confirmText="Delete Project"
+                cancelText="Keep Project"
+                onConfirm={
+                    handleDeleteProject
+                }
+                onClose={() =>
+                    setShowDeleteModal(false)
+                }
+                loading={
+                    deletingProject
+                }
+            />
+
+
+            <ActionModal
+                isOpen={showErrorModal}
+                type="error"
+                title="Something went wrong"
+                message={modalError}
+                onClose={() =>
+                    setShowErrorModal(false)
+                }
+            />
 
         </div>
     );

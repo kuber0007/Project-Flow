@@ -1810,3 +1810,73 @@
   }
 
 }
+
+/* =========================================================
+   PROJECT HEADER ACTIONS
+========================================================= */
+
+.project-details-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+/* =========================================================
+   DELETE PROJECT BUTTON
+========================================================= */
+
+.project-details-delete-button {
+    min-height: 40px;
+
+    padding: 0 16px;
+
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+
+    background: #ffffff;
+    color: #dc2626;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 650;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.project-details-delete-button:hover:not(:disabled) {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+
+    transform: translateY(-1px);
+}
+
+.project-details-delete-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .project-details-header-actions {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    .project-details-header-actions button {
+        flex: 1;
+    }
+
+}

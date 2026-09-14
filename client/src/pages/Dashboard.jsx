@@ -1312,7 +1312,7 @@ function Dashboard() {
 
             {/* THEME */}
 
-            <button
+            {/* <button
               type="button"
               className="dashboard-icon-button"
               aria-label="Toggle theme"
@@ -1321,7 +1321,7 @@ function Dashboard() {
                 size={17}
                 strokeWidth={1.8}
               />
-            </button>
+            </button> */}
 
             {/* =================================================
                 NOTIFICATIONS

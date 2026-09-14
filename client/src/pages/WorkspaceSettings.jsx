@@ -11,6 +11,7 @@ import {
 } from "react-router-dom";
 
 import Sidebar from "../components/Sidebar";
+import ActionModal from "../components/ActionModal";
 
 import {
   getWorkspaceSettings,
@@ -53,6 +54,15 @@ const WorkspaceSettings = () => {
     useState("");
 
   const [success, setSuccess] =
+    useState("");
+
+  const [showDeleteModal, setShowDeleteModal] =
+    useState(false);
+
+  const [showErrorModal, setShowErrorModal] =
+    useState(false);
+
+  const [modalError, setModalError] =
     useState("");
 
 
@@ -251,15 +261,6 @@ const WorkspaceSettings = () => {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Delete "${workspace?.name || "this workspace"}"? This action cannot be undone.`
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
     try {
       setDeleting(true);
       setError("");
@@ -286,6 +287,8 @@ const WorkspaceSettings = () => {
         );
       }
 
+      setShowDeleteModal(false);
+
       navigate("/dashboard", {
         replace: true,
       });
@@ -296,10 +299,15 @@ const WorkspaceSettings = () => {
         err
       );
 
-      setError(
+      setShowDeleteModal(false);
+
+      setModalError(
         err?.message ||
           "Failed to delete workspace."
       );
+
+      setShowErrorModal(true);
+
     } finally {
       setDeleting(false);
     }
@@ -643,7 +651,9 @@ const WorkspaceSettings = () => {
               <button
                 type="button"
                 className="workspace-delete-button"
-                onClick={handleDelete}
+                onClick={() =>
+                  setShowDeleteModal(true)
+                }
                 disabled={deleting}
               >
                 <Trash2
@@ -659,6 +669,40 @@ const WorkspaceSettings = () => {
           )}
 
         </div>
+
+        {/* =================================================
+            DELETE WORKSPACE CONFIRMATION
+        ================================================= */}
+
+        <ActionModal
+          isOpen={showDeleteModal}
+          type="confirm"
+          title="Delete Workspace?"
+          message={`You're about to permanently delete "${
+            workspace?.name || "this workspace"
+          }". This action cannot be undone.`}
+          confirmText="Delete Workspace"
+          cancelText="Keep Workspace"
+          onConfirm={handleDelete}
+          onClose={() =>
+            setShowDeleteModal(false)
+          }
+          loading={deleting}
+        />
+
+        {/* =================================================
+            DELETE WORKSPACE ERROR
+        ================================================= */}
+
+        <ActionModal
+          isOpen={showErrorModal}
+          type="error"
+          title="Something went wrong"
+          message={modalError}
+          onClose={() =>
+            setShowErrorModal(false)
+          }
+        />
 
       </main>
 

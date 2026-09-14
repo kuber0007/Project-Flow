@@ -25,14 +25,15 @@ import {
   deleteComment,
 } from "../services/commentService";
 
+import ActionModal from "../components/ActionModal";
+
 
 /* =========================================================
    GET CURRENT USER
 ========================================================= */
 
 const getInitialUser = () => {
-  const storedUser =
-    localStorage.getItem("user");
+  const storedUser = localStorage.getItem("user");
 
   if (!storedUser) {
     return null;
@@ -67,11 +68,9 @@ const TaskDetails = () => {
   ======================================================= */
 
   const [loading, setLoading] = useState(true);
-  const [loadingMembers, setLoadingMembers] =
-    useState(false);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] =
-    useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   /* =======================================================
      ERROR / SUCCESS
@@ -81,11 +80,29 @@ const TaskDetails = () => {
   const [success, setSuccess] = useState("");
 
   /* =======================================================
+     ACTION MODALS
+  ======================================================= */
+
+  const [showDeleteTaskModal, setShowDeleteTaskModal] =
+    useState(false);
+
+  const [showDeleteCommentModal, setShowDeleteCommentModal] =
+    useState(false);
+
+  const [commentToDelete, setCommentToDelete] =
+    useState(null);
+
+  const [showErrorModal, setShowErrorModal] =
+    useState(false);
+
+  const [modalError, setModalError] =
+    useState("");
+
+  /* =======================================================
      EDITING
   ======================================================= */
 
-  const [editing, setEditing] =
-    useState(false);
+  const [editing, setEditing] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -99,23 +116,13 @@ const TaskDetails = () => {
      COMMENTS
   ======================================================= */
 
-  const [comments, setComments] =
-    useState([]);
-
-  const [commentContent, setCommentContent] =
-    useState("");
-
-  const [commentsLoading, setCommentsLoading] =
-    useState(false);
-
-  const [commentSubmitting, setCommentSubmitting] =
-    useState(false);
-
+  const [comments, setComments] = useState([]);
+  const [commentContent, setCommentContent] = useState("");
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [deletingCommentId, setDeletingCommentId] =
     useState("");
-
-  const [commentError, setCommentError] =
-    useState("");
+  const [commentError, setCommentError] = useState("");
 
   /* =======================================================
      GET PROJECT ID
@@ -126,17 +133,11 @@ const TaskDetails = () => {
       return null;
     }
 
-    if (
-      typeof taskData.project ===
-      "string"
-    ) {
+    if (typeof taskData.project === "string") {
       return taskData.project;
     }
 
-    return (
-      taskData.project?._id ||
-      null
-    );
+    return taskData.project?._id || null;
   };
 
   /* =======================================================
@@ -148,41 +149,27 @@ const TaskDetails = () => {
       return null;
     }
 
-    if (
-      typeof project.workspace ===
-      "string"
-    ) {
+    if (typeof project.workspace === "string") {
       return project.workspace;
     }
 
-    return (
-      project.workspace?._id ||
-      null
-    );
+    return project.workspace?._id || null;
   };
 
   /* =======================================================
      GET ASSIGNEE ID
   ======================================================= */
 
-  const getAssigneeId = (
-    assignee
-  ) => {
+  const getAssigneeId = (assignee) => {
     if (!assignee) {
       return "";
     }
 
-    if (
-      typeof assignee ===
-      "string"
-    ) {
+    if (typeof assignee === "string") {
       return assignee;
     }
 
-    return (
-      assignee?._id ||
-      ""
-    );
+    return assignee?._id || "";
   };
 
   /* =======================================================
@@ -194,34 +181,25 @@ const TaskDetails = () => {
       setLoading(true);
       setError("");
 
-      const data =
-        await getTask(taskId);
+      const data = await getTask(taskId);
 
       setTask(data);
 
       setFormData({
-        title:
-          data?.title || "",
-        description:
-          data?.description || "",
+        title: data?.title || "",
+        description: data?.description || "",
       });
 
       setSelectedAssignee(
-        getAssigneeId(
-          data?.assignee
-        )
+        getAssigneeId(data?.assignee)
       );
 
       return data;
     } catch (err) {
-      console.error(
-        "Failed to load task:",
-        err
-      );
+      console.error("Failed to load task:", err);
 
       setError(
-        err?.message ||
-          "Failed to load task"
+        err?.message || "Failed to load task"
       );
 
       return null;
@@ -234,14 +212,9 @@ const TaskDetails = () => {
      LOAD PROJECT MEMBERS
   ======================================================= */
 
-  const loadMembers = async (
-    taskData
-  ) => {
+  const loadMembers = async (taskData) => {
     try {
-      const projectId =
-        getProjectId(
-          taskData
-        );
+      const projectId = getProjectId(taskData);
 
       if (!projectId) {
         return;
@@ -249,27 +222,17 @@ const TaskDetails = () => {
 
       setLoadingMembers(true);
 
-      const result =
-        await getProjectMembers(
-          projectId
-        );
+      const result = await getProjectMembers(projectId);
 
-      const memberList =
-        Array.isArray(result)
-          ? result
-          : Array.isArray(
-              result?.members
-            )
-            ? result.members
-            : Array.isArray(
-                result?.data
-              )
-              ? result.data
-              : [];
+      const memberList = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.members)
+          ? result.members
+          : Array.isArray(result?.data)
+            ? result.data
+            : [];
 
-      setMembers(
-        memberList
-      );
+      setMembers(memberList);
     } catch (err) {
       console.error(
         "Failed to load project members:",
@@ -291,27 +254,17 @@ const TaskDetails = () => {
       setCommentsLoading(true);
       setCommentError("");
 
-      const result =
-        await getTaskComments(
-          taskId
-        );
+      const result = await getTaskComments(taskId);
 
-      const commentList =
-        Array.isArray(result)
-          ? result
-          : Array.isArray(
-              result?.comments
-            )
-            ? result.comments
-            : Array.isArray(
-                result?.data
-              )
-              ? result.data
-              : [];
+      const commentList = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.comments)
+          ? result.comments
+          : Array.isArray(result?.data)
+            ? result.data
+            : [];
 
-      setComments(
-        commentList
-      );
+      setComments(commentList);
     } catch (err) {
       console.error(
         "Failed to load comments:",
@@ -321,8 +274,7 @@ const TaskDetails = () => {
       setComments([]);
 
       setCommentError(
-        err?.message ||
-          "Failed to load comments"
+        err?.message || "Failed to load comments"
       );
     } finally {
       setCommentsLoading(false);
@@ -333,14 +285,10 @@ const TaskDetails = () => {
      ADD COMMENT
   ======================================================= */
 
-  const handleAddComment = async (
-    event
-  ) => {
+  const handleAddComment = async (event) => {
     event.preventDefault();
 
-    if (
-      !commentContent.trim()
-    ) {
+    if (!commentContent.trim()) {
       setCommentError(
         "Please write a comment first."
       );
@@ -352,19 +300,16 @@ const TaskDetails = () => {
       setCommentSubmitting(true);
       setCommentError("");
 
-      const newComment =
-        await addComment(
-          taskId,
-          commentContent
-        );
+      const newComment = await addComment(
+        taskId,
+        commentContent
+      );
 
       if (newComment) {
-        setComments(
-          (previous) => [
-            ...previous,
-            newComment,
-          ]
-        );
+        setComments((previous) => [
+          ...previous,
+          newComment,
+        ]);
       }
 
       setCommentContent("");
@@ -379,51 +324,52 @@ const TaskDetails = () => {
       );
 
       setCommentError(
-        err?.message ||
-          "Failed to add comment"
+        err?.message || "Failed to add comment"
       );
     } finally {
-      setCommentSubmitting(
-        false
-      );
+      setCommentSubmitting(false);
     }
   };
 
   /* =======================================================
-     DELETE COMMENT
+     OPEN DELETE COMMENT MODAL
   ======================================================= */
 
-  const handleDeleteComment = async (
-    commentId
-  ) => {
-    const confirmed =
-      window.confirm(
-        "Are you sure you want to delete this comment?"
-      );
-
-    if (!confirmed) {
+  const handleDeleteComment = (comment) => {
+    if (!comment?._id) {
       return;
     }
 
-    try {
-      setDeletingCommentId(
-        commentId
-      );
+    setCommentToDelete(comment);
+    setShowDeleteCommentModal(true);
+  };
 
+  /* =======================================================
+     CONFIRM DELETE COMMENT
+  ======================================================= */
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete?._id) {
+      return;
+    }
+
+    const commentId = commentToDelete._id;
+
+    try {
+      setDeletingCommentId(commentId);
       setCommentError("");
 
-      await deleteComment(
-        commentId
+      await deleteComment(commentId);
+
+      setComments((previous) =>
+        previous.filter(
+          (comment) =>
+            comment._id !== commentId
+        )
       );
 
-      setComments(
-        (previous) =>
-          previous.filter(
-            (comment) =>
-              comment._id !==
-              commentId
-          )
-      );
+      setShowDeleteCommentModal(false);
+      setCommentToDelete(null);
 
       showSuccess(
         "Comment deleted successfully"
@@ -434,10 +380,15 @@ const TaskDetails = () => {
         err
       );
 
-      setCommentError(
+      setShowDeleteCommentModal(false);
+      setCommentToDelete(null);
+
+      setModalError(
         err?.message ||
           "Failed to delete comment"
       );
+
+      setShowErrorModal(true);
     } finally {
       setDeletingCommentId("");
     }
@@ -452,19 +403,14 @@ const TaskDetails = () => {
       return;
     }
 
-    const loadPage =
-      async () => {
-        const taskData =
-          await loadTask();
+    const loadPage = async () => {
+      const taskData = await loadTask();
 
-        if (taskData) {
-          await loadMembers(
-            taskData
-          );
-
-          await loadComments();
-        }
-      };
+      if (taskData) {
+        await loadMembers(taskData);
+        await loadComments();
+      }
+    };
 
     loadPage();
 
@@ -475,23 +421,17 @@ const TaskDetails = () => {
      FORMAT VALUE
   ======================================================= */
 
-  const formatValue = (
-    value
-  ) => {
+  const formatValue = (value) => {
     if (!value) {
       return "Not available";
     }
 
     return value
-      .replaceAll(
-        "_",
-        " "
-      )
+      .replaceAll("_", " ")
       .toLowerCase()
       .replace(
         /\b\w/g,
-        (char) =>
-          char.toUpperCase()
+        (char) => char.toUpperCase()
       );
   };
 
@@ -499,15 +439,12 @@ const TaskDetails = () => {
      FORMAT DATE
   ======================================================= */
 
-  const formatDate = (
-    date
-  ) => {
+  const formatDate = (date) => {
     if (!date) {
       return "Not available";
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
     if (
       Number.isNaN(
@@ -531,15 +468,12 @@ const TaskDetails = () => {
      DATE INPUT
   ======================================================= */
 
-  const getDateInputValue = (
-    date
-  ) => {
+  const getDateInputValue = (date) => {
     if (!date) {
       return "";
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
     if (
       Number.isNaN(
@@ -558,9 +492,7 @@ const TaskDetails = () => {
      SUCCESS MESSAGE
   ======================================================= */
 
-  const showSuccess = (
-    message
-  ) => {
+  const showSuccess = (message) => {
     setSuccess(message);
 
     setTimeout(() => {
@@ -572,34 +504,26 @@ const TaskDetails = () => {
      FORM CHANGE
   ======================================================= */
 
-  const handleFormChange = (
-    event
-  ) => {
+  const handleFormChange = (event) => {
     const {
       name,
       value,
     } = event.target;
 
-    setFormData(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   /* =======================================================
      SAVE CHANGES
   ======================================================= */
 
-  const handleUpdate = async (
-    event
-  ) => {
+  const handleUpdate = async (event) => {
     event.preventDefault();
 
-    if (
-      !formData.title.trim()
-    ) {
+    if (!formData.title.trim()) {
       setError(
         "Task title is required"
       );
@@ -664,8 +588,8 @@ const TaskDetails = () => {
                   : member.user?._id;
 
               return (
-                memberUserId ===
-                selectedAssignee
+                String(memberUserId) ===
+                String(selectedAssignee)
               );
             }
           );
@@ -841,80 +765,79 @@ const TaskDetails = () => {
     };
 
   /* =======================================================
-     DELETE TASK
+     OPEN DELETE TASK MODAL
   ======================================================= */
 
-  const handleDelete =
-    async () => {
-      const confirmed =
-        window.confirm(
-          "Are you sure you want to delete this task?"
-        );
+  const handleDelete = () => {
+    setShowDeleteTaskModal(true);
+  };
 
-      if (!confirmed) {
-        return;
+  /* =======================================================
+     CONFIRM DELETE TASK
+  ======================================================= */
+
+  const confirmDeleteTask = async () => {
+    try {
+      setDeleting(true);
+      setError("");
+
+      await deleteTask(taskId);
+
+      setShowDeleteTaskModal(false);
+
+      const projectId =
+        getProjectId(task);
+
+      if (projectId) {
+        navigate(
+          `/projects/${projectId}`
+        );
+      } else {
+        navigate("/projects");
       }
+    } catch (err) {
+      console.error(
+        "Failed to delete task:",
+        err
+      );
 
-      try {
-        setDeleting(true);
-        setError("");
+      setShowDeleteTaskModal(false);
 
-        await deleteTask(
-          taskId
-        );
+      setModalError(
+        err?.message ||
+          "Failed to delete task"
+      );
 
-        const projectId =
-          getProjectId(task);
+      setShowErrorModal(true);
 
-        if (projectId) {
-          navigate(
-            `/projects/${projectId}`
-          );
-        } else {
-          navigate(
-            "/projects"
-          );
-        }
-      } catch (err) {
-        console.error(
-          "Failed to delete task:",
-          err
-        );
-
-        setError(
-          err?.message ||
-            "Failed to delete task"
-        );
-
-        setDeleting(false);
-      }
-    };
+      setDeleting(false);
+    }
+  };
 
   /* =======================================================
      CANCEL EDIT
   ======================================================= */
 
-  const handleCancelEdit =
-    () => {
-      setEditing(false);
+  const handleCancelEdit = () => {
+    setEditing(false);
 
-      setFormData({
-        title:
-          task?.title || "",
+    setFormData({
+      title:
+        task?.title || "",
 
-        description:
-          task?.description ||
-          "",
-      });
+      description:
+        task?.description ||
+        "",
+    });
 
-      setSelectedAssignee(
-        getAssigneeId(
-          task?.assignee
-        )
-      );
+    setSelectedAssignee(
+      getAssigneeId(
+        task?.assignee
+      )
+    );
 
-      setError("");
-    };
+    setError("");
+  };
 
   /* =======================================================
      LOADING
@@ -955,9 +878,7 @@ const TaskDetails = () => {
           <button
             type="button"
             onClick={() =>
-              navigate(
-                "/projects"
-              )
+              navigate("/projects")
             }
           >
             ← Back to Projects
@@ -986,9 +907,7 @@ const TaskDetails = () => {
           <button
             type="button"
             onClick={() =>
-              navigate(
-                "/projects"
-              )
+              navigate("/projects")
             }
           >
             ← Back to Projects
@@ -1325,8 +1244,6 @@ const TaskDetails = () => {
           </div>
 
 
-          {/* NORMAL MODE */}
-
           {!editing && (
             <div className="task-details-assignee">
 
@@ -1372,8 +1289,6 @@ const TaskDetails = () => {
             </div>
           )}
 
-
-          {/* EDIT MODE */}
 
           {editing && (
             <div className="task-details-assignee-control">
@@ -1533,8 +1448,6 @@ const TaskDetails = () => {
         ================================================= */}
 
         <section className="task-comments-section">
-
-          {/* COMMENTS HEADER */}
 
           <div className="task-comments-header">
 
@@ -1734,8 +1647,6 @@ const TaskDetails = () => {
                       }
                     >
 
-                      {/* AVATAR */}
-
                       <div className="task-comment-avatar">
 
                         {commentUserName
@@ -1744,8 +1655,6 @@ const TaskDetails = () => {
 
                       </div>
 
-
-                      {/* BODY */}
 
                       <div className="task-comment-body">
 
@@ -1792,8 +1701,6 @@ const TaskDetails = () => {
                         </div>
 
 
-                        {/* COMMENT TEXT */}
-
                         <p className="task-comment-content">
                           {
                             comment.content
@@ -1801,15 +1708,13 @@ const TaskDetails = () => {
                         </p>
 
 
-                        {/* DELETE */}
-
                         {isOwnComment && (
                           <button
                             type="button"
                             className="task-comment-delete"
                             onClick={() =>
                               handleDeleteComment(
-                                comment._id
+                                comment
                               )
                             }
                             disabled={
@@ -1843,6 +1748,90 @@ const TaskDetails = () => {
           </div>
 
         </section>
+
+
+        {/* =================================================
+            DELETE TASK MODAL
+        ================================================= */}
+
+        <ActionModal
+          isOpen={
+            showDeleteTaskModal
+          }
+          type="confirm"
+          title="Delete Task?"
+          message={`You're about to permanently delete "${
+            task?.title ||
+            "this task"
+          }". This action cannot be undone.`}
+          confirmText="Delete Task"
+          cancelText="Keep Task"
+          onConfirm={
+            confirmDeleteTask
+          }
+          onClose={() => {
+            if (!deleting) {
+              setShowDeleteTaskModal(
+                false
+              );
+            }
+          }}
+          loading={deleting}
+        />
+
+
+        {/* =================================================
+            DELETE COMMENT MODAL
+        ================================================= */}
+
+        <ActionModal
+          isOpen={
+            showDeleteCommentModal
+          }
+          type="confirm"
+          title="Delete Comment?"
+          message="Are you sure you want to permanently delete this comment? This action cannot be undone."
+          confirmText="Delete Comment"
+          cancelText="Keep Comment"
+          onConfirm={
+            confirmDeleteComment
+          }
+          onClose={() => {
+            if (
+              !deletingCommentId
+            ) {
+              setShowDeleteCommentModal(
+                false
+              );
+              setCommentToDelete(
+                null
+              );
+            }
+          }}
+          loading={
+            deletingCommentId ===
+            commentToDelete?._id
+          }
+        />
+
+
+        {/* =================================================
+            ERROR MODAL
+        ================================================= */}
+
+        <ActionModal
+          isOpen={
+            showErrorModal
+          }
+          type="error"
+          title="Something went wrong"
+          message={modalError}
+          onClose={() =>
+            setShowErrorModal(
+              false
+            )
+          }
+        />
 
       </main>
 

@@ -3,6 +3,8 @@ import ProjectMember from "../models/projectMember.model.js";
 import WorkspaceMember from "../models/workspaceMember.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { createNotification } from "./notification.service.js";
+import Task from "../models/task.model.js";
+import Comment from "../models/comment.model.js";
 
 
 // 1. Create a project
@@ -193,9 +195,10 @@ const deleteProject = async (
     userId
 ) => {
 
-    const project = await Project.findById(
-        projectId
-    );
+    const project =
+        await Project.findById(
+            projectId
+        );
 
     if (!project) {
         throw new ApiError(
@@ -204,10 +207,19 @@ const deleteProject = async (
         );
     }
 
-    const member = await WorkspaceMember.findOne({
-        workspace: project.workspace,
-        user: userId
-    });
+
+    /* =====================================================
+       CHECK WORKSPACE ACCESS
+    ===================================================== */
+
+    const member =
+        await WorkspaceMember.findOne({
+            workspace:
+                project.workspace,
+
+            user: userId,
+        });
+
 
     if (!member) {
         throw new ApiError(
@@ -216,20 +228,86 @@ const deleteProject = async (
         );
     }
 
-    if (!["OWNER", "ADMIN"].includes(member.role)) {
+
+    /* =====================================================
+       ONLY OWNER / ADMIN CAN DELETE
+    ===================================================== */
+
+    if (
+        !["OWNER", "ADMIN"].includes(
+            member.role
+        )
+    ) {
         throw new ApiError(
             403,
             "Only Owner or Admin can delete project"
         );
     }
 
+
+    /* =====================================================
+       FIND TASKS
+       
+       We need the task IDs because comments belong
+       to tasks, not directly to projects.
+    ===================================================== */
+
+    const tasks =
+        await Task.find({
+            project: projectId,
+        }).select("_id");
+
+
+    const taskIds =
+        tasks.map(
+            (task) =>
+                task._id
+        );
+
+
+    /* =====================================================
+       DELETE COMMENTS
+    ===================================================== */
+
+    if (
+        taskIds.length > 0
+    ) {
+
+        await Comment.deleteMany({
+            task: {
+                $in: taskIds,
+            },
+        });
+
+    }
+
+
+    /* =====================================================
+       DELETE TASKS
+    ===================================================== */
+
+    await Task.deleteMany({
+        project: projectId,
+    });
+
+
+    /* =====================================================
+       DELETE PROJECT MEMBERS
+    ===================================================== */
+
+    await ProjectMember.deleteMany({
+        project: projectId,
+    });
+
+
+    /* =====================================================
+       DELETE PROJECT
+    ===================================================== */
+
     await Project.findByIdAndDelete(
         projectId
     );
 
-    await ProjectMember.deleteMany({
-        project: projectId
-    });
 
     return project;
 };
