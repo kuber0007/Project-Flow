@@ -98,8 +98,7 @@ function MyTasks() {
   const [tasks, setTasks] =
     useState([]);
 
-  const [loading, setLoading] =
-    useState(Boolean(token));
+  const [loading, setLoading] = useState( Boolean(token && userId));
 
   const [error, setError] =
     useState("");
@@ -115,10 +114,9 @@ function MyTasks() {
 
 
   useEffect(() => {
-    if (!token || !userId) {
-      setLoading(false);
-      return;
-    }
+  if (!token || !userId) {
+    return;
+  }
 
     let cancelled = false;
 

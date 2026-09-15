@@ -136,192 +136,213 @@ const Team = () => {
      LOAD DATA
   ========================================================= */
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  useEffect(() => {
+    let cancelled = false;
 
-      const result =
-        await getWorkspaces();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const workspaceList =
-        Array.isArray(result)
-          ? result.filter(
+        const result =
+          await getWorkspaces();
+
+        if (cancelled) {
+          return;
+        }
+
+        const workspaceList =
+          Array.isArray(result)
+            ? result.filter(
               (item) => item?._id
             )
-          : [];
+            : [];
 
-      setWorkspaces(
-        workspaceList
-      );
+        setWorkspaces(
+          workspaceList
+        );
 
-      let workspaceId =
-        selectedWorkspaceId;
+        let workspaceId =
+          selectedWorkspaceId;
 
-      if (
-        !workspaceId ||
-        !workspaceList.some(
-          (item) =>
-            String(item._id) ===
-            String(workspaceId)
-        )
-      ) {
-        workspaceId =
-          workspaceList[0]?._id ||
-          null;
+        if (
+          !workspaceId ||
+          !workspaceList.some(
+            (item) =>
+              String(item._id) ===
+              String(workspaceId)
+          )
+        ) {
+          workspaceId =
+            workspaceList[0]?._id ||
+            null;
 
-        if (workspaceId) {
-          localStorage.setItem(
-            "selectedWorkspaceId",
-            workspaceId
-          );
+          if (workspaceId) {
+            localStorage.setItem(
+              "selectedWorkspaceId",
+              workspaceId
+            );
 
-          setSelectedWorkspaceId(
-            workspaceId
-          );
+            setSelectedWorkspaceId(
+              workspaceId
+            );
+          }
         }
-      }
 
-      /* =====================================================
-         LOAD RECEIVED INVITATIONS
-      ===================================================== */
+        let receivedInvitations = [];
 
-      let receivedInvitations = [];
+        try {
+          const myInvitationsResult =
+            await getMyWorkspaceInvitations();
 
-      try {
-        const myInvitationsResult =
-          await getMyWorkspaceInvitations();
+          if (cancelled) {
+            return;
+          }
 
-        receivedInvitations =
-          Array.isArray(myInvitationsResult)
-            ? myInvitationsResult
-            : Array.isArray(
+          receivedInvitations =
+            Array.isArray(
+              myInvitationsResult
+            )
+              ? myInvitationsResult
+              : Array.isArray(
                 myInvitationsResult?.invitations
               )
-              ? myInvitationsResult.invitations
-              : [];
-      } catch (invitationError) {
-        console.error(
-          "Failed to load received invitations:",
-          invitationError
-        );
-      }
+                ? myInvitationsResult.invitations
+                : [];
+        } catch (
+        invitationError
+        ) {
+          console.error(
+            "Failed to load received invitations:",
+            invitationError
+          );
+        }
 
-      setMyInvitations(
-        receivedInvitations
-      );
+        if (cancelled) {
+          return;
+        }
 
-      if (!workspaceId) {
-        setWorkspace(null);
-        setMembers([]);
-        setInvitations([]);
-        return;
-      }
-
-      /* =====================================================
-         SELECTED WORKSPACE
-      ===================================================== */
-
-      const selectedWorkspace =
-        workspaceList.find(
-          (item) =>
-            String(item._id) ===
-            String(workspaceId)
+        setMyInvitations(
+          receivedInvitations
         );
 
-      const canManageWorkspace =
-        ["OWNER", "ADMIN"].includes(
-          selectedWorkspace?.role
-        );
+        if (!workspaceId) {
+          setWorkspace(null);
+          setMembers([]);
+          setInvitations([]);
+          return;
+        }
 
-      /* =====================================================
-         LOAD WORKSPACE DATA + SENT INVITATIONS
-      ===================================================== */
+        const selectedWorkspace =
+          workspaceList.find(
+            (item) =>
+              String(item._id) ===
+              String(workspaceId)
+          );
 
-      const [
-        workspaceResult,
-        membersResult,
-        invitationsResult,
-      ] = await Promise.all([
-        getWorkspace(
-          workspaceId
-        ),
+        const canManageWorkspace =
+          ["OWNER", "ADMIN"].includes(
+            selectedWorkspace?.role
+          );
 
-        getWorkspaceMembers(
-          workspaceId
-        ),
+        const [
+          workspaceResult,
+          membersResult,
+          invitationsResult,
+        ] = await Promise.all([
+          getWorkspace(
+            workspaceId
+          ),
 
-        canManageWorkspace
-          ? getWorkspaceInvitations(
+          getWorkspaceMembers(
+            workspaceId
+          ),
+
+          canManageWorkspace
+            ? getWorkspaceInvitations(
               workspaceId
             )
-          : Promise.resolve([]),
-      ]);
+            : Promise.resolve([]),
+        ]);
 
-      const workspaceData =
-        workspaceResult?.workspace ||
-        workspaceResult ||
-        {};
+        if (cancelled) {
+          return;
+        }
 
-      const memberList =
-        Array.isArray(membersResult)
-          ? membersResult
-          : Array.isArray(
+        const workspaceData =
+          workspaceResult?.workspace ||
+          workspaceResult ||
+          {};
+
+        const memberList =
+          Array.isArray(
+            membersResult
+          )
+            ? membersResult
+            : Array.isArray(
               membersResult?.members
             )
-            ? membersResult.members
-            : [];
+              ? membersResult.members
+              : [];
 
-      const workspaceInvitations =
-        Array.isArray(
-          invitationsResult
-        )
-          ? invitationsResult
-          : Array.isArray(
+        const workspaceInvitations =
+          Array.isArray(
+            invitationsResult
+          )
+            ? invitationsResult
+            : Array.isArray(
               invitationsResult?.invitations
             )
-            ? invitationsResult.invitations
-            : [];
+              ? invitationsResult.invitations
+              : [];
 
-      setWorkspace({
-        ...(selectedWorkspace || {}),
-        ...workspaceData,
-        role:
-          workspaceResult?.role ||
-          selectedWorkspace?.role ||
-          workspaceData.role ||
-          "MEMBER",
-      });
+        setWorkspace({
+          ...(selectedWorkspace || {}),
+          ...workspaceData,
+          role:
+            workspaceResult?.role ||
+            selectedWorkspace?.role ||
+            workspaceData.role ||
+            "MEMBER",
+        });
 
-      setMembers(
-        memberList
-      );
+        setMembers(
+          memberList
+        );
 
-      setInvitations(
-        workspaceInvitations
-      );
+        setInvitations(
+          workspaceInvitations
+        );
 
-      setMyInvitations(
-        receivedInvitations
-      );
+        setMyInvitations(
+          receivedInvitations
+        );
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
 
-    } catch (err) {
-      console.error(
-        "Failed to load team:",
-        err
-      );
+        console.error(
+          "Failed to load team:",
+          err
+        );
 
-      setError(
-        err?.message ||
-        "Failed to load workspace members"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(
+          err?.message ||
+          "Failed to load workspace members"
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
-  useEffect(() => {
     loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedWorkspaceId]);
 
   /* =========================================================
@@ -359,33 +380,33 @@ const Team = () => {
     !value
       ? members
       : members.filter((member) => {
-          const user =
-            typeof member.user ===
-              "object"
-              ? member.user
-              : null;
+        const user =
+          typeof member.user ===
+            "object"
+            ? member.user
+            : null;
 
-          const name =
-            user?.name || "";
+        const name =
+          user?.name || "";
 
-          const email =
-            user?.email || "";
+        const email =
+          user?.email || "";
 
-          const role =
-            member?.role || "";
+        const role =
+          member?.role || "";
 
-          return (
-            name
-              .toLowerCase()
-              .includes(value) ||
-            email
-              .toLowerCase()
-              .includes(value) ||
-            role
-              .toLowerCase()
-              .includes(value)
-          );
-        });
+        return (
+          name
+            .toLowerCase()
+            .includes(value) ||
+          email
+            .toLowerCase()
+            .includes(value) ||
+          role
+            .toLowerCase()
+            .includes(value)
+        );
+      });
 
   /* =========================================================
      SUCCESS MESSAGE
@@ -466,8 +487,8 @@ const Team = () => {
           )
             ? updatedInvitations
             : Array.isArray(
-                updatedInvitations?.invitations
-              )
+              updatedInvitations?.invitations
+            )
               ? updatedInvitations.invitations
               : [];
 
@@ -1616,25 +1637,25 @@ const Team = () => {
                             member
                           ) && (
 
-                            <button
-                              type="button"
-                              className="team-remove-button"
-                              onClick={() =>
-                                handleRemoveMember(
-                                  member
-                                )
-                              }
-                              disabled={
-                                removing ||
-                                roleChanging
-                              }
-                            >
-                              {removing
-                                ? "Removing..."
-                                : "Remove"}
-                            </button>
+                              <button
+                                type="button"
+                                className="team-remove-button"
+                                onClick={() =>
+                                  handleRemoveMember(
+                                    member
+                                  )
+                                }
+                                disabled={
+                                  removing ||
+                                  roleChanging
+                                }
+                              >
+                                {removing
+                                  ? "Removing..."
+                                  : "Remove"}
+                              </button>
 
-                          )}
+                            )}
 
                         </div>
 
@@ -1707,11 +1728,10 @@ const Team = () => {
           isOpen={showRemoveModal}
           type="confirm"
           title="Remove Member?"
-          message={`Are you sure you want to remove "${
-            memberToRemove?.user?.name ||
+          message={`Are you sure you want to remove "${memberToRemove?.user?.name ||
             memberToRemove?.user?.email ||
             "this member"
-          }" from this workspace? They will lose access to this workspace and its projects.`}
+            }" from this workspace? They will lose access to this workspace and its projects.`}
           confirmText="Remove Member"
           cancelText="Keep Member"
           onConfirm={
@@ -1740,10 +1760,9 @@ const Team = () => {
           isOpen={showLeaveModal}
           type="confirm"
           title="Leave Workspace?"
-          message={`Are you sure you want to leave "${
-            workspace?.name ||
+          message={`Are you sure you want to leave "${workspace?.name ||
             "this workspace"
-          }"? You will lose access to this workspace and its projects.`}
+            }"? You will lose access to this workspace and its projects.`}
           confirmText="Leave Workspace"
           cancelText="Stay"
           onConfirm={

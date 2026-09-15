@@ -13,9 +13,6 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   CheckCircle2,
-  FolderKanban,
-  LayoutDashboard,
-  UsersRound,
 } from "lucide-react";
 
 import {

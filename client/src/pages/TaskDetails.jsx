@@ -141,22 +141,6 @@ const TaskDetails = () => {
   };
 
   /* =======================================================
-     GET WORKSPACE ID
-  ======================================================= */
-
-  const getWorkspaceId = (project) => {
-    if (!project?.workspace) {
-      return null;
-    }
-
-    if (typeof project.workspace === "string") {
-      return project.workspace;
-    }
-
-    return project.workspace?._id || null;
-  };
-
-  /* =======================================================
      GET ASSIGNEE ID
   ======================================================= */
 

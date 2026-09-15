@@ -22,10 +22,8 @@ import {
   Search,
   Plus,
   BriefcaseBusiness,
-  Sun,
   Settings,
   ChevronRight,
-  Check,
   AlertCircle,
   Bell,
 } from "lucide-react";
@@ -348,163 +346,155 @@ function Dashboard() {
   ======================================================= */
 
   useEffect(() => {
+  let cancelled = false;
+
+  const loadWorkspaceData = async () => {
     if (!workspace?._id) {
       setMembers([]);
       setProjects([]);
       setTasks([]);
-
+      setWorkspaceDataLoading(false);
       return;
     }
 
-    let cancelled = false;
+    try {
+      setWorkspaceDataLoading(true);
+      setError("");
 
-    const loadWorkspaceData =
-      async () => {
-        try {
-          setWorkspaceDataLoading(
-            true
-          );
+      const [
+        membersResult,
+        projectsResult,
+      ] = await Promise.all([
+        getWorkspaceMembers(
+          workspace._id
+        ),
 
-          setError("");
+        getWorkspaceProjects(
+          workspace._id
+        ),
+      ]);
 
-          const [
-            membersResult,
-            projectsResult,
-          ] = await Promise.all([
-            getWorkspaceMembers(
-              workspace._id
-            ),
+      if (cancelled) {
+        return;
+      }
 
-            getWorkspaceProjects(
-              workspace._id
-            ),
-          ]);
+      const workspaceMembers =
+        Array.isArray(
+          membersResult
+        )
+          ? membersResult
+          : [];
 
-          if (cancelled) {
-            return;
-          }
+      const workspaceProjects =
+        Array.isArray(
+          projectsResult
+        )
+          ? projectsResult
+          : [];
 
-          const workspaceMembers =
-            Array.isArray(
-              membersResult
-            )
-              ? membersResult
-              : [];
+      setMembers(
+        workspaceMembers
+      );
 
-          const workspaceProjects =
-            Array.isArray(
-              projectsResult
-            )
-              ? projectsResult
-              : [];
+      setProjects(
+        workspaceProjects
+      );
 
-          setMembers(
-            workspaceMembers
-          );
+      if (
+        workspaceProjects.length ===
+        0
+      ) {
+        setTasks([]);
+        return;
+      }
 
-          setProjects(
-            workspaceProjects
-          );
+      const taskResults =
+        await Promise.all(
+          workspaceProjects.map(
+            async (project) => {
+              if (!project?._id) {
+                return [];
+              }
 
-          /* =============================================
-             LOAD TASKS
-          ============================================= */
+              try {
+                const result =
+                  await getProjectTasks(
+                    project._id
+                  );
 
-          if (
-            workspaceProjects.length ===
-            0
-          ) {
-            setTasks([]);
-            return;
-          }
+                const projectTasks =
+                  Array.isArray(
+                    result
+                  )
+                    ? result
+                    : [];
 
-          const taskResults =
-            await Promise.all(
-              workspaceProjects.map(
-                async (project) => {
-                  if (!project?._id) {
-                    return [];
-                  }
+                return projectTasks.map(
+                  (task) => ({
+                    ...task,
 
-                  try {
-                    const result =
-                      await getProjectTasks(
-                        project._id
-                      );
+                    projectId:
+                      project._id,
 
-                    const projectTasks =
-                      Array.isArray(
-                        result
-                      )
-                        ? result
-                        : [];
-
-                    return projectTasks.map(
-                      (task) => ({
-                        ...task,
-
-                        projectId:
-                          project._id,
-
-                        projectName:
-                          project?.name ||
-                          "Untitled Project",
-                      })
-                    );
-                  } catch (
+                    projectName:
+                      project?.name ||
+                      "Untitled Project",
+                  })
+                );
+              } catch (
+                taskError
+              ) {
+                console.error(
+                  `Failed to load tasks for project ${project._id}:`,
                   taskError
-                  ) {
-                    console.error(
-                      `Failed to load tasks for project ${project._id}:`,
-                      taskError
-                    );
+                );
 
-                    return [];
-                  }
-                }
-              )
-            );
+                return [];
+              }
+            }
+          )
+        );
 
-          if (cancelled) {
-            return;
-          }
+      if (cancelled) {
+        return;
+      }
 
-          setTasks(
-            taskResults.flat()
-          );
-        } catch (err) {
-          if (cancelled) {
-            return;
-          }
+      setTasks(
+        taskResults.flat()
+      );
+    } catch (err) {
+      if (cancelled) {
+        return;
+      }
 
-          console.error(
-            "Failed to load workspace data:",
-            err
-          );
+      console.error(
+        "Failed to load workspace data:",
+        err
+      );
 
-          setMembers([]);
-          setProjects([]);
-          setTasks([]);
+      setMembers([]);
+      setProjects([]);
+      setTasks([]);
 
-          setError(
-            err?.message ||
-            "Unable to load the selected workspace."
-          );
-        } finally {
-          if (!cancelled) {
-            setWorkspaceDataLoading(
-              false
-            );
-          }
-        }
-      };
+      setError(
+        err?.message ||
+          "Unable to load the selected workspace."
+      );
+    } finally {
+      if (!cancelled) {
+        setWorkspaceDataLoading(
+          false
+        );
+      }
+    }
+  };
 
-    loadWorkspaceData();
+  loadWorkspaceData();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [workspace]);
+  return () => {
+    cancelled = true;
+  };
+}, [workspace]);
 
   /* =======================================================
      AUTH REDIRECT

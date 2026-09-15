@@ -44,48 +44,63 @@ const Invitations = () => {
      LOAD INVITATIONS
   ========================================================= */
 
-  const loadInvitations = async () => {
-    try {
-      setLoading(true);
-      setError("");
+  useEffect(() => {
+    let cancelled = false;
 
-      const result =
-        await getMyWorkspaceInvitations();
+    const loadInvitations = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const invitationList =
-        Array.isArray(result)
-          ? result
-          : Array.isArray(
+        const result =
+          await getMyWorkspaceInvitations();
+
+        if (cancelled) {
+          return;
+        }
+
+        const invitationList =
+          Array.isArray(result)
+            ? result
+            : Array.isArray(
               result?.invitations
             )
-            ? result.invitations
-            : Array.isArray(
+              ? result.invitations
+              : Array.isArray(
                 result?.data
               )
-              ? result.data
-              : [];
+                ? result.data
+                : [];
 
-      setInvitations(
-        invitationList
-      );
+        setInvitations(
+          invitationList
+        );
+      } catch (err) {
+        if (cancelled) {
+          return;
+        }
 
-    } catch (err) {
-      console.error(
-        "Failed to load invitations:",
-        err
-      );
+        console.error(
+          "Failed to load invitations:",
+          err
+        );
 
-      setError(
-        err.message ||
-        "Failed to load invitations."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        setError(
+          err?.message ||
+          "Failed to load invitations."
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
 
-  useEffect(() => {
     loadInvitations();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /* =========================================================
