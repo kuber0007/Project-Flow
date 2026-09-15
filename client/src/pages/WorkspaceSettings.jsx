@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   BriefcaseBusiness,
+  Camera,
   Save,
   Trash2,
+  X,
 } from "lucide-react";
 import {
   useNavigate,
@@ -21,10 +23,11 @@ import {
 
 import apiRequest from "../services/api";
 
-
 const WorkspaceSettings = () => {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
+
+  const fileInputRef = useRef(null);
 
   const [workspace, setWorkspace] =
     useState(null);
@@ -36,6 +39,12 @@ const WorkspaceSettings = () => {
     useState("");
 
   const [logo, setLogo] =
+    useState("");
+
+  const [selectedLogo, setSelectedLogo] =
+    useState(null);
+
+  const [logoPreview, setLogoPreview] =
     useState("");
 
   const [role, setRole] =
@@ -161,10 +170,121 @@ const WorkspaceSettings = () => {
 
 
   /* =========================================================
+     CLEAN PREVIEW URL
+  ========================================================= */
+
+  useEffect(() => {
+    return () => {
+      if (logoPreview) {
+        URL.revokeObjectURL(
+          logoPreview
+        );
+      }
+    };
+  }, [logoPreview]);
+
+
+  /* =========================================================
+     SELECT LOGO
+  ========================================================= */
+
+  const handleChooseLogo = () => {
+    if (
+      saving ||
+      role === "MEMBER"
+    ) {
+      return;
+    }
+
+    fileInputRef.current?.click();
+  };
+
+
+  const handleLogoChange = (
+    event
+  ) => {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        file.type
+      )
+    ) {
+      setError(
+        "Please choose a JPG, PNG, or WEBP image."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    if (
+      file.size >
+      5 * 1024 * 1024
+    ) {
+      setError(
+        "Logo image must be 5 MB or smaller."
+      );
+
+      event.target.value = "";
+      return;
+    }
+
+    if (logoPreview) {
+      URL.revokeObjectURL(
+        logoPreview
+      );
+    }
+
+    const preview =
+      URL.createObjectURL(file);
+
+    setSelectedLogo(file);
+    setLogoPreview(preview);
+    setError("");
+    setSuccess("");
+  };
+
+
+  /* =========================================================
+     REMOVE SELECTED LOGO
+  ========================================================= */
+
+  const handleRemoveSelectedLogo = () => {
+    if (logoPreview) {
+      URL.revokeObjectURL(
+        logoPreview
+      );
+    }
+
+    setSelectedLogo(null);
+    setLogoPreview("");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value =
+        "";
+    }
+  };
+
+
+  /* =========================================================
      SAVE SETTINGS
   ========================================================= */
 
-  const handleSave = async (event) => {
+  const handleSave = async (
+    event
+  ) => {
     event.preventDefault();
 
     setError("");
@@ -176,9 +296,6 @@ const WorkspaceSettings = () => {
     const cleanDescription =
       description.trim();
 
-    const cleanLogo =
-      logo.trim();
-
     if (!cleanName) {
       setError(
         "Workspace name cannot be empty."
@@ -186,7 +303,10 @@ const WorkspaceSettings = () => {
       return;
     }
 
-    if (role !== "OWNER" && role !== "ADMIN") {
+    if (
+      role !== "OWNER" &&
+      role !== "ADMIN"
+    ) {
       setError(
         "Only the workspace owner or admin can update settings."
       );
@@ -203,7 +323,8 @@ const WorkspaceSettings = () => {
             name: cleanName,
             description:
               cleanDescription,
-            logo: cleanLogo,
+            logoFile:
+              selectedLogo,
           }
         );
 
@@ -225,9 +346,22 @@ const WorkspaceSettings = () => {
       );
 
       setLogo(
-        updated?.logo ||
-          cleanLogo
+        updated?.logo || ""
       );
+
+      if (logoPreview) {
+        URL.revokeObjectURL(
+          logoPreview
+        );
+      }
+
+      setSelectedLogo(null);
+      setLogoPreview("");
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value =
+          "";
+      }
 
       setSuccess(
         "Workspace settings updated successfully."
@@ -321,15 +455,21 @@ const WorkspaceSettings = () => {
   if (loading) {
     return (
       <div className="workspace-settings-page">
+
         <Sidebar />
 
         <main className="workspace-settings-main">
+
           <div className="workspace-settings-container">
+
             <div className="workspace-settings-state">
               Loading workspace settings...
             </div>
+
           </div>
+
         </main>
+
       </div>
     );
   }
@@ -342,9 +482,11 @@ const WorkspaceSettings = () => {
   if (!workspace) {
     return (
       <div className="workspace-settings-page">
+
         <Sidebar />
 
         <main className="workspace-settings-main">
+
           <div className="workspace-settings-container">
 
             <button
@@ -354,9 +496,8 @@ const WorkspaceSettings = () => {
                 navigate("/dashboard")
               }
             >
-              <ArrowLeft
-                size={17}
-              />
+              <ArrowLeft size={17} />
+
               Back to Dashboard
             </button>
 
@@ -366,10 +507,20 @@ const WorkspaceSettings = () => {
             </div>
 
           </div>
+
         </main>
+
       </div>
     );
   }
+
+
+  /* =========================================================
+     DISPLAY LOGO
+  ========================================================= */
+
+  const displayedLogo =
+    logoPreview || logo;
 
 
   return (
@@ -382,7 +533,7 @@ const WorkspaceSettings = () => {
 
         <div className="workspace-settings-container">
 
-          {/* Header */}
+          {/* HEADER */}
 
           <div className="workspace-settings-header">
 
@@ -393,22 +544,26 @@ const WorkspaceSettings = () => {
                 navigate("/dashboard")
               }
             >
-              <ArrowLeft
-                size={17}
-              />
+              <ArrowLeft size={17} />
+
               Back to Dashboard
             </button>
+
 
             <div className="workspace-settings-title-row">
 
               <div className="workspace-settings-icon">
+
                 <BriefcaseBusiness
                   size={23}
                   strokeWidth={1.8}
                 />
+
               </div>
 
+
               <div>
+
                 <h1>
                   Workspace Settings
                 </h1>
@@ -416,6 +571,7 @@ const WorkspaceSettings = () => {
                 <p>
                   Manage your workspace information.
                 </p>
+
               </div>
 
             </div>
@@ -423,7 +579,7 @@ const WorkspaceSettings = () => {
           </div>
 
 
-          {/* Messages */}
+          {/* MESSAGES */}
 
           {error && (
             <div className="workspace-settings-message error">
@@ -438,13 +594,14 @@ const WorkspaceSettings = () => {
           )}
 
 
-          {/* General settings */}
+          {/* GENERAL */}
 
           <section className="workspace-settings-card">
 
             <div className="workspace-settings-card-header">
 
               <div>
+
                 <h2>
                   General
                 </h2>
@@ -452,7 +609,9 @@ const WorkspaceSettings = () => {
                 <p>
                   Update your workspace details.
                 </p>
+
               </div>
+
 
               <span
                 className={`workspace-role-badge role-${role.toLowerCase()}`}
@@ -468,20 +627,18 @@ const WorkspaceSettings = () => {
               className="workspace-settings-form"
             >
 
-              {/* Logo */}
+              {/* =================================================
+                  WORKSPACE LOGO
+              ================================================= */}
 
-              <div className="workspace-logo-section">
+              <div className="workspace-logo-upload-section">
 
                 <div className="workspace-logo-preview">
 
-                  {logo ? (
+                  {displayedLogo ? (
                     <img
-                      src={logo}
+                      src={displayedLogo}
                       alt="Workspace logo"
-                      onError={(event) => {
-                        event.currentTarget.style.display =
-                          "none";
-                      }}
                     />
                   ) : (
                     <span>
@@ -492,7 +649,25 @@ const WorkspaceSettings = () => {
                     </span>
                   )}
 
+                  {role !== "MEMBER" && (
+                    <button
+                      type="button"
+                      className="workspace-logo-camera"
+                      onClick={
+                        handleChooseLogo
+                      }
+                      disabled={saving}
+                      aria-label="Choose workspace logo"
+                    >
+                      <Camera
+                        size={15}
+                        strokeWidth={1.9}
+                      />
+                    </button>
+                  )}
+
                 </div>
+
 
                 <div className="workspace-logo-info">
 
@@ -501,40 +676,83 @@ const WorkspaceSettings = () => {
                   </strong>
 
                   <span>
-                    Enter an image URL for your workspace logo.
+                    Upload an image for your workspace.
                   </span>
+
+                  <small>
+                    JPG, PNG or WEBP · Maximum 5 MB
+                  </small>
+
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={
+                      handleLogoChange
+                    }
+                    hidden
+                  />
+
+
+                  <div className="workspace-logo-actions">
+
+                    <button
+                      type="button"
+                      className="workspace-logo-choose-button"
+                      onClick={
+                        handleChooseLogo
+                      }
+                      disabled={
+                        saving ||
+                        role === "MEMBER"
+                      }
+                    >
+                      Choose Logo
+                    </button>
+
+
+                    {selectedLogo && (
+                      <button
+                        type="button"
+                        className="workspace-logo-remove-button"
+                        onClick={
+                          handleRemoveSelectedLogo
+                        }
+                        disabled={saving}
+                      >
+                        <X
+                          size={14}
+                          strokeWidth={1.8}
+                        />
+
+                        Remove Selection
+                      </button>
+                    )}
+
+                  </div>
 
                 </div>
 
               </div>
 
 
-              <div className="workspace-settings-form-group">
+              {selectedLogo && (
+                <div className="workspace-logo-selected">
 
-                <label htmlFor="workspace-logo">
-                  Logo URL
-                </label>
+                  <span>
+                    Selected:
+                  </span>
 
-                <input
-                  id="workspace-logo"
-                  type="url"
-                  value={logo}
-                  onChange={(event) =>
-                    setLogo(
-                      event.target.value
-                    )
-                  }
-                  placeholder="https://example.com/logo.png"
-                  disabled={
-                    saving ||
-                    role === "MEMBER"
-                  }
-                />
+                  <strong>
+                    {selectedLogo.name}
+                  </strong>
 
-              </div>
+                </div>
+              )}
 
 
-              {/* Name */}
+              {/* NAME */}
 
               <div className="workspace-settings-form-group">
 
@@ -563,7 +781,7 @@ const WorkspaceSettings = () => {
               </div>
 
 
-              {/* Description */}
+              {/* DESCRIPTION */}
 
               <div className="workspace-settings-form-group">
 
@@ -595,6 +813,8 @@ const WorkspaceSettings = () => {
               </div>
 
 
+              {/* ACTIONS */}
+
               <div className="workspace-settings-actions">
 
                 <button
@@ -608,6 +828,7 @@ const WorkspaceSettings = () => {
                   Cancel
                 </button>
 
+
                 <button
                   type="submit"
                   className="workspace-settings-save"
@@ -616,9 +837,7 @@ const WorkspaceSettings = () => {
                     role === "MEMBER"
                   }
                 >
-                  <Save
-                    size={16}
-                  />
+                  <Save size={16} />
 
                   {saving
                     ? "Saving..."
@@ -632,12 +851,13 @@ const WorkspaceSettings = () => {
           </section>
 
 
-          {/* Danger Zone */}
+          {/* DANGER ZONE */}
 
           {role === "OWNER" && (
             <section className="workspace-settings-danger">
 
               <div>
+
                 <h2>
                   Danger Zone
                 </h2>
@@ -646,7 +866,9 @@ const WorkspaceSettings = () => {
                   Deleting a workspace is permanent and
                   cannot be undone.
                 </p>
+
               </div>
+
 
               <button
                 type="button"
@@ -656,9 +878,7 @@ const WorkspaceSettings = () => {
                 }
                 disabled={deleting}
               >
-                <Trash2
-                  size={16}
-                />
+                <Trash2 size={16} />
 
                 {deleting
                   ? "Deleting..."
@@ -670,19 +890,19 @@ const WorkspaceSettings = () => {
 
         </div>
 
-        {/* =================================================
-            DELETE WORKSPACE CONFIRMATION
-        ================================================= */}
+
+        {/* DELETE CONFIRMATION */}
 
         <ActionModal
           isOpen={showDeleteModal}
           type="confirm"
           title="Delete Workspace?"
           message={`You're about to permanently delete "${
-            workspace?.name || "this workspace"
+            workspace?.name ||
+            "this workspace"
           }". This action cannot be undone.`}
           confirmText="Delete Workspace"
-          cancelText="Keep Workspace"
+          cancelText="Cancel"
           onConfirm={handleDelete}
           onClose={() =>
             setShowDeleteModal(false)
@@ -690,14 +910,13 @@ const WorkspaceSettings = () => {
           loading={deleting}
         />
 
-        {/* =================================================
-            DELETE WORKSPACE ERROR
-        ================================================= */}
+
+        {/* ERROR MODAL */}
 
         <ActionModal
           isOpen={showErrorModal}
           type="error"
-          title="Something went wrong"
+          title="Unable to delete workspace"
           message={modalError}
           onClose={() =>
             setShowErrorModal(false)
@@ -709,6 +928,5 @@ const WorkspaceSettings = () => {
     </div>
   );
 };
-
 
 export default WorkspaceSettings;

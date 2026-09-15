@@ -1,36 +1,69 @@
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  "http://localhost:8000/api";
 
-const apiRequest = async (endpoint, options = {}) => {
-  const token = localStorage.getItem("accessToken");
+const apiRequest = async (
+  endpoint,
+  options = {}
+) => {
+  const token =
+    localStorage.getItem(
+      "accessToken"
+    );
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
+  const isFormData =
+    options.body instanceof FormData;
 
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
+  const headers = {
+    ...(token
+      ? {
+          Authorization:
+            `Bearer ${token}`,
+        }
+      : {}),
+    ...(options.headers || {}),
+  };
 
-      ...(options.headers || {}),
-    },
-  });
+  if (!isFormData) {
+    headers["Content-Type"] =
+      "application/json";
+  }
+
+  const response =
+    await fetch(
+      `${API_BASE_URL}${endpoint}`,
+      {
+        ...options,
+        headers,
+      }
+    );
 
   let data = null;
 
   const contentType =
-    response.headers.get("content-type");
+    response.headers.get(
+      "content-type"
+    );
 
-  if (contentType?.includes("application/json")) {
-    data = await response.json();
+  if (
+    contentType?.includes(
+      "application/json"
+    )
+  ) {
+    data =
+      await response.json();
   }
 
   if (!response.ok) {
-    if (response.status === 401) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
+    if (
+      response.status === 401
+    ) {
+      localStorage.removeItem(
+        "accessToken"
+      );
+
+      localStorage.removeItem(
+        "user"
+      );
     }
 
     throw new Error(

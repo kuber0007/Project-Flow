@@ -9,6 +9,58 @@ import {
 import { useNavigate } from "react-router-dom";
 
 
+/* =========================================================
+   WORKSPACE LOGO
+========================================================= */
+
+const WorkspaceLogo = ({
+  workspace,
+  className = "",
+}) => {
+  const [imageError, setImageError] =
+    useState(false);
+
+  const logo =
+    workspace?.logo || "";
+
+  const workspaceName =
+    workspace?.name ||
+    "Workspace";
+
+  const initial =
+    workspaceName
+      .charAt(0)
+      .toUpperCase() || "W";
+
+
+  if (logo && !imageError) {
+    return (
+      <img
+        src={logo}
+        alt={`${workspaceName} logo`}
+        className={`workspace-logo-image ${className}`}
+        onError={() =>
+          setImageError(true)
+        }
+      />
+    );
+  }
+
+
+  return (
+    <span
+      className={`workspace-logo-fallback ${className}`}
+    >
+      {initial}
+    </span>
+  );
+};
+
+
+/* =========================================================
+   WORKSPACE DROPDOWN
+========================================================= */
+
 const WorkspaceDropdown = ({
   workspaces = [],
   workspace = null,
@@ -24,6 +76,10 @@ const WorkspaceDropdown = ({
     setOpen,
   ] = useState(false);
 
+
+  /* =========================================================
+     CHANGE WORKSPACE
+  ========================================================= */
 
   const handleChange = (
     selectedWorkspace
@@ -51,6 +107,10 @@ const WorkspaceDropdown = ({
   return (
     <div className="workspace-selector">
 
+      {/* =====================================================
+          CURRENT WORKSPACE BUTTON
+      ===================================================== */}
+
       <button
         type="button"
         className="workspace-selector-button"
@@ -68,10 +128,16 @@ const WorkspaceDropdown = ({
 
         <span className="workspace-selector-icon">
 
-          <BriefcaseBusiness
-            size={16}
-            strokeWidth={1.8}
-          />
+          {workspace?.logo ? (
+            <WorkspaceLogo
+              workspace={workspace}
+            />
+          ) : (
+            <BriefcaseBusiness
+              size={16}
+              strokeWidth={1.8}
+            />
+          )}
 
         </span>
 
@@ -102,6 +168,10 @@ const WorkspaceDropdown = ({
       </button>
 
 
+      {/* =====================================================
+          DROPDOWN
+      ===================================================== */}
+
       {open &&
         workspaces.length > 0 && (
 
@@ -111,6 +181,10 @@ const WorkspaceDropdown = ({
               Select workspace
             </div>
 
+
+            {/* =================================================
+                WORKSPACES
+            ================================================= */}
 
             {workspaces.map(
               (item) => {
@@ -144,15 +218,18 @@ const WorkspaceDropdown = ({
                     }
                   >
 
+                    {/* WORKSPACE LOGO */}
+
                     <span className="workspace-dropdown-icon">
 
-                      {item?.name
-                        ?.charAt(0)
-                        ?.toUpperCase() ||
-                        "W"}
+                      <WorkspaceLogo
+                        workspace={item}
+                      />
 
                     </span>
 
+
+                    {/* WORKSPACE INFO */}
 
                     <span className="workspace-dropdown-info">
 
@@ -168,6 +245,8 @@ const WorkspaceDropdown = ({
 
                     </span>
 
+
+                    {/* SELECTED CHECK */}
 
                     {selected && (
 
@@ -190,6 +269,10 @@ const WorkspaceDropdown = ({
 
             <div className="workspace-dropdown-divider" />
 
+
+            {/* =================================================
+                CREATE WORKSPACE
+            ================================================= */}
 
             <button
               type="button"

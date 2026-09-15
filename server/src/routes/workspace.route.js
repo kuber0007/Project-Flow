@@ -20,6 +20,7 @@ import { createWorkspace,
     getMyWorkspaceInvitations
 } from "../controllers/workspace.controller.js"
 import { verifyJWT } from "../middleware/auth.middleware.js";
+import upload from "../middleware/upload.middleware.js";
 
 const router = express.Router()
 
@@ -45,7 +46,7 @@ router.post("/workspace-invitations/:invitationId/accept",acceptWorkspaceInvitat
 router.post("/workspace-invitations/:invitationId/reject",rejectWorkspaceInvitation) // -tested
 
 router.get("/:workspaceId/settings",getWorkspaceSettings) // - tested
-router.patch("/:workspaceId/settings",updateWorkspaceSettings) // - tested
+router.patch("/:workspaceId/settings", upload.single("logoFile"),updateWorkspaceSettings) // - tested
 router.patch("/:workspaceId/transfer-ownership",transferOwnership)
 
 

@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  UserRound,
 } from "lucide-react";
 
 import { logoutUser } from "../services/authService";
@@ -30,6 +31,7 @@ const getStoredUser = () => {
   try {
     return JSON.parse(storedUser);
   } catch {
+    localStorage.removeItem("user");
     return null;
   }
 };
@@ -41,21 +43,64 @@ const Sidebar = ({
 }) => {
   const navigate = useNavigate();
 
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [myTaskCount, setMyTaskCount] = useState(0);
+  const [showProfileMenu, setShowProfileMenu] =
+    useState(false);
 
-  const user = getStoredUser();
-  const userName = user?.name || "User";
+  const [sidebarOpen, setSidebarOpen] =
+    useState(false);
+
+  const [myTaskCount, setMyTaskCount] =
+    useState(0);
+
+  const [user, setUser] =
+    useState(getStoredUser());
+
+  /* =========================================================
+     KEEP USER / AVATAR UPDATED
+  ========================================================= */
+
+  useEffect(() => {
+    const handleUserUpdated = () => {
+      setUser(getStoredUser());
+    };
+
+    window.addEventListener(
+      "user-updated",
+      handleUserUpdated
+    );
+
+    return () => {
+      window.removeEventListener(
+        "user-updated",
+        handleUserUpdated
+      );
+    };
+  }, []);
+
+  const userName =
+    user?.name || "User";
+
+  const userAvatar =
+    user?.avatar || "";
+
+  /* =========================================================
+     LOAD MY TASK COUNT
+  ========================================================= */
 
   useEffect(() => {
     const loadMyTaskCount = async () => {
-      const token = localStorage.getItem("accessToken");
+      const token =
+        localStorage.getItem(
+          "accessToken"
+        );
 
       const currentUserId =
         user?._id || user?.id;
 
-      if (!token || !currentUserId) {
+      if (
+        !token ||
+        !currentUserId
+      ) {
         setMyTaskCount(0);
         return;
       }
@@ -71,81 +116,86 @@ const Sidebar = ({
 
         const workspaceProjects =
           await Promise.all(
-            workspaces.map(async (workspace) => {
-              if (!workspace?._id) {
-                return [];
-              }
+            workspaces.map(
+              async (workspace) => {
+                if (!workspace?._id) {
+                  return [];
+                }
 
-              try {
-                const result =
-                  await getWorkspaceProjects(
-                    workspace._id
+                try {
+                  const result =
+                    await getWorkspaceProjects(
+                      workspace._id
+                    );
+
+                  return Array.isArray(result)
+                    ? result
+                    : [];
+                } catch (error) {
+                  console.error(
+                    `Failed to load projects for workspace ${workspace._id}:`,
+                    error
                   );
 
-                return Array.isArray(result)
-                  ? result
-                  : [];
-              } catch (error) {
-                console.error(
-                  `Failed to load projects for workspace ${workspace._id}:`,
-                  error
-                );
-
-                return [];
+                  return [];
+                }
               }
-            })
+            )
           );
 
-        const projects =
+        const allProjects =
           workspaceProjects.flat();
 
         const taskResults =
           await Promise.all(
-            projects.map(async (project) => {
-              if (!project?._id) {
-                return [];
-              }
+            allProjects.map(
+              async (project) => {
+                if (!project?._id) {
+                  return [];
+                }
 
-              try {
-                const result =
-                  await getProjectTasks(
-                    project._id
+                try {
+                  const result =
+                    await getProjectTasks(
+                      project._id
+                    );
+
+                  return Array.isArray(result)
+                    ? result
+                    : [];
+                } catch (error) {
+                  console.error(
+                    `Failed to load tasks for project ${project._id}:`,
+                    error
                   );
 
-                return Array.isArray(result)
-                  ? result
-                  : [];
-              } catch (error) {
-                console.error(
-                  `Failed to load tasks for project ${project._id}:`,
-                  error
-                );
-
-                return [];
+                  return [];
+                }
               }
-            })
+            )
           );
 
         const allTasks =
           taskResults.flat();
 
         const assignedTasks =
-          allTasks.filter((task) => {
-            const assigneeId =
-              task?.assignee?._id ||
-              task?.assignee?.id ||
-              task?.assignee;
+          allTasks.filter(
+            (task) => {
+              const assigneeId =
+                task?.assignee?._id ||
+                task?.assignee?.id ||
+                task?.assignee;
 
-            return (
-              String(assigneeId) ===
-              String(currentUserId)
-            );
-          });
+              return (
+                String(assigneeId) ===
+                String(currentUserId)
+              );
+            }
+          );
 
         setMyTaskCount(
           assignedTasks.length
         );
-
       } catch (error) {
         console.error(
           "Failed to load My Tasks count:",
@@ -157,22 +207,17 @@ const Sidebar = ({
     };
 
     loadMyTaskCount();
-  }, [user?._id, user?.id]);
+  }, [
+    user?._id,
+    user?.id,
+  ]);
+
+  /* =========================================================
+     HELPERS
+  ========================================================= */
 
   const closeSidebar = () => {
     setSidebarOpen(false);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      localStorage.removeItem("selectedWorkspaceId");
-      closeSidebar();
-      navigate("/login", { replace: true });
-    }
   };
 
   const handleNavigation = () => {
@@ -180,16 +225,44 @@ const Sidebar = ({
     setShowProfileMenu(false);
   };
 
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error(
+        "Logout failed:",
+        err
+      );
+    } finally {
+      localStorage.removeItem(
+        "selectedWorkspaceId"
+      );
+
+      closeSidebar();
+
+      navigate("/login", {
+        replace: true,
+      });
+    }
+  };
+
   return (
     <>
       {/* MOBILE TOP BAR */}
+
       <header className="mobile-header">
         <Link
           to="/dashboard"
           className="mobile-brand"
           onClick={handleNavigation}
         >
-          <span className="mobile-brand-icon">P</span>
+          <span className="mobile-brand-icon">
+            P
+          </span>
 
           <span className="mobile-brand-text">
             Project<span>Flow</span>
@@ -199,14 +272,21 @@ const Sidebar = ({
         <button
           type="button"
           className="mobile-menu-button"
-          onClick={() => setSidebarOpen(true)}
+          onClick={() =>
+            setSidebarOpen(true)
+          }
           aria-label="Open navigation menu"
         >
-          <Menu size={23} strokeWidth={1.8} />
+          <Menu
+            size={23}
+            strokeWidth={1.8}
+          />
         </button>
       </header>
 
+
       {/* MOBILE OVERLAY */}
+
       {sidebarOpen && (
         <button
           type="button"
@@ -216,157 +296,296 @@ const Sidebar = ({
         />
       )}
 
+
       {/* SIDEBAR */}
+
       <aside
-        className={`dashboard-sidebar ${sidebarOpen ? "sidebar-open" : ""
+        className={`dashboard-sidebar ${sidebarOpen
+            ? "sidebar-open"
+            : ""
           }`}
       >
-        {/* DESKTOP BRAND / MOBILE BRAND */}
+
+        {/* BRAND */}
+
         <Link
           to="/dashboard"
           className="dashboard-brand"
           onClick={handleNavigation}
         >
-          <span className="dashboard-brand-icon">P</span>
+          <span className="dashboard-brand-icon">
+            P
+          </span>
 
           <span className="dashboard-brand-text">
             Project<span>Flow</span>
           </span>
         </Link>
 
-        {/* MOBILE CLOSE BUTTON */}
+
+        {/* MOBILE CLOSE */}
+
         <button
           type="button"
           className="mobile-sidebar-close"
           onClick={closeSidebar}
           aria-label="Close navigation menu"
         >
-          <X size={21} strokeWidth={1.8} />
+          <X
+            size={21}
+            strokeWidth={1.8}
+          />
         </button>
 
+
         {/* NAVIGATION */}
+
         <nav className="dashboard-nav">
+
           <Link
             to="/dashboard"
-            className={`dashboard-nav-item ${active === "dashboard" ? "active" : ""
+            className={`dashboard-nav-item ${active === "dashboard"
+                ? "active"
+                : ""
               }`}
             onClick={handleNavigation}
           >
-            <LayoutDashboard size={18} strokeWidth={1.8} />
-            <span>Dashboard</span>
+            <LayoutDashboard
+              size={18}
+              strokeWidth={1.8}
+            />
+
+            <span>
+              Dashboard
+            </span>
           </Link>
+
 
           <Link
             to="/projects"
-            className={`dashboard-nav-item ${active === "projects" ? "active" : ""
+            className={`dashboard-nav-item ${active === "projects"
+                ? "active"
+                : ""
               }`}
             onClick={handleNavigation}
           >
-            <FolderKanban size={18} strokeWidth={1.8} />
-            <span>Projects</span>
+            <FolderKanban
+              size={18}
+              strokeWidth={1.8}
+            />
+
+            <span>
+              Projects
+            </span>
           </Link>
+
 
           <Link
             to="/team"
-            className={`dashboard-nav-item ${active === "team" ? "active" : ""
+            className={`dashboard-nav-item ${active === "team"
+                ? "active"
+                : ""
               }`}
             onClick={handleNavigation}
           >
-            <Users size={18} strokeWidth={1.8} />
-            <span>Team</span>
+            <Users
+              size={18}
+              strokeWidth={1.8}
+            />
+
+            <span>
+              Team
+            </span>
           </Link>
 
+
           <div className="dashboard-task-link">
+
             <Link
               to="/tasks"
-              className={`dashboard-nav-item ${active === "tasks" ? "active" : ""
+              className={`dashboard-nav-item ${active === "tasks"
+                  ? "active"
+                  : ""
                 }`}
               onClick={handleNavigation}
             >
-              <CheckSquare size={18} strokeWidth={1.8} />
+              <CheckSquare
+                size={18}
+                strokeWidth={1.8}
+              />
 
-              <span>My Tasks</span>
+              <span>
+                My Tasks
+              </span>
 
-              <small>{myTaskCount}</small>
+              <small>
+                {myTaskCount}
+              </small>
             </Link>
 
             <span className="dashboard-arrow">
-              <ChevronRight size={15} strokeWidth={1.8} />
+              <ChevronRight
+                size={15}
+                strokeWidth={1.8}
+              />
             </span>
+
           </div>
+
         </nav>
 
+
         {/* PROJECT LIST */}
+
         {showProjects && (
           <div className="sidebar-projects">
+
             <div className="sidebar-section-title">
-              <span>PROJECTS</span>
+
+              <span>
+                PROJECTS
+              </span>
 
               <Link
                 to="/projects"
                 aria-label="View all projects"
                 onClick={handleNavigation}
               >
-                <ChevronRight size={14} strokeWidth={1.8} />
+                <ChevronRight
+                  size={14}
+                  strokeWidth={1.8}
+                />
               </Link>
+
             </div>
+
 
             {projects.length === 0 ? (
               <div className="sidebar-empty-projects">
                 No projects yet
               </div>
             ) : (
-              projects.slice(0, 5).map((project, index) => (
-                <Link
-                  key={project?._id || index}
-                  to={`/projects/${project?._id}`}
-                  className="sidebar-project"
-                  onClick={handleNavigation}
-                >
-                  <span
-                    className={`project-dot ${index % 2 === 0 ? "blue" : "purple"
-                      }`}
-                  />
+              projects
+                .slice(0, 5)
+                .map(
+                  (
+                    project,
+                    index
+                  ) => (
+                    <Link
+                      key={
+                        project?._id ||
+                        index
+                      }
+                      to={`/projects/${project?._id}`}
+                      className="sidebar-project"
+                      onClick={
+                        handleNavigation
+                      }
+                    >
+                      <span
+                        className={`project-dot ${index % 2 === 0
+                            ? "blue"
+                            : "purple"
+                          }`}
+                      />
 
-                  <span className="sidebar-project-name">
-                    {project?.name || "Untitled Project"}
-                  </span>
-                </Link>
-              ))
+                      <span className="sidebar-project-name">
+                        {
+                          project?.name ||
+                          "Untitled Project"
+                        }
+                      </span>
+                    </Link>
+                  )
+                )
             )}
+
           </div>
         )}
 
+
         {/* PROFILE */}
+
         <div className="sidebar-profile-wrapper">
+
           <button
             type="button"
             className="sidebar-profile"
             onClick={() =>
-              setShowProfileMenu((previous) => !previous)
+              setShowProfileMenu(
+                (previous) =>
+                  !previous
+              )
             }
           >
-            <div className="profile-avatar">
-              {userName.charAt(0).toUpperCase()}
+
+            <div
+              className={`profile-avatar ${userAvatar
+                  ? "profile-avatar-has-image"
+                  : ""
+                }`}
+              style={
+                userAvatar
+                  ? {
+                    "--avatar-image": `url("${userAvatar}")`,
+                  }
+                  : undefined
+              }
+            >
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt={`${userName} avatar`}
+                />
+              ) : (
+                <span className="profile-avatar-initial">
+                  {userName
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              )}
             </div>
+
 
             <div className="profile-info">
-              <strong>{userName}</strong>
-              <span>Profile</span>
+
+              <strong>
+                {userName}
+              </strong>
+
+              <span>
+                Profile
+              </span>
+
             </div>
 
+
             <span className="profile-arrow">
-              <ChevronDown size={15} strokeWidth={1.8} />
+              <ChevronDown
+                size={15}
+                strokeWidth={1.8}
+              />
             </span>
+
           </button>
+
 
           {showProfileMenu && (
             <div className="profile-dropdown">
-              <div className="profile-dropdown-user">
-                <strong>{userName}</strong>
 
-                <span>{user?.email || ""}</span>
+              <div className="profile-dropdown-user">
+
+                <strong>
+                  {userName}
+                </strong>
+
+                <span>
+                  {user?.email || ""}
+                </span>
+
               </div>
+
 
               <button
                 type="button"
@@ -374,7 +593,29 @@ const Sidebar = ({
                 onClick={() => {
                   setShowProfileMenu(false);
                   closeSidebar();
-                  navigate("/change-password");
+                  navigate("/profile");
+                }}
+              >
+                <UserRound
+                  size={15}
+                  strokeWidth={1.8}
+                />
+
+                <span>
+                  Profile
+                </span>
+              </button>
+
+
+              <button
+                type="button"
+                className="profile-menu-button"
+                onClick={() => {
+                  setShowProfileMenu(false);
+                  closeSidebar();
+                  navigate(
+                    "/change-password"
+                  );
                 }}
               >
                 <KeyRound
@@ -382,8 +623,11 @@ const Sidebar = ({
                   strokeWidth={1.8}
                 />
 
-                <span>Change Password</span>
+                <span>
+                  Change Password
+                </span>
               </button>
+
 
               <button
                 type="button"
@@ -395,11 +639,16 @@ const Sidebar = ({
                   strokeWidth={1.8}
                 />
 
-                <span>Logout</span>
+                <span>
+                  Logout
+                </span>
               </button>
+
             </div>
           )}
+
         </div>
+
       </aside>
     </>
   );

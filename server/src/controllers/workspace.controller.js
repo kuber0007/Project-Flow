@@ -23,6 +23,10 @@ import {
     getMyWorkspaceInvitations as getMyWorkspaceInvitationsService,
 } from "../services/workspace.service.js";
 import Workspace from "../models/workspace.model.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryUpload.js";
 
 // 1. POST create workspace
 const createWorkspace = asyncHandler(async (req, res) => {
@@ -331,34 +335,117 @@ const getWorkspaceSettings = asyncHandler(async (req, res) => {
 })
 
 // 17. Update Workspace Settings 
-const updateWorkspaceSettings = asyncHandler(async (req, res) => {
-    const { workspaceId } = req.params;
-    const { name, description, logo } = req.body;
+const updateWorkspaceSettings =
+  asyncHandler(async (req, res) => {
+    const { workspaceId } =
+      req.params;
 
-    if (name !== undefined && !name.trim()) {
-        throw new ApiError(400, "Workspace name cannot be empty");
+    const {
+      name,
+      description,
+    } = req.body;
+
+    if (
+      name !== undefined &&
+      !name.trim()
+    ) {
+      throw new ApiError(
+        400,
+        "Workspace name cannot be empty"
+      );
     }
 
-    const workspace = await updateWorkspaceSettingsService(
+    const currentWorkspace =
+      await Workspace.findById(
+        workspaceId
+      );
+
+    if (!currentWorkspace) {
+      throw new ApiError(
+        404,
+        "Workspace not found"
+      );
+    }
+
+    let logo =
+      currentWorkspace.logo;
+
+    let logoPublicId =
+      currentWorkspace.logoPublicId;
+
+    if (req.file) {
+      const uploaded =
+        await uploadToCloudinary(
+          req.file.buffer,
+          "projectflow/workspaces"
+        );
+
+      if (!uploaded?.secure_url) {
+        throw new ApiError(
+          500,
+          "Workspace logo upload failed."
+        );
+      }
+
+      const oldLogoPublicId =
+        currentWorkspace.logoPublicId;
+
+      logo =
+        uploaded.secure_url;
+
+      logoPublicId =
+        uploaded.public_id;
+
+      if (oldLogoPublicId) {
+        try {
+          await deleteFromCloudinary(
+            oldLogoPublicId
+          );
+        } catch (deleteError) {
+          console.error(
+            "Failed to delete old workspace logo:",
+            deleteError
+          );
+        }
+      }
+    }
+
+    const workspace =
+      await updateWorkspaceSettingsService(
         workspaceId,
         req.user._id,
         {
-            name,
-            description,
-            logo,
+          name:
+            name !== undefined
+              ? name.trim()
+              : undefined,
+
+          description:
+            description !== undefined
+              ? description.trim()
+              : undefined,
+
+          logo,
         }
-    );
+      );
+
+    if (logoPublicId !== undefined) {
+      workspace.logoPublicId =
+        logoPublicId;
+
+      await workspace.save();
+    }
 
     return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                workspace,
-                "Workspace settings updated successfully"
-            )
-        );
-})
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          workspace,
+          "Workspace settings updated successfully"
+        )
+      );
+  });
 
 // 18. Transfer Ownership
 const transferOwnership = asyncHandler(async(req,res)=>{

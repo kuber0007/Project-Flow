@@ -4196,7 +4196,7 @@ a {
 }
 
 .site-footer .footer-right {
-  justify-self: center;
+  justify-self: right;
 }
 
 .site-footer .footer-socials {
@@ -4261,7 +4261,7 @@ a {
 
   .site-footer .footer-brand,
   .site-footer .footer-right {
-    justify-self: start;
+    justify-self: right;
   }
 }
 
@@ -4365,7 +4365,7 @@ a {
 }
 
 .site-footer .footer-right {
-  justify-self: center;
+  justify-self: right;
 }
 
 .site-footer .footer-made-with {
@@ -4400,7 +4400,7 @@ a {
 
   .site-footer .footer-brand,
   .site-footer .footer-right {
-    justify-self: start;
+    justify-self: right;
   }
 
   .site-footer .footer-links {
@@ -10813,4 +10813,435 @@ a {
     max-height: 400px;
   }
 
+}
+
+.workspace-logo-upload-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.workspace-logo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.workspace-logo-info strong {
+  color: #334155;
+  font-size: 14px;
+}
+
+.workspace-logo-info span {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.workspace-logo-info small {
+  color: #a0a9b8;
+  font-size: 11px;
+}
+
+.workspace-logo-camera {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+
+  background: #4f6ff5;
+  color: #ffffff;
+
+  cursor: pointer;
+}
+
+.workspace-logo-camera:hover {
+  background: #455fe0;
+}
+
+.workspace-logo-camera:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.workspace-logo-preview {
+  position: relative;
+
+  width: 72px;
+  height: 72px;
+
+  flex: 0 0 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 14px;
+
+  background: #eef2ff;
+
+  color: #536df5;
+
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.workspace-logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.workspace-logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: 5px;
+}
+
+.workspace-logo-choose-button,
+.workspace-logo-remove-button {
+  min-height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  padding: 0 11px;
+
+  border-radius: 7px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.workspace-logo-choose-button {
+  border: 1px solid #d7def0;
+  background: #ffffff;
+  color: #4f6ff5;
+}
+
+.workspace-logo-choose-button:hover {
+  background: #f8faff;
+}
+
+.workspace-logo-remove-button {
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.workspace-logo-remove-button:hover {
+  background: #f8fafc;
+}
+
+.workspace-logo-choose-button:disabled,
+.workspace-logo-remove-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.workspace-logo-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin: 0 0 20px;
+  padding: 9px 11px;
+
+  border: 1px solid #e0e7ff;
+  border-radius: 8px;
+
+  background: #f8faff;
+
+  color: #64748b;
+
+  font-size: 11px;
+}
+
+.workspace-logo-selected strong {
+  color: #475569;
+
+  max-width: 360px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .workspace-logo-upload-section {
+    align-items: flex-start;
+  }
+
+  .workspace-logo-preview {
+    width: 64px;
+    height: 64px;
+    flex-basis: 64px;
+  }
+
+  .workspace-logo-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================================================
+   WORKSPACE LOGOS
+========================================================= */
+
+.workspace-logo-image,
+.workspace-logo-fallback {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: inherit;
+}
+
+
+/* Actual uploaded image */
+
+.workspace-logo-image {
+  object-fit: cover;
+}
+
+
+/* Fallback initial */
+
+.workspace-logo-fallback {
+  color: #5271f4;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* Dropdown workspace logo */
+
+.workspace-dropdown-icon {
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 9px;
+
+  background: #eef2ff;
+}
+
+
+.workspace-dropdown-icon
+.workspace-logo-image {
+  border-radius: 9px;
+}
+
+
+.workspace-dropdown-icon
+.workspace-logo-fallback {
+  border-radius: 9px;
+  font-size: 14px;
+}
+
+
+/* Current workspace logo */
+
+.workspace-selector-icon {
+  overflow: hidden;
+}
+
+
+.workspace-selector-icon
+.workspace-logo-image,
+.workspace-selector-icon
+.workspace-logo-fallback {
+  width: 100%;
+  height: 100%;
+
+  border-radius: inherit;
+}
+
+
+.workspace-selector-icon
+.workspace-logo-image {
+  object-fit: cover;
+}
+
+/* =========================================================
+   SIDEBAR PROFILE
+========================================================= */
+
+/* Profile box is ALWAYS visible */
+.sidebar-profile {
+  background: #f0f4ff;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-profile:hover {
+  background: #e9efff;
+}
+
+
+/* =========================================================
+   PROFILE AVATAR
+========================================================= */
+
+.profile-avatar {
+  position: relative;
+
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 10px;
+
+  background: #edf1f7;
+
+  isolation: isolate;
+}
+
+
+/* ---------------------------------------------------------
+   BLURRED IMAGE BEHIND AVATAR
+
+   This automatically takes its colors from the user's
+   actual profile picture.
+--------------------------------------------------------- */
+
+.profile-avatar-has-image::before {
+  content: "";
+
+  position: absolute;
+  inset: -7px;
+
+  background-image: var(--avatar-image);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+
+  filter: blur(9px);
+
+  transform: scale(1.15);
+
+  opacity: 0.75;
+
+  z-index: -1;
+}
+
+
+/* ---------------------------------------------------------
+   ACTUAL AVATAR IMAGE
+--------------------------------------------------------- */
+
+.profile-avatar img {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  border-radius: 10px;
+}
+
+
+/* ---------------------------------------------------------
+   INITIAL WHEN THERE IS NO PHOTO
+--------------------------------------------------------- */
+
+.profile-avatar-initial {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #edf1f7;
+
+  color: #5269d9;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  border-radius: 10px;
+}
+
+.footer-main {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 84px;
+}
+
+.footer-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 84px;
+}
+
+.footer-right {
+  margin-left: auto;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.footer-made-with {
+  white-space: nowrap;
+
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.footer-made-with span {
+  color: #f47272;
 }

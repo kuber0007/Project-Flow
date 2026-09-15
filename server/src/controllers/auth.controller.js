@@ -9,6 +9,12 @@ import {
     resetPassword as resetPasswordService,
 } from "../services/auth.service.js";
 
+import User from "../models/user.model.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinaryUpload.js";
+
 //1. Register 
 const registerUser = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
@@ -126,4 +132,80 @@ const resetPassword = asyncHandler(
   }
 );
 
-export { registerUser, loginUser, logoutUser, getCurrentUser, changePassword, forgotPassword, resetPassword};
+// 8. Upload / Update Avatar
+const updateAvatar = asyncHandler(
+  async (req, res) => {
+    if (!req.file) {
+      throw new ApiError(
+        400,
+        "Please select an image to upload."
+      );
+    }
+
+    const user =
+      await User.findById(
+        req.user._id
+      );
+
+    if (!user) {
+      throw new ApiError(
+        404,
+        "User not found."
+      );
+    }
+
+    const uploaded =
+      await uploadToCloudinary(
+        req.file.buffer,
+        "projectflow/avatars"
+      );
+
+    if (!uploaded?.secure_url) {
+      throw new ApiError(
+        500,
+        "Avatar upload failed."
+      );
+    }
+
+    const oldPublicId =
+      user.avatarPublicId;
+
+    user.avatar =
+      uploaded.secure_url;
+
+    user.avatarPublicId =
+      uploaded.public_id;
+
+    await user.save();
+
+    if (oldPublicId) {
+      try {
+        await deleteFromCloudinary(
+          oldPublicId
+        );
+      } catch (deleteError) {
+        console.error(
+          "Failed to delete old avatar:",
+          deleteError
+        );
+      }
+    }
+
+    const updatedUser =
+      await User.findById(
+        user._id
+      ).select("-password");
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          updatedUser,
+          "Avatar updated successfully"
+        )
+      );
+  }
+);
+
+export { registerUser, loginUser, logoutUser, getCurrentUser, changePassword, forgotPassword, resetPassword, updateAvatar};

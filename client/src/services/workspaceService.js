@@ -565,27 +565,53 @@ const updateWorkspaceSettings = async (
   workspaceId,
   data
 ) => {
-
   if (!workspaceId) {
-
     throw new Error(
       "Workspace ID is required."
     );
   }
 
+  const hasLogoFile =
+    data?.logoFile instanceof File;
+
+  let body;
+
+  if (hasLogoFile) {
+    const formData =
+      new FormData();
+
+    formData.append(
+      "name",
+      data.name || ""
+    );
+
+    formData.append(
+      "description",
+      data.description || ""
+    );
+
+    formData.append(
+      "logoFile",
+      data.logoFile
+    );
+
+    body = formData;
+  } else {
+    body = JSON.stringify({
+      name: data?.name || "",
+      description:
+        data?.description || "",
+    });
+  }
 
   const result =
     await apiRequest(
       `/workspaces/${workspaceId}/settings`,
       {
         method: "PATCH",
-
-        body: JSON.stringify(
-          data
-        ),
+        body,
       }
     );
-
 
   return (
     result?.data ??
@@ -647,6 +673,42 @@ const getMyWorkspaceInvitations = async () => {
   return result?.data ?? result;
 };
 
+const uploadWorkspaceLogo = async (workspaceId, file) => {
+  if (!workspaceId) {
+    throw new Error(
+      "Workspace ID is required."
+    );
+  }
+
+  if (!file) {
+    throw new Error(
+      "Please select an image."
+    );
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "logoFile",
+    file
+  );
+
+  const result =
+    await apiRequest(
+      `/workspaces/${workspaceId}/settings`,
+      {
+        method: "PATCH",
+        body: formData,
+      }
+    );
+
+  return (
+    result?.data ??
+    result
+  );
+};
+
 
 export {
   getWorkspaces,
@@ -666,4 +728,5 @@ export {
   updateWorkspaceSettings,
   transferOwnership,
   getMyWorkspaceInvitations,
+  uploadWorkspaceLogo
 };

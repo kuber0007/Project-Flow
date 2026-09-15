@@ -145,6 +145,69 @@ const logoutUser = () => {
   localStorage.removeItem("user");
 };
 
+const updateAvatar = async (
+  file
+) => {
+  if (!file) {
+    throw new Error(
+      "Please select an image."
+    );
+  }
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "avatar",
+    file
+  );
+
+  const token =
+    localStorage.getItem(
+      "accessToken"
+    );
+
+  const response =
+    await fetch(
+      `${API_BASE_URL}/auth/avatar`,
+      {
+        method: "PATCH",
+
+        headers: {
+          ...(token
+            ? {
+                Authorization:
+                  `Bearer ${token}`,
+              }
+            : {}),
+        },
+
+        body: formData,
+      }
+    );
+
+  const result =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      result?.message ||
+        "Failed to update avatar."
+    );
+  }
+
+  if (result?.data) {
+    localStorage.setItem(
+      "user",
+      JSON.stringify(
+        result.data
+      )
+    );
+  }
+
+  return result?.data;
+};
+
 
 export {
   registerUser,
@@ -152,5 +215,6 @@ export {
   logoutUser,
   resetPassword,
   forgotPassword,
-  changePassword
+  changePassword,
+  updateAvatar
 };

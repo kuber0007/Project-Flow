@@ -9,7 +9,6 @@ function Footer() {
         <div className="footer-divider" />
 
         <div className="footer-main">
-
           {/* Brand */}
           <a
             href="/"
@@ -26,6 +25,12 @@ function Footer() {
           </a>
 
 
+          {/* Center Text */}
+          <span className="footer-made-with">
+             <span>  </span>
+           </span>
+
+
           {/* Socials */}
           <div className="footer-right">
 
@@ -33,7 +38,7 @@ function Footer() {
 
               {/* LinkedIn */}
               <a
-                href="#"
+                href="https://www.linkedin.com/in/learner-kuber/"
                 className="footer-social"
                 aria-label="ProjectFlow LinkedIn"
               >
@@ -51,7 +56,7 @@ function Footer() {
 
               {/* GitHub */}
               <a
-                href="#"
+                href="https://github.com/kuber0007/"
                 className="footer-social"
                 aria-label="ProjectFlow GitHub"
               >
@@ -66,7 +71,7 @@ function Footer() {
                 </svg>
               </a>
 
-
+              {/* Center Text */}
               <span className="footer-made-with">
                 Made with
                 <span> ♥ </span>
